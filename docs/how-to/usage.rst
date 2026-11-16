@@ -430,6 +430,11 @@ Download the latest versions of seed packages from PyPI:
 
     $ virtualenv --download venv
 
+Set ``download = true`` in the configuration file or ``VIRTUALENV_DOWNLOAD=1`` to do so for every environment;
+``no_download = true`` or ``VIRTUALENV_NO_DOWNLOAD=1`` turns it off again. Environment variables override either
+configuration file key, and if both environment variables are true, ``VIRTUALENV_NO_DOWNLOAD`` wins. A flag on the
+command line beats both.
+
 Disable periodic updates
 ========================
 
