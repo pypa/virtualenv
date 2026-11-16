@@ -277,7 +277,8 @@ Set options using environment variables with the ``VIRTUALENV_`` prefix and uppe
 
     $ export VIRTUALENV_PYTHON=/opt/python-3.14/bin/python
 
-For multi-value options, separate values with commas or newlines.
+For multi-value options, separate values with commas or newlines. The commas inside one version specifier, such as
+``>=3.9,<3.10``, do not split it; to pass two specifiers as separate values, put each on its own line.
 
 Override app-data location
 ==========================
