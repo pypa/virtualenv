@@ -15,12 +15,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-class _Checkout(NamedTuple):
-    repo: Repo
-    remote: Repo
-    root: Path
-
-
 @pytest.fixture
 def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> _Checkout:
     remote: Final[Repo] = Repo.init(tmp_path / "pypa" / "virtualenv", bare=True)
@@ -66,6 +60,12 @@ def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: Mo
         autospec=True,
     )
     return _Checkout(repo, remote, root)
+
+
+class _Checkout(NamedTuple):
+    repo: Repo
+    remote: Repo
+    root: Path
 
 
 def test_release_prepares_tag_without_push(release_checkout: tuple[Repo, Repo, Path]) -> None:

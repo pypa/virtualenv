@@ -16,49 +16,10 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
-class _CountedFileLock(FileLock):
-    def __init__(self, lock_file: str) -> None:
-        parent = os.path.dirname(lock_file)
-        with suppress(OSError):
-            os.makedirs(parent, exist_ok=True)
-
-        super().__init__(lock_file)
-        self.count = 0
-        self.thread_safe = RLock()
-
-    # filelock's acquire takes poll_interval as float | None and more keyword arguments, this override narrows them
-    def acquire(  # ty: ignore[incompatible-method-override]
-        self,
-        timeout: float | None = None,
-        poll_interval: float = 0.05,
-    ) -> None:
-        if not self.thread_safe.acquire(timeout=-1 if timeout is None else timeout):
-            raise Timeout(self.lock_file)
-        if self.count == 0:
-            try:
-                super().acquire(timeout, poll_interval)
-            except BaseException:
-                self.thread_safe.release()
-                raise
-        self.count += 1
-
-    # force is a flag of the lock API, callers set it by keyword
-    def release(self, force: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
-        with self.thread_safe:
-            if self.count > 0:
-                if self.count == 1:
-                    super().release(force=force)
-                self.count -= 1
-                if self.count == 0:
-                    # if we have no more users of this lock, release the thread lock
-                    self.thread_safe.release()
-
-
-_LOCK_STORE = {}  # simplint: ignore[SMP601]  # ty infers a different value type on Python 3.9 when annotated
+_LOCK_STORE = {}  # simplint: ignore[missing-final]  # ty infers a different value type on Python 3.9 when annotated
 _STORE_LOCK: Final[Lock] = Lock()
 
 
@@ -219,6 +180,44 @@ class ReentrantFileLock(PathLockBase):
             yield
 
 
+class _CountedFileLock(FileLock):
+    def __init__(self, lock_file: str) -> None:
+        parent = os.path.dirname(lock_file)
+        with suppress(OSError):
+            os.makedirs(parent, exist_ok=True)
+
+        super().__init__(lock_file)
+        self.count = 0
+        self.thread_safe = RLock()
+
+    # filelock's acquire takes poll_interval as float | None and more keyword arguments, this override narrows them
+    def acquire(  # ty: ignore[incompatible-method-override]
+        self,
+        timeout: float | None = None,
+        poll_interval: float = 0.05,
+    ) -> None:
+        if not self.thread_safe.acquire(timeout=-1 if timeout is None else timeout):
+            raise Timeout(self.lock_file)
+        if self.count == 0:
+            try:
+                super().acquire(timeout, poll_interval)
+            except BaseException:
+                self.thread_safe.release()
+                raise
+        self.count += 1
+
+    # force is a flag of the lock API, callers set it by keyword
+    def release(self, force: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
+        with self.thread_safe:
+            if self.count > 0:
+                if self.count == 1:
+                    super().release(force=force)
+                self.count -= 1
+                if self.count == 0:
+                    # if we have no more users of this lock, release the thread lock
+                    self.thread_safe.release()
+
+
 class NoOpFileLock(PathLockBase):
     """Lock that takes no lock, for folders that are read only."""
 
@@ -257,7 +256,6 @@ class NoOpFileLock(PathLockBase):
 
 
 __all__ = [
-    "LOGGER",
     "NoOpFileLock",
     "PathLockBase",
     "ReentrantFileLock",

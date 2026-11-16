@@ -202,6 +202,10 @@ entry searches the current directory.
 It also removes an inherited ``PYTHONHOME`` from the current process so child Python interpreters use the environment's
 standard library.
 
+It points ``sys.prefix`` and ``sys.exec_prefix`` at the environment, so ``sysconfig`` reports the environment's install
+paths. CPython before 3.12.8, CPython 3.13.0 and PyPy before 3.12 read both prefixes once, when ``sysconfig`` is first
+imported, so there this only holds when the activation runs before that import.
+
 .. code-block:: python
 
     import runpy

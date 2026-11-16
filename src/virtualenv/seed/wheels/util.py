@@ -1,4 +1,6 @@
-from __future__ import annotations  # simplint: ignore[SMP104]  # its import path is used across the seed package
+"""Wheel parsing and version selection."""  # simplint: ignore[catch-all-module]  # public import path
+
+from __future__ import annotations
 
 import logging
 from email.parser import HeaderParser

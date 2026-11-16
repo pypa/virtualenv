@@ -250,6 +250,12 @@ def test_cshell_prompt_preserves_quoting_mode(csh_venv: _CshVenv, tmp_path: Path
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
+def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
+    _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
+
+
 def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: dict[str, str]) -> None:
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
@@ -266,12 +272,6 @@ def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: d
     )
 
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
-
-
-@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
-def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
-    _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
 
 
 @pytest.fixture
@@ -482,6 +482,9 @@ def test_cshell_preserves_non_newline_path(csh_venv: _CshVenv, tmp_path: Path, b
     assert result.stdout == str(dest).encode()
 
 
+_TEST_CSHELL_HISTCHARS_REPLACES_HASH_IN_PROMPT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\(a%\d+b\) __END__")
+
+
 @pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize("state", list(SHELLS["cshell"].states))
 def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) -> None:
@@ -489,4 +492,4 @@ def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) ->
         "cshell", generate_script("cshell", tmp_path / "env", "a%#b"), state, "histchars", tmp_path
     )
 
-    assert re.fullmatch(r"\(a%\d+b\) __END__", drawn_prompt("cshell", result))
+    assert _TEST_CSHELL_HISTCHARS_REPLACES_HASH_IN_PROMPT_PATTERN.fullmatch(drawn_prompt("cshell", result))

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 # python_discovery exposes its cache helpers only from the private module
-from python_discovery._cached_py_info import clear, from_exe  # ruff:ignore[import-private-name]
+from python_discovery._cached_py_info import clear, from_exe  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # legacy signatures
 
 __all__ = [
     "clear",
