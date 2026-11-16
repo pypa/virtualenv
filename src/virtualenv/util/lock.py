@@ -213,9 +213,8 @@ class _CountedFileLock(FileLock):
                 if self.count == 1:
                     super().release(force=force)
                 self.count -= 1
-                if self.count == 0:
-                    # if we have no more users of this lock, release the thread lock
-                    self.thread_safe.release()
+                # Each acquire takes the RLock, including recursive acquisitions.
+                self.thread_safe.release()
 
 
 class NoOpFileLock(PathLockBase):

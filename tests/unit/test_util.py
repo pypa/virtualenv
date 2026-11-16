@@ -8,6 +8,7 @@ import subprocess
 import sys
 import traceback
 import zipfile
+from contextlib import ExitStack
 from errno import EACCES
 from operator import attrgetter
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
@@ -19,7 +20,7 @@ from virtualenv import __version__
 from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
-from virtualenv.util.lock import ReentrantFileLock
+from virtualenv.util.lock import ReentrantFileLock, Timeout
 from virtualenv.util.path import copy, ensure_within, safe_delete, symlink, write_file
 from virtualenv.util.subprocess import LogCmd, run_cmd
 
@@ -549,6 +550,28 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
             # every failed task's traceback is collected, one bad task must not stop the loop
             except Exception:  # ruff:ignore[blind-except, try-except-in-loop]
                 pytest.fail(traceback.format_exc())
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+def test_nested_file_lock_releases_thread_lock(tmp_path: Path, mocker: MockerFixture, depth: int) -> None:
+    lock = ReentrantFileLock(tmp_path)
+    create_lock = mocker.spy(lock, "_create_lock")
+
+    def acquire_from_another_thread() -> None:
+        counted_lock.acquire(timeout=1)
+        counted_lock.release()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with lock.lock_for_key("target"):
+            with ExitStack() as contexts:
+                for _ in range(depth - 1):
+                    contexts.enter_context(lock.lock_for_key("target"))
+                # A waiting thread can retain this same counted lock after it leaves the store.
+                counted_lock = create_lock.spy_return
+            # Releasing inner contexts must still leave the outer context protected.
+            with pytest.raises(Timeout):
+                executor.submit(acquire_from_another_thread).result(timeout=5)
+        executor.submit(acquire_from_another_thread).result(timeout=5)
 
 
 def test_default_app_data_dir_override_env_var(tmp_path: Path) -> None:
