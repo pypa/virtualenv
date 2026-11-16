@@ -110,7 +110,8 @@ def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] 
 def _exit_for_exception(options: VirtualEnvOptions, exception: BaseException) -> None:
     if getattr(options, "with_traceback", False):
         raise exception
-    if not (isinstance(exception, SystemExit) and exception.code == 0):
+    # sys.exit() without a status exits with 0 too, so SystemExit(None) is a success and not an error to report
+    if not (isinstance(exception, SystemExit) and (exception.code is None or exception.code == 0)):
         LOGGER.error("%s: %s", type(exception).__name__, exception)
     sys.exit(exception.code if isinstance(exception, SystemExit) else 1)
 
