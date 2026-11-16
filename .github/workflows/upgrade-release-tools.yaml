@@ -22,7 +22,6 @@ jobs:
       additional-matrix-platforms: >-
         linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64
       additional-matrix-implementations: cpython pypy
-      commit-message: "build(deps): refresh release lock"
       pull-request-title: "build(deps): refresh release tool lock"
       pull-request-body: |-
         Relock `pylock.toml` and `pylock.zipapp.toml`.
