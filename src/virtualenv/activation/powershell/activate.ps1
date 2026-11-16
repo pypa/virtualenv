@@ -124,6 +124,15 @@ function global:deactivate([switch] $NonDestructive) {
         Remove-Item function:\_old_virtual_prompt
     }
 
+    if (Test-Path variable:_OLD_VIRTUAL_PYDOC) {
+        if ($null -eq $variable:_OLD_VIRTUAL_PYDOC) {
+            Remove-Item function:pydoc -ErrorAction SilentlyContinue
+        } else {
+            $function:pydoc = $variable:_OLD_VIRTUAL_PYDOC
+        }
+        Remove-Variable "_OLD_VIRTUAL_PYDOC" -Scope global
+    }
+
     if ($env:VIRTUAL_ENV) {
         Remove-Item env:VIRTUAL_ENV -ErrorAction SilentlyContinue
     }
@@ -138,12 +147,7 @@ function global:deactivate([switch] $NonDestructive) {
 
     if (!$NonDestructive) {
         Remove-Item function:deactivate
-        Remove-Item function:pydoc
     }
-}
-
-function global:pydoc {
-    & python -m pydoc $args
 }
 
 $VenvExecPath = [IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)
@@ -198,6 +202,11 @@ if ($Prompt) {
 }
 
 deactivate -nondestructive
+
+New-Variable -Scope global -Name _OLD_VIRTUAL_PYDOC -Value $function:pydoc
+function global:pydoc {
+    & python -m pydoc $args
+}
 
 $env:VIRTUAL_ENV = $VenvDir
 $env:VIRTUAL_ENV_PROMPT = $Prompt
