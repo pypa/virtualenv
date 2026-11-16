@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.run.session import Session
 
-LOGGER: Final[logging.Logger] = logging.getLogger(  # simplint: ignore[SMP404]  # upstream's logger, keep importable
-    __name__
-)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing API
 
 
 def _run_as_module() -> None:
@@ -69,7 +67,7 @@ def run(
         raise
 
 
-class LogSession:  # simplint: ignore[SMP403]  # upstream's public name, kept so virtualenv.__main__.LogSession keeps importing
+class LogSession:  # simplint: ignore[unexported-public-name]  # existing import
     def __init__(self, session: Session, start: float) -> None:
         self.session = session
         self.start = start

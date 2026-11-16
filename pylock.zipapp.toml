@@ -130,7 +130,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "distlib-0.4.4.tar.gz"
-upload-time = 2026-10-16 13:56:34.203008+00:00
+upload-time = 2026-10-16T13:56:34.203008+00:00
 url = "https://files.pythonhosted.org/packages/68/bc/d36966de7304047a1001a7559fbf266c464bb5d8cc85464536ef8c9bcc32/distlib-0.4.4.tar.gz"
 size = 621304
 
@@ -139,7 +139,7 @@ sha256 = "ca4175b4ac7f71223cc30ed7248c45d2b38c2439d8ee6e498ab67ed63cf3508d"
 
 [[packages.wheels]]
 name = "distlib-0.4.4-py2.py3-none-any.whl"
-upload-time = 2026-10-16 13:56:32.053304+00:00
+upload-time = 2026-10-16T13:56:32.053304+00:00
 url = "https://files.pythonhosted.org/packages/c1/2b/238f02a4927fa2e27aa995371d240a468b52e42eae44a678434aff736b38/distlib-0.4.4-py2.py3-none-any.whl"
 size = 472099
 
@@ -155,7 +155,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "filelock-3.19.1.tar.gz"
-upload-time = 2025-08-14 16:56:03.016502+00:00
+upload-time = 2025-08-14T16:56:03.016502+00:00
 url = "https://files.pythonhosted.org/packages/40/bb/0ab3e58d22305b6f5440629d20683af28959bf793d98d11950e305c1c326/filelock-3.19.1.tar.gz"
 size = 17687
 
@@ -164,7 +164,7 @@ sha256 = "66eda1888b0171c998b35be2bcc0f6d75c388a7ce20c3f3f37aa8e96c2dddf58"
 
 [[packages.wheels]]
 name = "filelock-3.19.1-py3-none-any.whl"
-upload-time = 2025-08-14 16:56:01.633373+00:00
+upload-time = 2025-08-14T16:56:01.633373+00:00
 url = "https://files.pythonhosted.org/packages/42/14/42b2651a2f46b022ccd948bca9f2d5af0fd8929c4eec235b8d6d844fbe67/filelock-3.19.1-py3-none-any.whl"
 size = 15988
 
@@ -180,7 +180,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "filelock-4.1.0.tar.gz"
-upload-time = 2026-10-09 19:57:20.340403+00:00
+upload-time = 2026-10-09T19:57:20.340403+00:00
 url = "https://files.pythonhosted.org/packages/4c/58/6fd434bec86eff7c38a3168454cb132b762b2bea9b3ac094101a2f7bc32a/filelock-4.1.0.tar.gz"
 size = 561277
 
@@ -189,7 +189,7 @@ sha256 = "ad7f724afef953e731b1cc39bcd3a09166d72ed7fcdf29e6e88b1c3235c6715d"
 
 [[packages.wheels]]
 name = "filelock-4.1.0-py3-none-any.whl"
-upload-time = 2026-10-09 19:57:18.716241+00:00
+upload-time = 2026-10-09T19:57:18.716241+00:00
 url = "https://files.pythonhosted.org/packages/ee/86/032133892a5de43b5a98200b01aadcad68cc255e274a762f08b8a76d2912/filelock-4.1.0-py3-none-any.whl"
 size = 133003
 
@@ -205,7 +205,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "packaging-26.3.tar.gz"
-upload-time = 2026-08-04 18:15:28.737071+00:00
+upload-time = 2026-08-04T18:15:28.737071+00:00
 url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz"
 size = 313412
 
@@ -214,7 +214,7 @@ sha256 = "94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79"
 
 [[packages.wheels]]
 name = "packaging-26.3-py3-none-any.whl"
-upload-time = 2026-08-04 18:15:27.159957+00:00
+upload-time = 2026-08-04T18:15:27.159957+00:00
 url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
 size = 129956
 
@@ -230,7 +230,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "platformdirs-4.4.0.tar.gz"
-upload-time = 2025-08-26 14:32:04.268581+00:00
+upload-time = 2025-08-26T14:32:04.268581+00:00
 url = "https://files.pythonhosted.org/packages/23/e8/21db9c9987b0e728855bd57bff6984f67952bea55d6f75e055c46b5383e8/platformdirs-4.4.0.tar.gz"
 size = 21634
 
@@ -239,7 +239,7 @@ sha256 = "ca753cf4d81dc309bc67b0ea38fd15dc97bc30ce419a7f58d13eb3bf14c4febf"
 
 [[packages.wheels]]
 name = "platformdirs-4.4.0-py3-none-any.whl"
-upload-time = 2025-08-26 14:32:02.735683+00:00
+upload-time = 2025-08-26T14:32:02.735683+00:00
 url = "https://files.pythonhosted.org/packages/40/4b/2028861e724d3bd36227adfa20d3fd24c3fc6d52032f4a93c133be5d17ce/platformdirs-4.4.0-py3-none-any.whl"
 size = 18654
 
@@ -248,31 +248,32 @@ sha256 = "abd01743f24e5287cd7a5db3752faf1a2d65353f38ec26d98e25a6db65958c85"
 
 [[packages]]
 name = "python-discovery"
-version = "1.6.6"
+version = "1.9.5"
 marker = "\"project-runtime\" in dependency_groups"
 requires-python = ">=3.9"
 dependencies = [
-    { name = "filelock" },
+    { name = "filelock", version = "3.19.1" },
+    { name = "filelock", version = "4.1.0" },
 ]
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "python_discovery-1.6.6.tar.gz"
-upload-time = 2026-10-27 19:43:40.605766+00:00
-url = "https://files.pythonhosted.org/packages/8e/3e/0c8cbdb52feeac4a8667ccff3c58fd2568d6d2969db2717ff00a9fdae73a/python_discovery-1.6.6.tar.gz"
-size = 116920
+name = "python_discovery-1.9.5.tar.gz"
+upload-time = 2026-11-06T15:32:11.331993+00:00
+url = "https://files.pythonhosted.org/packages/68/55/70b46fae646bc6f5cb5e82569949d925cff1c7b5ce20ec4a11e0d977f8c6/python_discovery-1.9.5.tar.gz"
+size = 141121
 
 [packages.sdist.hashes]
-sha256 = "d687024fec55c489e7a465c7f5644300a4d9dbf7727a556a85660536ee922933"
+sha256 = "86279f5d2728bc067de28b7ddc571be2eacc2ae0e7048f8629d2481a0f8848a2"
 
 [[packages.wheels]]
-name = "python_discovery-1.6.6-py3-none-any.whl"
-upload-time = 2026-10-27 19:43:39.226654+00:00
-url = "https://files.pythonhosted.org/packages/23/33/d594dde9e7f510216ca87707b575492a610100497db735ab0b54345c60e2/python_discovery-1.6.6-py3-none-any.whl"
-size = 39043
+name = "python_discovery-1.9.5-py3-none-any.whl"
+upload-time = 2026-11-06T15:32:09.821939+00:00
+url = "https://files.pythonhosted.org/packages/ac/35/25bd092ca8a7e71192afdca67fbff4f797da74408e74ac3626e13b409ec0/python_discovery-1.9.5-py3-none-any.whl"
+size = 44377
 
 [packages.wheels.hashes]
-sha256 = "95e644ce8625c62dc195a603da9f8138ca5a35048224911b2cf7b3028025527a"
+sha256 = "a1fae8fca11e4bc61e38491c2aafff29e430b3c5e272d51ae52fb895bc4c0fac"
 
 [[packages]]
 name = "typing-extensions"
@@ -283,7 +284,7 @@ index = "https://pypi.org/simple/"
 
 [packages.sdist]
 name = "typing_extensions-4.16.0.tar.gz"
-upload-time = 2026-07-02 08:40:05.920538+00:00
+upload-time = 2026-07-02T08:40:05.920538+00:00
 url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz"
 size = 113555
 
@@ -292,7 +293,7 @@ sha256 = "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5"
 
 [[packages.wheels]]
 name = "typing_extensions-4.16.0-py3-none-any.whl"
-upload-time = 2026-07-02 08:40:04.659120+00:00
+upload-time = 2026-07-02T08:40:04.659120+00:00
 url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
 size = 45571
 
@@ -300,8 +301,8 @@ size = 45571
 sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 
 [tool.nab]
-nab-version = "0.0.23"
-created-at = 2026-11-03 21:20:43.488068+00:00
+nab-version = "0.0.27"
+created-at = 2026-11-16T19:01:05.041856+00:00
 command-line = [
     "nab",
     "lock",
@@ -343,3 +344,9 @@ cli-project-overrides = [
     "--project-matrix-platforms=linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64",
     "--project-matrix-implementations=cpython pypy",
 ]
+
+[tool.nab.validation]
+version = 1
+all-inputs-sha256 = "f265cc813b564bedf2b597dc77a51ed1d97116a48a3a981a34a5375c76a87275"
+selection-inputs-sha256 = "94c206f8e69fceedfabb7d8e8681cf39a3543f0db0644d5edc03c10d5acdfbcf"
+contents-sha256 = "7483c8638d653f7c29063630a6695347168341f049b809df37db0a5d13136a3a"

@@ -118,9 +118,7 @@ class _Shard:
         return executed
 
 
-def _executed_tests(  # simplint: ignore[SMP505]  # JUnit parsing is a task of its own
-    junit_path: Path,
-) -> int | None:
+def _executed_tests(junit_path: Path) -> int | None:  # simplint: ignore[single-caller-helper]  # JUnit parsing  # fmt: skip
     try:
         root: Final[ET.Element] = ET.parse(junit_path).getroot()  # ruff:ignore[suspicious-xml-element-tree-usage] trusted pytest output
         suites: Final[list[ET.Element]] = list(root.iter("testsuite"))

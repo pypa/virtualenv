@@ -8,6 +8,7 @@ import sys
 from importlib.metadata import distribution
 from pathlib import Path
 from subprocess import check_output
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, NoReturn
 
 import pytest
@@ -75,7 +76,7 @@ def raise_on_session_done(mocker):
             prev_session(args, options, setup_logging, env)
             raise exception
 
-        mocker.patch("virtualenv.run.cli.session_via_cli", side_effect=_session_via_cli, autospec=True)
+        mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli, autospec=True)
 
     return _func
 
@@ -162,7 +163,10 @@ def test_session_report_subprocess(tmp_path) -> None:
     _match_regexes(lines, regexes)
 
 
-_COPY_BY_KIND: Final[dict[bool, Callable[[Path, Path], object]]] = {True: shutil.copytree, False: shutil.copy2}
+_COPY_BY_KIND: Final[MappingProxyType[bool, Callable[[Path, Path], object]]] = MappingProxyType({
+    True: shutil.copytree,
+    False: shutil.copy2,
+})
 
 
 def test_module_entry_from_target_install(tmp_path: Path) -> None:

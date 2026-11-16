@@ -45,8 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class AppDataDiskFolder(AppData):
@@ -112,7 +111,7 @@ class AppDataDiskFolder(AppData):
 
         """
         # callers pass a callable for to_folder, despite the Path | None annotation
-        root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[call-non-callable]
+        root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[not-callable]
         with root.lock_for_key(path.name):
             dest = root.path / path.name
             if not dest.exists():
@@ -133,7 +132,7 @@ class AppDataDiskFolder(AppData):
     def py_info_at(self) -> ReentrantFileLock:
         """The lock guarding the python info folder."""
         # the lock's / operator returns PathLockBase, not the ReentrantFileLock promised here
-        return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
+        return self.lock / "py_info" / "5"  # ty: ignore[invalid-explicit-return]
 
     def py_info_clear(self) -> None:
         """clear py info."""
@@ -265,7 +264,7 @@ class PyInfoStoreDisk(JSONStoreDisk):
         super().__init__(in_folder, sha256(str(path).encode("utf-8")).hexdigest(), ("python info of", path))  # ty: ignore[invalid-argument-type]
 
 
-class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
+class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):  # simplint: ignore[missing-from-all]  # existing local type
     """Update log of an embedded distribution, kept as a JSON file in the app data folder.
 
     :param in_folder: the lock of the folder the log lives in
@@ -282,9 +281,7 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 
 __all__ = [
-    "LOGGER",
     "AppDataDiskFolder",
-    "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",
     "PyInfoStoreDisk",
 ]

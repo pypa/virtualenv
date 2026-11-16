@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class BaseEmbed(Seeder, ABC):
@@ -218,6 +217,5 @@ def _seed_version(value: str) -> str:
 
 
 __all__ = [
-    "LOGGER",
     "BaseEmbed",
 ]

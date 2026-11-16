@@ -17,18 +17,15 @@ import pytest
 
 from virtualenv import __version__
 from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
-from virtualenv.app_data.cache_migration import _cache_dir_with_migration
-from virtualenv.app_data.factory import _default_app_data_dir
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.path import copy, ensure_within, safe_delete, symlink, write_file
-from virtualenv.util.subprocess import run_cmd
+from virtualenv.util.subprocess import LogCmd, run_cmd
 
 if os.name == "nt":
     from ctypes import wintypes
 
-    from virtualenv.util.path._win import clear_readonly
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -44,12 +41,12 @@ _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppDataDiskFolder:
-    previous: Final = os.umask(0)
-    try:
-        return make_app_data(None, read_only=False, env=env)
-    finally:
-        os.umask(previous)
+def test_package_api_definition_modules() -> None:
+    assert (make_app_data.__module__, LogCmd.__module__, run_cmd.__module__) == (
+        "virtualenv.app_data",
+        "virtualenv.util.subprocess",
+        "virtualenv.util.subprocess",
+    )
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -57,6 +54,14 @@ def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppData
 def test_app_data_default_permissions_new(app_data_default: Path, env: dict[str, str]) -> None:
     data: Final = _make_app_data_with_zero_umask(env)
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o700)
+
+
+def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppDataDiskFolder:
+    previous: Final = os.umask(0)
+    try:
+        return make_app_data(None, read_only=False, env=env)
+    finally:
+        os.umask(previous)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -111,7 +116,7 @@ def test_app_data_default_writable(app_data_default: Path) -> None:
 def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o777)
-    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     try:
         assert isinstance(data, TempAppData)
@@ -122,8 +127,8 @@ def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mock
 
 @pytest.mark.parametrize("writable", [pytest.param(False, id="unwritable"), pytest.param(True, id="writable")])
 def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture, writable: bool) -> None:
-    mocker.patch("virtualenv.app_data.factory.os.makedirs", autospec=True, side_effect=PermissionError)
-    mocker.patch("virtualenv.app_data.factory.os.access", autospec=True, return_value=writable)
+    mocker.patch("virtualenv.app_data.os.makedirs", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.access", autospec=True, return_value=writable)
     data: Final = make_app_data(str(tmp_path), read_only=False, env={})
     try:
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
@@ -269,16 +274,6 @@ def test_safe_delete_reports_attribute_errors(
     source.chmod(S_IREAD | S_IWUSR)
 
 
-@pytest.mark.skipif(os.name != "nt" or not fs_supports_symlink(), reason="Windows file links")
-def test_clear_readonly_refuses_reparse_points(tmp_path: Path) -> None:
-    source: Final = tmp_path / "source"
-    source.touch()
-    link: Final = tmp_path / "link"
-    link.symlink_to(source)
-    with pytest.raises(OSError, match="refusing to change attributes"):
-        clear_readonly(str(link))
-
-
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_safe_delete_does_not_chmod_link_target(tmp_path: Path, mocker: MockerFixture) -> None:
     source: Final = tmp_path / "read-only"
@@ -398,7 +393,9 @@ def test_environment_directories_report_replaced_junction(tmp_path: Path, caplog
 
 
 def test_run_fail(tmp_path) -> None:
-    code, out, err = run_cmd([str(tmp_path)])
+    result = run_cmd([str(tmp_path)])
+    assert type(result) is tuple
+    code, out, err = result
     assert err
     assert not out
     assert code
@@ -420,6 +417,8 @@ def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
 
 def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
     safe_delete(tmp_path / "does-not-exist")  # --reset-app-data before anything was cached
+
+    assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="only Windows blocks deleting an open file")
@@ -555,12 +554,12 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
 def test_default_app_data_dir_override_env_var(tmp_path: Path) -> None:
     custom = str(tmp_path / "custom")
     env = {"VIRTUALENV_OVERRIDE_APP_DATA": custom}
-    assert _default_app_data_dir(env) == custom
+    assert str(make_app_data(None, read_only=False, env=env)) == custom
 
 
 def test_default_app_data_dir_no_override_returns_cache_dir(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("VIRTUALENV_OVERRIDE_APP_DATA", raising=False)
-    result = _default_app_data_dir(os.environ)
+    result = str(make_app_data(None, read_only=False, env=os.environ))
     assert result
 
 
@@ -573,7 +572,7 @@ def test_cache_dir_migration_migrate_old_to_new(tmp_path: Path, monkeypatch: pyt
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert os.path.isdir(new_dir)
     assert not os.path.isdir(old_dir)
@@ -587,7 +586,7 @@ def test_cache_dir_migration_no_migration_when_old_missing(tmp_path: Path, monke
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert not os.path.isdir(old_dir)
 
@@ -602,7 +601,7 @@ def test_cache_dir_migration_no_migration_when_new_exists(tmp_path: Path, monkey
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert os.path.isdir(old_dir)
 
@@ -612,7 +611,7 @@ def test_cache_dir_migration_same_dir_returns_immediately(tmp_path: Path, monkey
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: same_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: same_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == same_dir
 
 
@@ -630,7 +629,7 @@ def test_cache_dir_migration_fallback_on_migration_error(tmp_path: Path, monkeyp
 
     monkeypatch.setattr("virtualenv.app_data.cache_migration.shutil.move", broken_move)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == old_dir
 
 
@@ -659,7 +658,7 @@ def test_cache_dir_migration_symlink_app_data_survives_migration(
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
 
@@ -788,6 +787,14 @@ def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Pa
     assert zipapp.read(entry) == "hello zipapp"
 
 
+def test_zipapp_extract_uses_destination_name(fake_zipapp_root: Path, tmp_path: Path) -> None:
+    dest = tmp_path / "renamed.txt"
+
+    zipapp.extract(fake_zipapp_root / "virtualenv" / "payload.txt", dest)
+
+    assert dest.read_text(encoding="utf-8") == "hello zipapp"
+
+
 @pytest.mark.parametrize(
     "parts",
     [
@@ -816,10 +823,8 @@ def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, ex
 def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o1777)
-    mocker.patch(
-        "virtualenv.app_data.factory.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1
-    )
-    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
         True,

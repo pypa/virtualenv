@@ -29,8 +29,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.via_global_ref.builtin.ref import PathRef
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class CPythonmacOsFramework(CPython, ABC):
@@ -99,62 +98,9 @@ class CPythonmacOsFramework(CPython, ABC):
             yield fixed_host_exe, targets, must, when
 
 
-class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
-    """CPython 3 built as a macOS framework."""
-
-    @property
-    def reload_code(self) -> str:
-        """Source of the ``reload_code`` snippet, which turns off the framework site package behavior."""
-        # reload_code is defined on a base that ty does not resolve through this super()
-        result = super().reload_code  # ty: ignore[missing-attribute]
-        return dedent(
-            f"""
-        # the bundled site.py always adds the global site package if we're on python framework build, escape this
-        import sys
-        before = sys._framework
-        try:
-            sys._framework = None
-            {result}
-        finally:
-            sys._framework = before
-        """,
-        )
-
-    def current_mach_o_image_path(self) -> str:
-        """The Mach-O image path the copied executables currently reference, relative to the bundle.
-
-        :returns: the image path the executables were linked against
-
-        """
-        return "@executable_path/../../../../Python3"
-
-    def desired_mach_o_image_path(self) -> str:
-        """The Mach-O image path the copied executables should reference, inside the environment.
-
-        :returns: the image path inside the environment
-
-        """
-        return "@executable_path/../.Python"
-
-    @classmethod
-    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
-        """Yield the framework executables, plus a symlink to the host framework image.
-
-        :param interpreter: the host interpreter to take the files from
-
-        :yields: the references to the host files
-
-        """
-        yield from super().sources(interpreter)
-
-        # add a symlink to the host python image
-        # prefix is typed str | None, and Path needs a str
-        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
-
-
-def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
+def fix_mach_o(  # simplint: ignore[unexported-public-name]  # existing name
+    exe: str, current: str, new: str, max_size: int
+) -> None:
     """Rewrite the Mach-O library reference of an executable, falling back to ``install_name_tool``.
 
     :param exe: the executable to rewrite
@@ -162,7 +108,7 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     :param new: the library reference to use instead
     :param max_size: the largest Mach-O header size the builtin rewrite handles
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing docs
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
@@ -319,6 +265,61 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
     return mach_o_change
 
 
+class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
+    """CPython 3 built as a macOS framework."""
+
+    @property
+    def reload_code(self) -> str:
+        """Source of the ``reload_code`` snippet, which turns off the framework site package behavior."""
+        # reload_code is defined on a base that ty does not resolve through this super()
+        result = super().reload_code  # ty: ignore[missing-attribute]
+        return dedent(
+            f"""
+        # the bundled site.py always adds the global site package if we're on python framework build, escape this
+        import sys
+        before = sys._framework
+        try:
+            sys._framework = None
+            {result}
+        finally:
+            sys._framework = before
+        """,
+        )
+
+    def current_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables currently reference, relative to the bundle.
+
+        :returns: the image path the executables were linked against
+
+        """
+        return "@executable_path/../../../../Python3"
+
+    def desired_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables should reference, inside the environment.
+
+        :returns: the image path inside the environment
+
+        """
+        return "@executable_path/../.Python"
+
+    @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
+        """Yield the framework executables, plus a symlink to the host framework image.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
+        yield from super().sources(interpreter)
+
+        # add a symlink to the host python image
+        # prefix is typed str | None, and Path needs a str
+        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
+
+
 class CPython3macOsBrew(CPython3, CPythonPosix):
     """CPython 3 installed by Homebrew, which is created like a POSIX CPython."""
 
@@ -349,9 +350,7 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
 
 
 __all__ = [
-    "LOGGER",
     "CPython3macOsBrew",
     "CPython3macOsFramework",
     "CPythonmacOsFramework",
-    "fix_mach_o",
 ]

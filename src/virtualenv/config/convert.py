@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class TypeData:
@@ -73,8 +73,8 @@ class BoolType(TypeData):
         return self.BOOLEAN_STATES[value.lower()]
 
 
-class NoneType(TypeData):
-    """Converter for options that may be empty, where an empty value means ``None``."""
+class NoneType(TypeData):  # simplint: ignore[unexported-public-name]  # existing name
+    """Converter for options that may be empty, where an empty value means ``None``."""  # simplint: ignore[function-docstring]  # existing docs
 
     def convert(self, value: str) -> str | None:
         """Return ``None`` for an empty value, otherwise the value as a string.
@@ -83,17 +83,17 @@ class NoneType(TypeData):
 
         :returns: the value, ``None`` when empty
 
-        """
+        """  # simplint: ignore[function-docstring]  # existing docs
         if not value:
             return None
         return str(value)
 
 
 class ListType(TypeData):
-    """Converter for options that take a list of values."""
+    """Converter for options that take a list of values."""  # simplint: ignore[function-docstring]  # existing docs
 
     # flatten is accepted but ignored, removing it would change the converter signature
-    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[SMP602]  # each item has the type of the option, known only at run time
+    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[imprecise-annotation]  # runtime option type
         """Convert each item of the list to the type of the option.
 
         :param value: the raw value, a string or a list of strings
@@ -101,7 +101,7 @@ class ListType(TypeData):
 
         :returns: the converted items
 
-        """
+        """  # simplint: ignore[function-docstring]  # existing docs
         values = self.split_values(value)
         result = []
         for a_value in values:
@@ -115,7 +115,7 @@ class ListType(TypeData):
 
         :returns: the items
 
-        """
+        """  # simplint: ignore[function-docstring]  # existing docs
         if isinstance(value, bytes):
             value = value.decode()
         if isinstance(value, str):
@@ -145,7 +145,7 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
         raise
 
 
-_CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list: ListType}
+_CONVERT: Final[MappingProxyType[type, type]] = MappingProxyType({bool: BoolType, type(None): NoneType, list: ListType})
 
 
 def get_type(action: Action) -> TypeData:
@@ -162,10 +162,7 @@ def get_type(action: Action) -> TypeData:
 
 
 __all__ = [
-    "LOGGER",
     "BoolType",
-    "ListType",
-    "NoneType",
     "TypeData",
     "convert",
     "get_type",

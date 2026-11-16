@@ -175,7 +175,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         if cls.has_shim(interpreter):
             # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
             # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
-            return cls.shim(interpreter)  # ty: ignore[invalid-return-type]
+            return cls.shim(interpreter)  # ty: ignore[invalid-explicit-return]
         return super().host_python(interpreter)
 
     @classmethod

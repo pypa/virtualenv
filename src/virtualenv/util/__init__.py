@@ -1,1 +1,1 @@
-"""Utilities shared by the virtualenv package."""  # simplint: ignore[SMP104]  # renaming the public util package breaks every importer
+"""Utilities shared by the virtualenv package."""  # simplint: ignore[catch-all-module]  # renaming the public util package breaks every importer
