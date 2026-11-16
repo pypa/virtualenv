@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import io
 import logging
 import os
 import posixpath
@@ -105,7 +107,9 @@ class PipInstall(ABC):
         base_dirs: Final = paths.copy()
         record: Final = dist / "RECORD"
         for name in (
-            (i.split(",")[0] for i in record.read_text(encoding="utf-8").splitlines()) if record.exists() else ()
+            (row[0] for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")) if row)
+            if record.exists()
+            else ()
         ):
             path: Final = dist_base / name
             if not any(p in base_dirs for p in path.parents):
@@ -240,7 +244,9 @@ class PipInstall(ABC):
 
     @staticmethod
     def _records_text(folder: Path, files: set[Path] | list[Path]) -> str:
-        return "\n".join(f"{os.path.relpath(str(rec), str(folder))},," for rec in files)
+        stream = io.StringIO(newline="")
+        csv.writer(stream).writerows((os.path.relpath(str(rec), str(folder)), "", "") for rec in files)
+        return stream.getvalue()
 
     def clear(self) -> None:
         """Remove the cached image of the wheel."""
