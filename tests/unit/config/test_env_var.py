@@ -55,6 +55,8 @@ def test_python_multi_value_prefer_newline_via_env_var(monkeypatch) -> None:
         pytest.param("a", ["a"], id="single"),
         pytest.param(">=3.9,<3.10", [">=3.9,<3.10"], id="version_specifier"),
         pytest.param("python3.8, >=3.9,!=3.9.1,<3.12", ["python3.8", ">=3.9,!=3.9.1,<3.12"], id="specifier_after_name"),
+        pytest.param("cpython>=3.9,<3.10", ["cpython>=3.9,<3.10"], id="specifier_with_implementation"),
+        pytest.param("cpython>=3.9,pypy>=3.10", ["cpython>=3.9", "pypy>=3.10"], id="two_implementations_split"),
         pytest.param("python3,python27", ["python3", "python27"], id="names_still_split"),
         pytest.param("", [], id="empty"),
         pytest.param(b"a,b", ["a", "b"], id="bytes_comma"),

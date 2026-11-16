@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
@@ -10,6 +11,11 @@ if TYPE_CHECKING:
     from typing import Any
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
+_SPECIFIER_OPERATORS: Final[tuple[str, ...]] = ("===", "==", "!=", "~=", "<=", ">=", "<", ">")
+# the first clause of a version specifier may name the implementation, as in "cpython>=3.9"
+_SPECIFIER_START: Final[re.Pattern[str]] = re.compile(
+    rf"[A-Za-z]*\s*(?:{'|'.join(_SPECIFIER_OPERATORS)})",
+)
 
 
 class TypeData:
@@ -126,14 +132,13 @@ class ListType(TypeData):
             return [stripped for x in values if (stripped := x.strip())]
         return list(value)
 
-    # a comma also joins the clauses of one version specifier, so ">=3.9,<3.10" is one value; clauses are the pieces that
-    # start with a comparison operator and follow a piece that does too
+    # a comma also joins the clauses of one version specifier, so ">=3.9,<3.10" is one value; a clause is a piece that
+    # starts with a comparison operator and follows a piece that starts a specifier or is a clause itself
     @staticmethod
     def _join_specifiers(items: list[str]) -> list[str]:
-        operators: tuple[str, ...] = ("===", "==", "!=", "~=", "<=", ">=", "<", ">")
         result: list[str] = []
         for item in items:
-            if result and item.startswith(operators) and result[-1].startswith(operators):
+            if result and item.startswith(_SPECIFIER_OPERATORS) and _SPECIFIER_START.match(result[-1]):
                 result[-1] = f"{result[-1]},{item}"
             else:
                 result.append(item)
