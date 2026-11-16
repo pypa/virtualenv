@@ -109,6 +109,19 @@ def test_python_activator_adds_no_empty_path_entry(
     assert literal_eval(out) == f"{activation_python.creator.bin_dir}{expected_suffix}"
 
 
+def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:
+    script = str(activation_python.creator.bin_dir / "activate_this.py")
+    # CPython before 3.12.8 reads the prefixes once, when sysconfig is imported, so import it after the activation, and
+    # pass -S because site would import it at startup
+    code = (
+        f"import runpy, sys; runpy.run_path({script!r}); import sysconfig; "
+        "print(repr((sys.prefix, sys.exec_prefix, sysconfig.get_path('platlib'))))"
+    )
+    out = subprocess.check_output([sys.executable, "-S", "-c", code], text=True, encoding="utf-8")
+    dest = str(activation_python.creator.dest)
+    assert literal_eval(out) == (dest, dest, str(activation_python.creator.platlib))
+
+
 def test_python(raise_on_non_source_class, activation_tester) -> None:
     class Python(raise_on_non_source_class):
         def __init__(self, session) -> None:
