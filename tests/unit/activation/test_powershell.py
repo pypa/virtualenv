@@ -22,6 +22,53 @@ _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.parametrize(
+    ("define", "expected"),
+    [
+        pytest.param([], [""], id="absent"),
+        pytest.param(["function global:pydoc { 'original pydoc' }"], [" 'original pydoc' "], id="existing"),
+    ],
+)
+@pytest.mark.parametrize(
+    "environments",
+    [
+        pytest.param(["env"], id="once"),
+        pytest.param(["env", "env"], id="repeat"),
+        pytest.param(["env", "other"], id="switch"),
+    ],
+)
+def test_powershell_restores_pydoc(
+    tmp_path: Path, powershell: str, define: list[str], expected: list[str], environments: list[str]
+) -> None:
+    sessions: Final = [
+        cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / name)]) for name in environments
+    ]
+    activate: Final = [
+        f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}" for session in sessions
+    ]
+    driver: Final = tmp_path / "pydoc.ps1"
+    driver.write_text(
+        "\n".join([
+            "$ErrorActionPreference = 'Stop'",
+            *define,
+            *activate,
+            "deactivate",
+            'Write-Output "$function:pydoc"',
+        ]),
+        encoding="utf-8-sig",
+    )
+    result: Final = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (0, expected, "")
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
 def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
     session = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
     inherited = str(tmp_path / "missing-pythonhome")
