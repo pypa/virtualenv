@@ -116,6 +116,11 @@ def test_reset_with_empty_app_data_override_resets_default(
     assert delete.call_args_list == [mocker.call(default_folder)]
 
 
+_TEST_BLANK_APP_DATA_LEAVES_WORKING_DIRECTORY_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"app data folder '.*' must not be empty or whitespace\n\Z"
+)
+
+
 @pytest.mark.parametrize(
     ("args", "env_vars"),
     [
@@ -142,7 +147,7 @@ def test_blank_app_data_leaves_working_directory(
         context.value.code,
         sentinel.read_text(encoding="utf-8"),
         list(tmp_path.iterdir()),
-        bool(re.search(r"app data folder '.*' must not be empty or whitespace\n\Z", capsys.readouterr().err)),
+        bool(_TEST_BLANK_APP_DATA_LEAVES_WORKING_DIRECTORY_PATTERN.search(capsys.readouterr().err)),
     ) == (2, "keep", [sentinel], True)
 
 

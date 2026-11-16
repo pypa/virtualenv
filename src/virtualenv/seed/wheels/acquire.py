@@ -20,8 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 #: The command that runs pip as a module, with the empty path entries removed.
 PIP_RUN: Final[str] = (
@@ -201,7 +200,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 def _check_version_spec(version_spec: str | None) -> None:
     if not version_spec:
         return
-    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
+    if not _CHECK_VERSION_SPEC_PATTERN.fullmatch(version_spec):
         msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
         raise ValueError(msg)
     try:
@@ -258,6 +257,9 @@ def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None)
     return result
 
 
+_CHECK_VERSION_SPEC_PATTERN: Final[re.Pattern[str]] = re.compile(r"(?:==|<)[A-Za-z0-9._+!-]+")
+
+
 def find_compatible_in_house(
     distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
 ) -> Wheel | None:
@@ -283,7 +285,6 @@ def find_compatible_in_house(
 
 
 __all__ = [
-    "LOGGER",
     "PIP_RUN",
     "download_wheel",
     "find_compatible_in_house",

@@ -1,6 +1,6 @@
-diff --git a/src/virtualenv/activation/python/activator.py b/src/virtualenv/activation/python/activator.py
---- a/src/virtualenv/activation/python/activator.py
-+++ b/src/virtualenv/activation/python/activator.py
+diff --git a/src/virtualenv/activation/python/__init__.py b/src/virtualenv/activation/python/__init__.py
+--- a/src/virtualenv/activation/python/__init__.py
++++ b/src/virtualenv/activation/python/__init__.py
 @@ -33,7 +33,7 @@
          :returns: the ``ascii`` representation of the value
 

@@ -11,8 +11,7 @@ from .via_disk_folder import AppDataDiskFolder
 if TYPE_CHECKING:
     from typing import NoReturn
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class TempAppData(AppDataDiskFolder):
@@ -51,6 +50,5 @@ class TempAppData(AppDataDiskFolder):
 
 
 __all__ = [
-    "LOGGER",
     "TempAppData",
 ]

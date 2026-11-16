@@ -37,11 +37,10 @@ from .pyenv_cfg import PyEnvCfg
 HERE: Final[Path] = Path(os.path.abspath(__file__)).parent
 #: Script that reports debug information from an interpreter.
 DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
-_DebugInfo = dict[str, Any]  # simplint: ignore[SMP602]  # debug JSON keys vary by interpreter
+_DebugInfo = dict[str, Any]
 
 
 class CreatorMeta:
@@ -139,7 +138,7 @@ class Creator(ABC):
             ...
 
     @property
-    def debug(self) -> _DebugInfo | None:
+    def debug(self) -> dict[str, Any] | None:  # simplint: ignore[imprecise-annotation]  # public signature
         """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
@@ -423,11 +422,13 @@ class Creator(ABC):
             # Universal newlines already turned \r\n into \n.
             line: Final[str] = redirect.read_text(encoding="utf-8").removesuffix("\n")
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
-        except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
+        except (OSError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
 
 
-def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> _DebugInfo:
+def get_env_debug_info(
+    env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]
+) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # public signature
     """Run the debug script with the interpreter at ``env_exe`` and return the report it prints.
 
     :param env_exe: the interpreter to run the script with
@@ -437,7 +438,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     :returns: the debug information
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing docs
     env = env.copy()
     env.pop("PYTHONPATH", None)
 
@@ -474,10 +475,6 @@ def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:
 
 
 __all__ = [
-    "DEBUG_SCRIPT",
-    "HERE",
-    "LOGGER",
     "Creator",
     "CreatorMeta",
-    "get_env_debug_info",
 ]

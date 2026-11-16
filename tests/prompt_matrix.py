@@ -6,8 +6,9 @@ import shlex
 import shutil
 import subprocess
 from argparse import Namespace
+from itertools import product
 from typing import TYPE_CHECKING, Final, NamedTuple
-from unittest.mock import create_autospec  # simplint: ignore[SMP809]  # hypothesis rejects the mocker fixture
+from unittest.mock import create_autospec
 
 import pytest
 from python_discovery import PythonInfo
@@ -169,9 +170,7 @@ SHELLS: Final[dict[str, Shell]] = {
 PROMPT_CASES: Final[list[tuple[str, str, str, str]]] = [
     (shell, state, action, payload)
     for shell, spec in SHELLS.items()
-    for state in spec.states
-    for action in spec.actions
-    for payload in spec.payloads
+    for state, action, payload in product(spec.states, spec.actions, spec.payloads)
 ]
 
 
@@ -306,10 +305,13 @@ def _printed_text(shell: str, prompt: str, action: str) -> str:
         return f"({prompt}) " if action == "none" else prompt
     if shell == "batch":
         # the activator replaces the cmd.exe operators it cannot quote with spaces
-        replaced: Final = re.sub(r'["&|<>^!]', " ", prompt)
+        replaced: Final = _REPLACED_PATTERN.sub(" ", prompt)
         return f"({replaced}) "
     # a child fish or PowerShell does not run the activation script, so only the marker check applies to it
     return "" if action == "child" else f"({prompt}) "
+
+
+_REPLACED_PATTERN: Final[re.Pattern[str]] = re.compile(r'["&|<>^!]')
 
 
 __all__ = [

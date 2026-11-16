@@ -86,7 +86,7 @@ class IniConfig:
 
     def get(
         self, key: str, as_type: TypeData
-    ) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
+    ) -> tuple[Any, str] | None:  # simplint: ignore[imprecise-annotation]  # type known at run time
         """Return the value of a key from the config file, reading the file once.
 
         :param key: the option name
