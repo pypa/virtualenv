@@ -24,6 +24,7 @@ from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[im
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
+from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
 
@@ -705,6 +706,90 @@ def test_copy_seed_preserves_record_rows(tmp_path: Path, copy_seed_record: tuple
     files: Final = PathDistribution(dist_info).files
     assert files is not None
     assert f"{dist_info.name}/INSTALLER" in {Path(file).as_posix() for file in files}
+
+
+@pytest.fixture(
+    params=[
+        pytest.param("data,one.py", id="comma"),
+        pytest.param(
+            'data"one.py', id="quote", marks=pytest.mark.skipif(os.name == "nt", reason="unsupported filename")
+        ),
+        pytest.param("data\none.py", id="lf", marks=pytest.mark.skipif(os.name == "nt", reason="unsupported filename")),
+        pytest.param("data\rone.py", id="cr", marks=pytest.mark.skipif(os.name == "nt", reason="unsupported filename")),
+    ]
+)
+def record_filename(request: pytest.FixtureRequest) -> str:
+    return request.param
+
+
+def test_seed_uninstall_reads_quoted_record_paths(
+    tmp_path: Path, no_seed_session: Session, record_filename: str
+) -> None:
+    purelib = no_seed_session.creator.purelib
+    dist_info = purelib / "example-1.0.dist-info"
+    dist_info.mkdir(parents=True)
+    installed = purelib / record_filename
+    installed.write_text("old package data", encoding="utf-8")
+    unrelated = purelib / "keep.py"
+    unrelated.write_text("keep", encoding="utf-8")
+    with (dist_info / "RECORD").open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow([record_filename, "", ""])
+        writer.writerow([f"{dist_info.name}/RECORD", "", ""])
+
+    image = tmp_path / "image"
+    new_dist_info = image / "example-2.0.dist-info"
+    new_dist_info.mkdir(parents=True)
+    (new_dist_info / "RECORD").touch()
+    installer = CopyPipInstall(tmp_path / "example-2.0-py3-none-any.whl", no_seed_session.creator, image)
+    installer.install(no_seed_session.interpreter.version_info)
+
+    assert not installed.exists()
+    assert not dist_info.exists()
+    assert unrelated.read_text(encoding="utf-8") == "keep"
+
+
+@pytest.mark.parametrize(
+    "installer_class",
+    [
+        pytest.param(CopyPipInstall, id="copy"),
+        pytest.param(
+            SymlinkPipInstall,
+            id="symlink",
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks"),
+        ),
+    ],
+)
+def test_seed_records_quote_generated_paths(
+    tmp_path: Path,
+    no_seed_session: Session,
+    record_filename: str,
+    installer_class: type[CopyPipInstall | SymlinkPipInstall],
+) -> None:
+    bundled = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    wheel = tmp_path / bundled.name
+    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
+        for info in source.infolist():
+            content = source.read(info)
+            if info.filename.endswith(".dist-info/RECORD"):
+                stream = io.StringIO(content.decode("utf-8"), newline="")
+                stream.seek(0, io.SEEK_END)
+                csv.writer(stream).writerow([record_filename, "", ""])
+                content = stream.getvalue().encode("utf-8")
+            target.writestr(info, content)
+        target.writestr(record_filename, "value = 42\n")
+    image = tmp_path / "image" / installer_class.__name__ / wheel.stem
+    installer = installer_class(wheel, no_seed_session.creator, image)
+    installer.build_image()
+    installer.install(no_seed_session.interpreter.version_info)
+
+    dist_info = next(no_seed_session.creator.purelib.glob("pip-*.dist-info"))
+    with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.reader(stream))
+    assert all(len(row) == 3 for row in rows)
+    paths = {Path(row[0]).as_posix() for row in rows}
+    assert record_filename in paths
+    assert any(Path(path).name.startswith(f"{record_filename[:-3]}.") and path.endswith(".pyc") for path in paths)
 
 
 @pytest.fixture

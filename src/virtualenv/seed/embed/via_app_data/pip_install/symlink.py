@@ -57,7 +57,8 @@ class SymlinkPipInstall(PipInstall):
     def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
         extra_record_data.update(folder.iterdir())
         extra_record_data_str = self._records_text(folder, sorted(extra_record_data, key=str))
-        (dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")
+        with (dist_info / "RECORD").open("w", encoding="utf-8", newline="") as stream:
+            stream.write(extra_record_data_str)
 
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
         super()._populate_image(zip_ref, folder)
