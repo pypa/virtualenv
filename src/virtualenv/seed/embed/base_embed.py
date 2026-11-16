@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 #: Whether the bundled wheels are updated periodically when ``--no-periodic-update`` is not passed. Distributions
 #: patch this to ``False`` to let their package manager own the seed wheels, which is why it is a module constant.
 PERIODIC_UPDATE_ON_BY_DEFAULT: Final[bool] = True
@@ -216,7 +215,6 @@ def _seed_version(value: str) -> str:
 
 
 __all__ = [
-    "LOGGER",
     "PERIODIC_UPDATE_ON_BY_DEFAULT",
     "BaseEmbed",
 ]

@@ -214,12 +214,6 @@ def test_bash_deactivate_restores_ps1(
     assert out == f"{expected}\n"
 
 
-class _Relocated(NamedTuple):
-    result: subprocess.CompletedProcess[str]
-    relocated: Path
-    work_dir: Path
-
-
 @pytest.fixture
 def relocated_bash_venv(tmp_path: Path, current_fastest: str) -> Callable[[str], _Relocated]:
     def source_after_move(name: str) -> _Relocated:
@@ -248,6 +242,12 @@ def relocated_bash_venv(tmp_path: Path, current_fastest: str) -> Callable[[str],
         return _Relocated(result, relocated, work_dir)
 
     return source_after_move
+
+
+class _Relocated(NamedTuple):
+    result: subprocess.CompletedProcess[str]
+    relocated: Path
+    work_dir: Path
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")

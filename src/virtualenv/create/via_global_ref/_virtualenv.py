@@ -22,7 +22,7 @@ def patch_dist(dist: types.ModuleType) -> None:
     old_parse_config_files = dist.Distribution.parse_config_files
 
     # matches the untyped distutils parse_config_files override it replaces
-    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[SMP602]  # forwards the arguments of the distutils method it replaces unchanged, whatever they are
+    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[imprecise-annotation]  # distutils signature
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
 

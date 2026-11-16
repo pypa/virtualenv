@@ -26,8 +26,7 @@ ROOT: Final[str] = os.path.realpath(os.path.join(os.path.abspath(__file__), os.p
 #: Whether virtualenv runs from a zipapp archive.
 IS_ZIPAPP: Final[bool] = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = None
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 def fs_supports_symlink() -> bool:
@@ -85,7 +84,6 @@ def fs_is_case_sensitive() -> bool:
 
 
 __all__ = [
-    "IMPLEMENTATION",
     "IS_CPYTHON",
     "IS_GRAALPY",
     "IS_MAC_ARM64",
@@ -93,7 +91,6 @@ __all__ = [
     "IS_RUSTPYTHON",
     "IS_WIN",
     "IS_ZIPAPP",
-    "LOGGER",
     "ROOT",
     "fs_is_case_sensitive",
     "fs_path_id",

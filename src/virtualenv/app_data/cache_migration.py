@@ -13,7 +13,12 @@ _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _MIGRATION_MARKER: Final[str] = ".virtualenv-migration-incomplete"
 
 
-def _cache_dir_with_migration() -> str:
+def cache_dir_with_migration() -> str:
+    """Return the cache directory after migrating legacy app data when needed.
+
+    :returns: the cache directory path
+
+    """
     new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
     old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
     if new_dir == old_dir:
@@ -37,9 +42,7 @@ def _cache_dir_with_migration() -> str:
     return new_dir
 
 
-def _is_nested_dir(  # simplint: ignore[SMP505]  # commonpath raises ValueError across drives, helper keeps it
-    inner: str, outer: str
-) -> bool:
+def _is_nested_dir(inner: str, outer: str) -> bool:
     try:
         return os.path.normcase(os.path.commonpath((outer, inner))) == os.path.normcase(outer)
     except ValueError:
@@ -71,3 +74,8 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
     except OSError:
         return False
     return True
+
+
+__all__ = [
+    "cache_dir_with_migration",
+]
