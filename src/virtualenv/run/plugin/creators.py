@@ -13,25 +13,8 @@ if TYPE_CHECKING:
 
     from python_discovery import PythonInfo
 
-    from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
     from virtualenv.create.creator import Creator, CreatorMeta
-
-
-class CreatorInfo(NamedTuple):
-    """The creators available for an interpreter, with their metadata, the describer and the builtin creator name.
-
-    :param key_to_class: the creator classes keyed by their name
-    :param key_to_meta: the capability metadata of each creator, keyed by name
-    :param describe: the describer class, ``None`` when no describer applies
-    :param builtin_key: the name of the builtin creator
-
-    """
-
-    key_to_class: dict[str, type[Creator]]
-    key_to_meta: dict[str, CreatorMeta]
-    describe: type[Describe] | None
-    builtin_key: str
 
 
 class CreatorSelector(ComponentBuilder):
@@ -136,7 +119,11 @@ class CreatorSelector(ComponentBuilder):
     def _available_for(self) -> str:
         return f" for {self.interpreter.spec}"  # only the creators that support this interpreter are choices
 
-    def populate_selected_argparse(self, selected: str, app_data: AppData) -> None:
+    def populate_selected_argparse(
+        self,
+        selected: str,
+        app_data: object,  # simplint: ignore[imprecise-annotation]  # public signature
+    ) -> None:
         """Set the parser description and add the options of the chosen creator.
 
         :param selected: the name of the chosen creator
@@ -162,9 +149,25 @@ class CreatorSelector(ComponentBuilder):
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if not issubclass(self._impl_class, Describe):
             # describe is set by for_interpreter, which ty sees as possibly None
-            options.describe = self.describe(options, self.interpreter)  # ty: ignore[call-non-callable, invalid-argument-type]
+            options.describe = self.describe(options, self.interpreter)  # ty: ignore[not-callable, invalid-argument-type]
         # the builder chain returns object from super().create in ty's view
-        return super().create(options)  # ty: ignore[invalid-return-type]
+        return super().create(options)  # ty: ignore[invalid-explicit-return]
+
+
+class CreatorInfo(NamedTuple):
+    """The creators available for an interpreter, with their metadata, the describer and the builtin creator name.
+
+    :param key_to_class: the creator classes keyed by their name
+    :param key_to_meta: the capability metadata of each creator, keyed by name
+    :param describe: the describer class, ``None`` when no describer applies
+    :param builtin_key: the name of the builtin creator
+
+    """
+
+    key_to_class: dict[str, type[Creator]]
+    key_to_meta: dict[str, CreatorMeta]
+    describe: type[Describe] | None
+    builtin_key: str
 
 
 __all__ = [

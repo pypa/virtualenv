@@ -8,7 +8,7 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-pytest_plugins: Final[list[str]] = ["pytester"]
+pytest_plugins: Final[tuple[str, ...]] = ("pytester",)
 
 
 @pytest.fixture

@@ -13,24 +13,24 @@
     "tag": "4.9.3"
   },
   "mermaid": {
-    "version": "12.2.0"
+    "version": "12.3.0"
   },
   "nushell": {
     "assets": {
       "Linux": {
-        "name": "nu-0.116.1-x86_64-unknown-linux-gnu.tar.gz",
-        "sha256": "d6d8ace4be491ed8abba4026e73b60c0470b4671d7039307e7d772282ef863da"
+        "name": "nu-0.117.0-x86_64-unknown-linux-gnu.tar.gz",
+        "sha256": "33b907da92b0e80bd10fea9fa0e8a1624cabfebd89ee2568e365da3c492ffc68"
       },
       "Windows": {
-        "name": "nu-0.116.1-x86_64-pc-windows-msvc.zip",
-        "sha256": "6658c9e61fe42c88326c1caa99e8dc9ad99bec6c0bc353e6ecb7c5d3f79feed7"
+        "name": "nu-0.117.0-x86_64-pc-windows-msvc.zip",
+        "sha256": "8a135f25d3f22f1542107eb117e94628af35ce65402cbc098bfb26914227d3b2"
       },
       "macOS": {
-        "name": "nu-0.116.1-aarch64-apple-darwin.tar.gz",
-        "sha256": "302fb3dfc5d44e7fe0d5b8227be8e75b4c3956ca8d4804234e5c68fbdd3e4917"
+        "name": "nu-0.117.0-aarch64-apple-darwin.tar.gz",
+        "sha256": "1d0e642ef3bff22113a82749a0fa24a0126f4fea0db46a5909e56e94a4b57527"
       }
     },
-    "tag": "0.116.1"
+    "tag": "0.117.0"
   },
   "rustpython": {
     "assets": {

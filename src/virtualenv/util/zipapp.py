@@ -7,8 +7,7 @@ from typing import Final
 
 from virtualenv.info import ROOT
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 def read(full_path: str | Path) -> str:
@@ -56,7 +55,6 @@ def extract(full_path: str | Path, dest: Path) -> None:
 
 
 __all__ = [
-    "LOGGER",
     "extract",
     "read",
 ]

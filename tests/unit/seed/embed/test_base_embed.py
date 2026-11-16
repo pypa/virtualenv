@@ -71,17 +71,6 @@ _CLI_SEARCH_DIRS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-def _cli_search_dir_args(tmp_path: Path, cli_dirs: tuple[str, ...]) -> tuple[list[str], list[Path]]:
-    args = [str(tmp_path / "env"), "--no-seed"]
-    expected = []
-    for name in cli_dirs:
-        path = tmp_path / name
-        path.mkdir()
-        args.extend(["--extra-search-dir", str(path)])
-        expected.append(path)
-    return args, expected
-
-
 @pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)
 def test_extra_search_dir_cli_overrides_env_var(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cli_dirs: tuple[str, ...]
@@ -94,6 +83,17 @@ def test_extra_search_dir_cli_overrides_env_var(
     session = session_via_cli(args)
 
     assert session.seeder.extra_search_dir == (expected or [configured])
+
+
+def _cli_search_dir_args(tmp_path: Path, cli_dirs: tuple[str, ...]) -> tuple[list[str], list[Path]]:
+    args = [str(tmp_path / "env"), "--no-seed"]
+    expected = []
+    for name in cli_dirs:
+        path = tmp_path / name
+        path.mkdir()
+        args.extend(["--extra-search-dir", str(path)])
+        expected.append(path)
+    return args, expected
 
 
 @pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)

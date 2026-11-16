@@ -14,6 +14,7 @@ from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from textwrap import dedent, indent
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
@@ -49,8 +50,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache() -> Generator[None, None, None]:
-    # the fixture clears the private cache, so it imports the cache where it clears it
-    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level]
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # test cache  # fmt: skip
 
     _PYPI_CACHE.clear()
     yield
@@ -263,7 +263,7 @@ def test_manual_update_honored(mocker, session_app_data, for_py_version) -> None
 _UP_NOW: Final[datetime] = datetime.now(tz=timezone.utc)
 
 
-_UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
+_UPDATE_SKIP: Final[MappingProxyType[str, UpdateLog]] = MappingProxyType({
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
         started=_UP_NOW - timedelta(hours=1),
@@ -289,7 +289,7 @@ _UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
         versions=[],
         periodic=True,
     ),
-}
+})
 
 
 @pytest.mark.parametrize("u_log", list(_UPDATE_SKIP.values()), ids=list(_UPDATE_SKIP.keys()))
@@ -382,6 +382,19 @@ def test_add_wheel_to_update_log_drops_malformed_log(
     )
 
 
+def test_add_wheel_to_update_log_keeps_one_entry(
+    app_data: AppDataDiskFolder, for_py_version: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    wheel = get_embed_wheel("pip", for_py_version)
+
+    add_wheel_to_update_log(wheel, for_py_version, app_data)
+    add_wheel_to_update_log(wheel, for_py_version, app_data)
+
+    versions = app_data.embed_update_log("pip", for_py_version).read()["versions"]
+    assert len(versions) == 1
+    assert any("already present" in message for message in caplog.messages)
+
+
 def test_do_update_drops_malformed_log(
     malformed_app_data: AppDataDiskFolder,
     for_py_version: str,
@@ -417,7 +430,7 @@ def malformed_app_data(request: pytest.FixtureRequest, tmp_path: Path, for_py_ve
     return app_data
 
 
-_UPDATE_YES: Final[dict[str, UpdateLog]] = {
+_UPDATE_YES: Final[MappingProxyType[str, UpdateLog]] = MappingProxyType({
     "never_started": UpdateLog(started=None, completed=None, versions=[], periodic=False),
     "started_1_hour": UpdateLog(
         started=_UP_NOW - timedelta(hours=1, microseconds=1),
@@ -431,7 +444,7 @@ _UPDATE_YES: Final[dict[str, UpdateLog]] = {
         versions=[],
         periodic=False,
     ),
-}
+})
 
 
 _DETACHED_KWARGS: Final[dict[str, int | None]] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} | (
@@ -1023,6 +1036,4 @@ def test_update_uses_selected_installation_and_environment(
         {**os.environ, "_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1", "VIRTUALENV_ENV_PROBE": "supplied"},
         True,
     )
-    output = capfd.readouterr().out.splitlines()
-    assert "99.0.0" in output
-    assert "supplied" in output
+    assert {"99.0.0", "supplied"} <= set(capfd.readouterr().out.splitlines())

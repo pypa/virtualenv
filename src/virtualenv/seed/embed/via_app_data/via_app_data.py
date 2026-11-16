@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 
     from .pip_install.base import PipInstall
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class FromAppData(BaseEmbed):
@@ -200,6 +199,5 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
 
 
 __all__ = [
-    "LOGGER",
     "FromAppData",
 ]

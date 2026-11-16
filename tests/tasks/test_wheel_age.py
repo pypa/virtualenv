@@ -9,6 +9,7 @@ import sys
 import zipfile
 from io import BytesIO
 from pathlib import Path
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
@@ -130,7 +131,7 @@ def generator_repo(tmp_path: Path) -> Path:
     shutil.copyfile(root / "pyproject.toml", tmp_path / "pyproject.toml")
     embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
     embed.mkdir(parents=True)
-    (embed / "catalog.py").write_text(
+    (embed / "__init__.py").write_text(
         'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n',
         encoding="utf-8",
     )
@@ -230,16 +231,16 @@ def test_generator_formatter_failure(
         regenerate()
 
 
-_NU_ASSETS: Final[dict[str, str]] = {
+_NU_ASSETS: Final[MappingProxyType[str, str]] = MappingProxyType({
     "Linux": "nu-0.116.0-x86_64-unknown-linux-gnu.tar.gz",
     "macOS": "nu-0.116.0-aarch64-apple-darwin.tar.gz",
     "Windows": "nu-0.116.0-x86_64-pc-windows-msvc.zip",
-}
-_RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
+})
+_RUSTPYTHON_ASSETS: Final[MappingProxyType[str, str]] = MappingProxyType({
     "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
     "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
     "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
-}
+})
 _OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
     "fish": {"tag": "4.9.3", "assets": {"Linux": {"name": "fish.tar.xz", "sha256": "old"}}},
     "mermaid": {"version": "11.12.1"},

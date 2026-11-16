@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def get_env_var(
     key: str, as_type: TypeData, env: Mapping[str, str]
-) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
+) -> tuple[Any, str] | None:  # simplint: ignore[imprecise-annotation]  # type known at run time
     """Get the environment variable option.
 
     :param key: the config key requested

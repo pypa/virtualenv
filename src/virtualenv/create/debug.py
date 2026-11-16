@@ -6,7 +6,7 @@ import sys  # built-in
 
 
 def encode_path(
-    value: object,  # simplint: ignore[SMP602]  # encodes any value the interpreter reports
+    value: object,  # simplint: ignore[imprecise-annotation]  # encodes any value the interpreter reports
 ) -> str | None:
     """Encode a value for the JSON debug report, turning types and bytes into strings.
 
@@ -25,7 +25,7 @@ def encode_path(
 
 
 def encode_list_path(
-    value: list[object],  # simplint: ignore[SMP602]  # encodes any value the interpreter reports
+    value: list[object],  # simplint: ignore[imprecise-annotation]  # encodes any value the interpreter reports
 ) -> list[str | None]:
     """Encode each element of a path list for the JSON debug report.
 
@@ -80,27 +80,27 @@ def run() -> None:
 
         result["site"] = repr(site)
     # the target interpreter may lack site, which the probe reports instead of failing
-    except ImportError as exception:  # pragma: no cover
+    except ImportError as exception:
         # only a target interpreter without site reaches this branch
-        result["site"] = repr(exception)  # pragma: no cover
+        result["site"] = repr(exception)
 
     try:
         import datetime as dt  # site  # ruff:ignore[import-outside-top-level]
 
         result["datetime"] = repr(dt)
     # the target interpreter may lack datetime, which the probe reports instead of failing
-    except ImportError as exception:  # pragma: no cover
+    except ImportError as exception:
         # only a target interpreter without datetime reaches this branch
-        result["datetime"] = repr(exception)  # pragma: no cover
+        result["datetime"] = repr(exception)
 
     try:
         import math  # site  # ruff:ignore[import-outside-top-level]
 
         result["math"] = repr(math)
     # the target interpreter may lack math, which the probe reports instead of failing
-    except ImportError as exception:  # pragma: no cover
+    except ImportError as exception:
         # only a target interpreter without math reaches this branch
-        result["math"] = repr(exception)  # pragma: no cover
+        result["math"] = repr(exception)
 
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
@@ -113,13 +113,10 @@ def run() -> None:
     else:
         try:
             sys.stdout.write(json.dumps(result, indent=2))
-        # json.dumps fails only on values the probe never builds
-        except (ValueError, TypeError) as exception:  # pragma: no cover
+        except (ValueError, TypeError) as exception:
             sys.stderr.write(repr(exception))
-            # the fallback output for a result that json cannot encode
-            sys.stdout.write(repr(result))  # pragma: no cover
-            # the fallback exit for a result that json cannot encode
-            raise SystemExit(1)  # ruff:ignore[raise-without-from-inside-except]  # pragma: no cover
+            sys.stdout.write(repr(result))
+            raise SystemExit(1)  # ruff:ignore[raise-without-from-inside-except]  # exception is reported separately
 
 
 if __name__ == "__main__":

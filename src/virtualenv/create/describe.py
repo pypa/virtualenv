@@ -28,7 +28,6 @@ class Describe:
         self.dest = dest
         self._stdlib = None
         self._stdlib_platform = None
-        self._system_stdlib = None
         self._conf_vars = None
 
     @property
