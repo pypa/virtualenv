@@ -134,6 +134,7 @@ class _GeneratedFile(NamedTuple):
     extra_args: list[str]
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 @pytest.mark.parametrize("creator_name", [pytest.param("builtin", id="builtin"), pytest.param("venv", id="venv")])
 @pytest.mark.parametrize("link_to", [pytest.param("original", id="existing"), pytest.param("missing", id="dangling")])
 @pytest.mark.parametrize(
