@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import ntpath
 import os
 import posixpath
 import re
@@ -19,16 +18,26 @@ from distlib.scripts import ScriptMaker, enquote_executable
 
 from virtualenv.util.path import remove_file, safe_delete
 
+from ._safe_extract_zip import extract_zip as _safe_extract_zip
+
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 # https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
 # the path length Windows stops at without long path support, counting the terminating null
 _MAX_PATH: Final[int] = 260
 # a directory has to leave room for an 8.3 file name inside it
 _MAX_DIR_PATH: Final[int] = _MAX_PATH - 12
+
+
+_MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+                        (?P<name>[^\W\d]\w*?)  # the script name, which starts with a letter
+                        -?\d+(?:\.\d+)*        # an optional dash and the version
+                        """,
+    re.VERBOSE,
+)
 
 
 class PipInstall(ABC):
@@ -71,8 +80,7 @@ class PipInstall(ABC):
             if filename.suffix == ".dist-info":
                 return filename
         msg = f"no .dist-info at {folder}, has {', '.join(files)}"
-        # a valid wheel always has a dist-info folder, so this is a corrupt-wheel guard
-        raise RuntimeError(msg)  # pragma: no cover
+        raise RuntimeError(msg)
 
     def _uninstall_previous_version(self, dist_info: Path) -> None:
         dist_name = dist_info.stem.split("-")[0]
@@ -137,14 +145,7 @@ class PipInstall(ABC):
             if "console_scripts" in parser.sections():
                 for name, value in parser.items("console_scripts"):
                     # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
-                    match = re.fullmatch(
-                        r"""
-                        (?P<name>[^\W\d]\w*?)  # the script name, which starts with a letter
-                        -?\d+(?:\.\d+)*        # an optional dash and the version
-                        """,
-                        name,
-                        re.VERBOSE,
-                    )
+                    match = _MATCH_PATTERN.fullmatch(name)
                     scripts[match.group("name") if match else name] = value
         return scripts
 
@@ -278,7 +279,7 @@ class EntryPointConfig(ConfigParser):
         return optionstr
 
 
-class ScriptMakerCustom(ScriptMaker):
+class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name]  # existing name
     """Writes the entry point scripts of a distribution, replacing any existing file of the same name.
 
     :param target_dir: the directory the scripts are written to
@@ -290,7 +291,7 @@ class ScriptMakerCustom(ScriptMaker):
     :var set_mode: ``True`` so the scripts are made executable
     :var variants: the script variants to write, inherited from ``ScriptMaker``
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing docs
 
     def __init__(self, target_dir: Path, version_info: tuple[int, ...], executable: Path, name: str) -> None:
         super().__init__(None, str(target_dir))
@@ -334,28 +335,8 @@ def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
 
 
-def _safe_extract_zip(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
-    # Guard against zip slip: a wheel is a zip and a tampered entry name (absolute path or one containing ``..``)
-    # could escape ``target_dir``.
-    base = target_dir.resolve()
-    for info in zip_ref.infolist():
-        name = info.filename
-        if name.startswith(("/", "\\")) or ntpath.isabs(name) or posixpath.isabs(name):
-            msg = f"refusing to extract absolute path entry from wheel: {name!r}"
-            raise RuntimeError(msg)
-        candidate = (base / name).resolve()
-        try:
-            candidate.relative_to(base)
-        except ValueError as exc:
-            msg = f"refusing to extract entry escaping target directory: {name!r}"
-            raise RuntimeError(msg) from exc
-    zip_ref.extractall(str(target_dir))
-
-
 __all__ = [
-    "LOGGER",
     "EntryPointConfig",
     "PipInstall",
-    "ScriptMakerCustom",
     "shell_shebang",
 ]
