@@ -130,9 +130,10 @@ class ListType(TypeData):
     # start with a comparison operator and follow a piece that does too
     @staticmethod
     def _join_specifiers(items: list[str]) -> list[str]:
+        operators: tuple[str, ...] = ("===", "==", "!=", "~=", "<=", ">=", "<", ">")
         result: list[str] = []
         for item in items:
-            if result and item.startswith(_OPERATORS) and result[-1].startswith(_OPERATORS):
+            if result and item.startswith(operators) and result[-1].startswith(operators):
                 result[-1] = f"{result[-1]},{item}"
             else:
                 result.append(item)
@@ -156,8 +157,6 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
         LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
-
-_OPERATORS: Final[tuple[str, ...]] = ("===", "==", "!=", "~=", "<=", ">=", "<", ">")
 
 _CONVERT: Final[MappingProxyType[type, type]] = MappingProxyType({bool: BoolType, type(None): NoneType, list: ListType})
 
