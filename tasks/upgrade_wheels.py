@@ -20,7 +20,7 @@ from virtualenv.util.path import write_file
 
 _STRICT: Final[bool] = "UPGRADE_ADVISORY" not in os.environ
 
-_SUPPORT: Final[list[tuple[int, int]]] = [(3, i) for i in range(9, 17)]
+_SUPPORT: Final[tuple[tuple[int, int], ...]] = tuple((3, i) for i in range(9, 17))
 _DEST: Final[Path] = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 _NOTICES_DEST: Final[Path] = Path(__file__).resolve().parents[1] / "THIRD-PARTY-NOTICES.md"
 
@@ -91,11 +91,11 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:
-    # Write ``embed/catalog.py`` from the wheels currently in DEST.
+    # Write ``embed/__init__.py`` from the wheels currently in DEST.
     #
     # When called from ``run()`` after a download round, ``folders`` maps each per-python-version temp folder to its
     # version string, which is how support for a wheel is determined. When called with ``--regen`` there are no
-    # downloaded folders — the existing ``BUNDLE_SUPPORT`` from the current ``catalog.py`` is used so regeneration is
+    # downloaded folders — the existing ``BUNDLE_SUPPORT`` from the current ``__init__.py`` is used so regeneration is
     # deterministic.
     if folders is None:
         support_table = _support_table_from_existing_init()
@@ -223,7 +223,7 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
     """,
     )
-    dest_target = _DEST / "catalog.py"
+    dest_target = _DEST / "__init__.py"
     dest_target.write_text(msg, encoding="utf-8")
     subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"], check=False)
     subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"], check=False)
@@ -237,7 +237,7 @@ def render_notices() -> None:
     # Only the license of the wheel virtualenv itself redistributes is reproduced here - whatever that wheel in turn
     # vendors (pip's own ``_vendor`` tree, for example) already carries its license inside the wheel and stays there
     # rather than being duplicated at the top level.
-    tree = ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8"))
+    tree = ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8"))
     wheel_names: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SHA256":
@@ -265,7 +265,7 @@ def render_notices() -> None:
         directory, including the licenses of anything it in turn vendors.
 
         """)
-    _NOTICES_DEST.write_text(header + "\n".join(sections), encoding="utf-8")
+    write_file(_NOTICES_DEST, (header + "\n".join(sections)).encode("utf-8"))
     if (pre_commit := shutil.which("pre-commit")) is None:
         msg = "pre-commit must be installed to format THIRD-PARTY-NOTICES.md"
         raise RuntimeError(msg)
@@ -291,13 +291,13 @@ def _wheel_license_text(path: Path) -> str:
 
 
 def _support_table_from_existing_init() -> OrderedDict[str, OrderedDict[str, str]]:
-    for node in ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8")).body:
+    for node in ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SUPPORT":
             bundle_support = ast.literal_eval(node.value)
             return OrderedDict(
                 (version, OrderedDict(sorted(mapping.items()))) for version, mapping in bundle_support.items()
             )
-    msg = f"BUNDLE_SUPPORT not found in {_DEST / 'catalog.py'}"
+    msg = f"BUNDLE_SUPPORT not found in {_DEST / '__init__.py'}"
     raise RuntimeError(msg)
 
 
