@@ -744,9 +744,23 @@ def test_seed_uninstall_reads_quoted_record_paths(
     installer = CopyPipInstall(tmp_path / "example-2.0-py3-none-any.whl", no_seed_session.creator, image)
     installer.install(no_seed_session.interpreter.version_info)
 
-    assert not installed.exists()
-    assert not dist_info.exists()
-    assert unrelated.read_text(encoding="utf-8") == "keep"
+    assert (installed.exists(), dist_info.exists(), unrelated.read_text(encoding="utf-8")) == (False, False, "keep")
+
+
+@pytest.fixture
+def wheel_with_record_filename(tmp_path: Path, no_seed_session: Session, record_filename: str) -> Path:
+    bundled = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    wheel = tmp_path / bundled.name
+    row = io.StringIO(newline="")
+    csv.writer(row).writerow([record_filename, "", ""])
+    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
+        for info in source.infolist():
+            content = source.read(info)
+            if info.filename.endswith(".dist-info/RECORD"):
+                content += row.getvalue().encode("utf-8")
+            target.writestr(info, content)
+        target.writestr(record_filename, "value = 42\n")
+    return wheel
 
 
 @pytest.mark.parametrize(
@@ -763,33 +777,21 @@ def test_seed_uninstall_reads_quoted_record_paths(
 def test_seed_records_quote_generated_paths(
     tmp_path: Path,
     no_seed_session: Session,
+    wheel_with_record_filename: Path,
     record_filename: str,
     installer_class: type[CopyPipInstall | SymlinkPipInstall],
 ) -> None:
-    bundled = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
-    wheel = tmp_path / bundled.name
-    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
-        for info in source.infolist():
-            content = source.read(info)
-            if info.filename.endswith(".dist-info/RECORD"):
-                stream = io.StringIO(content.decode("utf-8"), newline="")
-                stream.seek(0, io.SEEK_END)
-                csv.writer(stream).writerow([record_filename, "", ""])
-                content = stream.getvalue().encode("utf-8")
-            target.writestr(info, content)
-        target.writestr(record_filename, "value = 42\n")
-    image = tmp_path / "image" / installer_class.__name__ / wheel.stem
-    installer = installer_class(wheel, no_seed_session.creator, image)
+    image = tmp_path / "image" / installer_class.__name__ / wheel_with_record_filename.stem
+    installer = installer_class(wheel_with_record_filename, no_seed_session.creator, image)
     installer.build_image()
     installer.install(no_seed_session.interpreter.version_info)
 
     dist_info = next(no_seed_session.creator.purelib.glob("pip-*.dist-info"))
     with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
         rows = list(csv.reader(stream))
-    assert all(len(row) == 3 for row in rows)
-    paths = {Path(row[0]).as_posix() for row in rows}
-    assert record_filename in paths
-    assert any(Path(path).name.startswith(f"{record_filename[:-3]}.") and path.endswith(".pyc") for path in paths)
+    names = {Path(row[0]).name for row in rows}
+    compiled = {name for name in names if name.startswith(f"{record_filename[:-3]}.") and name.endswith(".pyc")}
+    assert ({len(row) for row in rows}, record_filename in names, len(compiled)) == ({3}, True, 1)
 
 
 @pytest.fixture
