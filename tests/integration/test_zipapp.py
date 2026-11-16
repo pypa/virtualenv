@@ -131,7 +131,7 @@ def test_zipapp_update_command(
         None,
         [],
         AppDataDiskFolder(str(tmp_path / "data")),
-        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
+        {**os.environ, "_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
         True,
     )
     assert "done pip" in capfd.readouterr().out
@@ -146,11 +146,11 @@ def test_zipapp_update_without_installed_package(zipapp: Path, zipapp_test_env: 
             "-c",
             (
                 f"import runpy\nwith runpy.run_path({str(zipapp)!r}, run_name='__loader__')['VersionedFindLoad']():\n"
-                "    import sys\n"
+                "    import os, sys\n"
                 "    from virtualenv.app_data import AppDataDiskFolder\n"
                 "    from virtualenv.seed.wheels.periodic_update import trigger_update\n"
                 f"    trigger_update('pip', f'{{sys.version_info.major}}.{{sys.version_info.minor}}', None, [], "
-                f"AppDataDiskFolder({str(tmp_path / 'data')!r}), {{'_VIRTUALENV_PERIODIC_UPDATE_INLINE': '1'}}, True)\n"
+                f"AppDataDiskFolder({str(tmp_path / 'data')!r}), {{**os.environ, '_VIRTUALENV_PERIODIC_UPDATE_INLINE': '1'}}, True)\n"
             ),
         ],
         env={**os.environ, "PIP_NO_INDEX": "1"},

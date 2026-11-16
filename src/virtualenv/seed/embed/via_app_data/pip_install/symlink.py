@@ -33,7 +33,7 @@ class SymlinkPipInstall(PipInstall):
             ),
             str(folder),
         ]
-        code, out, err = run_cmd(cmd)
+        code, out, err = run_cmd(cmd, env=self._creator.env)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
         # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for close
