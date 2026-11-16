@@ -14,7 +14,11 @@ if TYPE_CHECKING:
 
 
 class Seeder(ABC):
-    """A seeder will install some seed packages into a virtual environment."""
+    """A seeder will install some seed packages into a virtual environment.
+
+    :var env: the environment variables the seeding runs with
+
+    """
 
     def __init__(self, options: VirtualEnvOptions, enabled: bool) -> None:
         """Create.
@@ -27,6 +31,7 @@ class Seeder(ABC):
         self.env = options.env
 
     @classmethod
+    # the base hook takes the interpreter, this seeder does not read it
     def cannot_seed(cls, interpreter: PythonInfo) -> str | None:  # ruff:ignore[unused-class-method-argument]
         """Explain why this seeder cannot install seed packages for the given interpreter.
 
@@ -43,8 +48,8 @@ class Seeder(ABC):
         """Add CLI arguments for this seed mechanisms.
 
         :param parser: the CLI parser
-        :param app_data: the CLI parser
         :param interpreter: the interpreter this virtual environment is based of
+        :param app_data: the application data folder
 
         """
         raise NotImplementedError

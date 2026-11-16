@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class CopyPipInstall(PipInstall):
+    """Install a seed package by copying its image files into the environment."""
+
     def _sync(self, src: Path, dst: Path) -> None:
         copy(src, dst)
 

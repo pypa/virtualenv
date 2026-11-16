@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING, NamedTuple
 
 import pytest
+from python_discovery import PythonInfo
 from testing import path
 from testing.py_info import read_fixture
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from tests.types import Interpreter, MakeInterpreter
 
 # Allows to import from `testing` into test submodules.
@@ -32,20 +34,27 @@ def mock_pypy_libs(mocker):
 
 
 @pytest.fixture
-def make_interpreter() -> MakeInterpreter:
+def make_interpreter(mocker: MockerFixture) -> MakeInterpreter:
     def _make(
-        sysconfig_vars: dict[str, object] | None = None,
+        sysconfig_vars: dict[str, str | int | None] | None = None,
         prefix: str = "/usr",
         free_threaded: bool = False,
         version_info: tuple[int, ...] = (3, 14, 0),
     ) -> Interpreter:
-        interpreter = MagicMock()
-        interpreter.prefix = prefix
-        interpreter.system_prefix = prefix
-        interpreter.system_executable = f"{prefix}/bin/python3"
-        interpreter.free_threaded = free_threaded
-        interpreter.version_info = MagicMock(major=version_info[0], minor=version_info[1])
-        interpreter.sysconfig_vars = sysconfig_vars or {}
-        return interpreter
+        return mocker.create_autospec(
+            PythonInfo,
+            instance=True,
+            prefix=prefix,
+            system_prefix=prefix,
+            system_executable=f"{prefix}/bin/python3",
+            free_threaded=free_threaded,
+            version_info=_VersionInfo(major=version_info[0], minor=version_info[1]),
+            sysconfig_vars=sysconfig_vars or {},
+        )
 
-    return _make  # type: ignore[return-value]
+    return _make  # type: ignore[return-value]  # autospec PythonInfo is not an Interpreter to ty
+
+
+class _VersionInfo(NamedTuple):
+    major: int
+    minor: int

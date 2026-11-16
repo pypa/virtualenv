@@ -19,7 +19,7 @@ def main(bump: str, *, push: bool) -> None:
     root_src_dir: Final[Path] = Path(__file__).resolve().parents[1]
     changelog_dir: Final[Path] = root_src_dir / "docs" / "changelog"
     repo = Repo(str(root_src_dir))
-    remote = get_remote(repo)
+    remote = _get_remote(repo)
     remote.fetch()
     version = next_tag(
         bump,
@@ -46,7 +46,7 @@ def main(bump: str, *, push: bool) -> None:
     sys.stdout.write(f"Prepared {version}\n")
 
 
-def get_remote(repo: Repo) -> Remote:
+def _get_remote(repo: Repo) -> Remote:
     for remote in repo.remotes:
         if any(url.removesuffix(".git").endswith("pypa/virtualenv") for url in remote.urls):
             return remote

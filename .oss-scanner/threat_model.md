@@ -35,7 +35,7 @@ Untrusted input is:
 - wheel bytes and metadata from PyPI, fetched by the periodic update and by `--download`, which virtualenv checks
   against the SHA-256 digest PyPI's JSON API publishes;
 - wheel archives being extracted into app-data (entry names, symlinks);
-- the embedded wheels, which virtualenv hashes against the table in `seed/wheels/embed/__init__.py` before first use,
+- the embedded wheels, which virtualenv hashes against the table in `seed/wheels/embed/catalog.py` before first use,
   including when reading from inside the zipapp (`util/zipapp.py`).
 
 ## Components that matter most / least
@@ -46,7 +46,7 @@ Most:
   `activation/via_template.py`. The batch activator also has logic to refuse paths it cannot quote;
 - the `pyvenv.cfg` writer (`create/pyenv_cfg.py`) and the line boundary helper (`util/text.py`);
 - wheel acquisition and integrity checks: `seed/wheels/acquire.py`, `seed/wheels/bundle.py`,
-  `seed/wheels/periodic_update.py`, `seed/wheels/embed/__init__.py`;
+  `seed/wheels/periodic_update.py`, `seed/wheels/embed/catalog.py`;
 - wheel extraction and linking into app-data and the environment: `seed/embed/via_app_data/`, `app_data/`,
   `util/zipapp.py`;
 - filesystem writes that could escape the destination or follow a symlink: `create/creator.py`, `util/path/`,

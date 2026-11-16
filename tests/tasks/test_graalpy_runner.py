@@ -8,15 +8,13 @@ import sys
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
-from unittest.mock import create_autospec
 
 import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
-    from unittest.mock import MagicMock
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
 _CLEAN: Final[str] = '<testsuite tests="1" failures="0" errors="0" skipped="0"/>'
 _EMPTY: Final[str] = '<testsuite tests="0" failures="0" errors="0" skipped="0"/>'
@@ -34,22 +32,22 @@ def junit(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def compileall(mocker: MockerFixture) -> MagicMock:
+def compileall(mocker: MockerFixture) -> MockType:
     return mocker.patch("subprocess.run", autospec=True)
 
 
 @pytest.fixture
-def popen(mocker: MockerFixture, junit: Path) -> Callable[[Sequence[Outcome]], MagicMock]:
-    def install(outcomes: Sequence[Outcome]) -> MagicMock:
+def popen(mocker: MockerFixture, junit: Path) -> Callable[[Sequence[Outcome]], MockType]:
+    def install(outcomes: Sequence[Outcome]) -> MockType:
         for index in range(1, len(outcomes) + 1):
             junit.with_suffix(f".{index}.xml").write_text(_CLEAN, encoding="utf-8")  # a stale report from a prior run
 
-        def start(command: list[str], **_kwargs: object) -> MagicMock:
+        def start(command: list[str], **_kwargs: object) -> MockType:
             index = int(command[-3].removeprefix("--shard=").split("/")[0])
             status, stderr, report = outcomes[index - 1]
             if report is not None:
                 Path(command[-1]).write_text(report, encoding="utf-8")
-            process = create_autospec(
+            process = mocker.create_autospec(
                 _POPEN, instance=True, stdout=io.StringIO(f"collected {index}\n"), stderr=io.StringIO(stderr)
             )
             # Python 3.11 autospec replaces a child configured through create_autospec kwargs
@@ -63,9 +61,9 @@ def popen(mocker: MockerFixture, junit: Path) -> Callable[[Sequence[Outcome]], M
 
 @pytest.fixture
 def run_shards(
-    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock]
-) -> Callable[[Sequence[Outcome]], MagicMock]:
-    def invoke(outcomes: Sequence[Outcome]) -> MagicMock:
+    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MockType]
+) -> Callable[[Sequence[Outcome]], MockType]:
+    def invoke(outcomes: Sequence[Outcome]) -> MockType:
         started = popen(outcomes)
         mocker.patch.object(sys, "argv", ["runner", "--shards", str(len(outcomes)), str(junit), "tests"])
         runpy.run_path(str(_RUNNER), run_name="__main__")
@@ -84,7 +82,7 @@ def run_shards(
         pytest.param([(1, _SHUTDOWN, _EMPTY), _PASS], id="shutdown-without-tests"),
     ],
 )
-def test_graalpy_shards_pass(run_shards: Callable[[Sequence[Outcome]], MagicMock], outcomes: list[Outcome]) -> None:
+def test_graalpy_shards_pass(run_shards: Callable[[Sequence[Outcome]], MockType], outcomes: list[Outcome]) -> None:
     run_shards(outcomes)
 
 
@@ -110,12 +108,12 @@ def test_graalpy_shards_pass(run_shards: Callable[[Sequence[Outcome]], MagicMock
         ),
     ],
 )
-def test_graalpy_shard_fails(run_shards: Callable[[Sequence[Outcome]], MagicMock], first: Outcome) -> None:
+def test_graalpy_shard_fails(run_shards: Callable[[Sequence[Outcome]], MockType], first: Outcome) -> None:
     with pytest.raises(SystemExit, match=r"^pytest shards failed: 1/2$"):
         run_shards([first, _PASS])
 
 
-def test_graalpy_shards_report_every_failure(run_shards: Callable[[Sequence[Outcome]], MagicMock]) -> None:
+def test_graalpy_shards_report_every_failure(run_shards: Callable[[Sequence[Outcome]], MockType]) -> None:
     with pytest.raises(SystemExit, match=r"^pytest shards failed: 1/2, 2/2$"):
         run_shards([(2, "", _CLEAN), (2, "", _CLEAN)])
 
@@ -127,12 +125,12 @@ def test_graalpy_shards_report_every_failure(run_shards: Callable[[Sequence[Outc
         pytest.param(_CLEAN.replace('skipped="0"', 'skipped="1"'), id="all-skipped"),
     ],
 )
-def test_graalpy_shards_fail_without_tests(run_shards: Callable[[Sequence[Outcome]], MagicMock], report: str) -> None:
+def test_graalpy_shards_fail_without_tests(run_shards: Callable[[Sequence[Outcome]], MockType], report: str) -> None:
     with pytest.raises(SystemExit, match=r"^pytest shards ran no tests$"):
         run_shards([(5, "", report), (0, "", report)])
 
 
-def test_graalpy_shard_command(run_shards: Callable[[Sequence[Outcome]], MagicMock], junit: Path) -> None:
+def test_graalpy_shard_command(run_shards: Callable[[Sequence[Outcome]], MockType], junit: Path) -> None:
     started = run_shards([_PASS, _PASS])
     assert [call.args[0] for call in started.call_args_list] == [
         [sys.executable, "-u", "-m", "pytest", "tests", f"--shard={index}/2", "--junitxml", str(junit.parent / name)]
@@ -141,7 +139,7 @@ def test_graalpy_shard_command(run_shards: Callable[[Sequence[Outcome]], MagicMo
 
 
 def test_graalpy_compiles_shared_trees(
-    run_shards: Callable[[Sequence[Outcome]], MagicMock], compileall: MagicMock
+    run_shards: Callable[[Sequence[Outcome]], MockType], compileall: MockType
 ) -> None:
     run_shards([_PASS, _PASS])
     trees: Final = dict.fromkeys(sysconfig.get_path(name) for name in ("stdlib", "purelib", "platlib"))
@@ -149,9 +147,9 @@ def test_graalpy_compiles_shared_trees(
 
 
 def test_graalpy_compiles_before_shards_start(
-    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock], compileall: MagicMock
+    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MockType], compileall: MockType
 ) -> None:
-    started: Final[MagicMock] = popen([_PASS, _PASS])
+    started: Final[MockType] = popen([_PASS, _PASS])
     shards_at_compile: Final[list[int]] = []
     compileall.side_effect = lambda *_args, **_kwargs: shards_at_compile.append(started.call_count)
     mocker.patch.object(sys, "argv", ["runner", "--shards", "2", str(junit), "tests"])
@@ -160,7 +158,7 @@ def test_graalpy_compiles_before_shards_start(
 
 
 def test_graalpy_shard_output_prefixed(
-    run_shards: Callable[[Sequence[Outcome]], MagicMock], capsys: pytest.CaptureFixture[str]
+    run_shards: Callable[[Sequence[Outcome]], MockType], capsys: pytest.CaptureFixture[str]
 ) -> None:
     run_shards([(1, f"{_SHUTDOWN}\n", _CLEAN), _PASS])
     assert capsys.readouterr() == (
@@ -181,7 +179,7 @@ def test_graalpy_shard_output_prefixed(
     ],
 )
 def test_graalpy_shard_failure_explained(
-    run_shards: Callable[[Sequence[Outcome]], MagicMock],
+    run_shards: Callable[[Sequence[Outcome]], MockType],
     capsys: pytest.CaptureFixture[str],
     status: int,
     report: str | None,
@@ -199,11 +197,11 @@ def test_graalpy_shard_failure_explained(
 def test_graalpy_shards_default_to_cpu_count(
     mocker: MockerFixture,
     junit: Path,
-    popen: Callable[[Sequence[Outcome]], MagicMock],
+    popen: Callable[[Sequence[Outcome]], MockType],
     cpu_count: int | None,
     expected: int,
 ) -> None:
-    mocker.patch.object(os, "cpu_count", return_value=cpu_count)
+    mocker.patch.object(os, "cpu_count", return_value=cpu_count, autospec=True)
     started = popen([_PASS] * expected)
     mocker.patch.object(sys, "argv", ["runner", str(junit), "tests"])
     runpy.run_path(str(_RUNNER), run_name="__main__")
@@ -211,9 +209,9 @@ def test_graalpy_shards_default_to_cpu_count(
 
 
 def test_graalpy_groups_cover_all_shards(
-    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock]
+    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MockType]
 ) -> None:
-    started: Final[MagicMock] = popen([_PASS] * 8)
+    started: Final[MockType] = popen([_PASS] * 8)
     for group in range(1, 5):
         mocker.patch.object(sys, "argv", ["runner", "--shards", "2", "--group", f"{group}/4", str(junit), "tests"])
         runpy.run_path(str(_RUNNER), run_name="__main__")

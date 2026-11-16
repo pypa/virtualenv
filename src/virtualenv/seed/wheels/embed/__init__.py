@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 import zipfile
 from pathlib import Path
+from typing import Final
 
 from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.seed.wheels.util import Wheel
 
-BUNDLE_FOLDER = Path(__file__).absolute().parent
-BUNDLE_SUPPORT = {
+#: The folder holding the bundled seed wheels.
+BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent
+#: The bundled wheel file names, keyed by the Python version they support, then by distribution.
+BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {
     "3.9": {
         "pip": "pip-26.0.1-py3-none-any.whl",
         "setuptools": "setuptools-82.0.1-py3-none-any.whl",
@@ -42,8 +45,10 @@ BUNDLE_SUPPORT = {
         "setuptools": "setuptools-84.2.1-py3-none-any.whl",
     },
 }
-MAX = next(reversed(BUNDLE_SUPPORT))
-MIN = next(iter(BUNDLE_SUPPORT))
+#: The newest Python version with bundled wheels.
+MAX: Final[str] = next(reversed(BUNDLE_SUPPORT))
+#: The oldest Python version with bundled wheels.
+MIN: Final[str] = next(iter(BUNDLE_SUPPORT))
 
 
 def _release_tuple(version: str) -> tuple[int, ...]:
@@ -51,18 +56,20 @@ def _release_tuple(version: str) -> tuple[int, ...]:
 
 
 # oldest target Python version virtualenv still bundles seed wheels for; anything below this has no embedded pip
-OLDEST_SUPPORTED = _release_tuple(MIN)
+#: The oldest Python version bundled wheels support, as a release tuple.
+OLDEST_SUPPORTED: Final[tuple[int, ...]] = _release_tuple(MIN)
 
 # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
 # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
-BUNDLE_SHA256 = {
+#: The SHA-256 digest of each bundled wheel file, keyed by file name.
+BUNDLE_SHA256: Final[dict[str, str]] = {
     "pip-26.0.1-py3-none-any.whl": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b",
     "pip-26.3-py3-none-any.whl": "f3b60b20ffaadd4415ed7957212a38ac63fa4c5fa375bd0f4a797777940fad13",
     "setuptools-82.0.1-py3-none-any.whl": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb",
     "setuptools-84.2.1-py3-none-any.whl": "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2",
 }
 
-_VERIFIED_WHEELS: set[str] = set()
+_VERIFIED_WHEELS: Final[set[str]] = set()
 
 
 def get_embed_wheel(distribution: str, for_py_version: str | None) -> Wheel | None:
@@ -101,8 +108,7 @@ def _verify_bundled_wheel(path: Path) -> None:
     if expected is None:
         msg = f"bundled wheel {name} has no recorded sha256 in BUNDLE_SHA256"
         raise RuntimeError(msg)
-    actual = _hash_bundled_wheel(path)
-    if actual != expected:
+    if (actual := _hash_bundled_wheel(path)) != expected:
         msg = f"bundled wheel {name} sha256 mismatch: expected {expected}, got {actual}"
         raise RuntimeError(msg)
     _VERIFIED_WHEELS.add(name)

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import logging
-import shlex
-from typing import TYPE_CHECKING, Final
+import logging  # isort: skip # fmt: skip
+import shlex  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator
-from virtualenv.util.text import collapse_line_boundaries
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
+from virtualenv.util.text import collapse_line_boundaries  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -15,21 +15,31 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-_LOGGER: Final = logging.getLogger(__name__)
-_PROMPT_DISPLAY_TCSH: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_TCSH__"
-_PROMPT_DISPLAY_PLAIN: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_PLAIN__"
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # fmt: skip
 
 
-class CShellActivator(ViaTemplateActivator):
+class CShellActivator(ViaTemplateActivator):  # fmt: skip
+    """Generate the ``activate.csh`` and ``deactivate.csh`` scripts for csh and tcsh."""
+
     @classmethod
     def supports(cls, interpreter: PythonInfo) -> bool:
+        """Accept interpreters that are not on Windows.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` when the interpreter does not run on Windows
+
+        """
         return interpreter.os != "nt"
 
-    def templates(self) -> Iterator[str]:
-        yield "activate.csh"
-        yield "deactivate.csh"
-
     def generate(self, creator: Creator) -> list[Path]:
+        """Generate the scripts, or remove them when a path holds a newline.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts, empty when they were removed
+
+        """
         values: Final = super().replacements(creator, creator.bin_dir)
         if any("\n" in values[key] for key in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__")):
             _LOGGER.warning("skipping csh activation scripts: a filesystem path contains a newline")
@@ -38,14 +48,38 @@ class CShellActivator(ViaTemplateActivator):
             return []
         return super().generate(creator)
 
+    def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
+        yield "activate.csh"
+        yield "deactivate.csh"
+
     @staticmethod
     def quote(string: str) -> str:
+        """Quote the value for csh, keeping history expansion, percent signs and backslashes inert.
+
+        :param string: the value to quote
+
+        :returns: the quoted value
+
+        """
         # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
         # Backslashes outside quotes retain their meaning with tcsh's backslash_quote option.
         quoted: Final = shlex.quote(string)
         return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        """Add the escaped display prompt for tcsh and plain csh to the placeholder values.
+
+        :param replacements: the raw placeholder values
+        :param creator: the creator of the environment
+
+        :returns: the placeholder names mapped to their substituted text
+
+        """
         # Normalize display text without changing the filesystem paths used by activation.
         values: Final = {
             **replacements,
@@ -54,13 +88,13 @@ class CShellActivator(ViaTemplateActivator):
         display: Final = collapse_line_boundaries(creator.env_name if self.flag_prompt is None else self.flag_prompt)
         return {
             **super().substitutions(values, creator),
-            _PROMPT_DISPLAY_TCSH: _prompt_literal(display, tcsh=True),
-            _PROMPT_DISPLAY_PLAIN: _prompt_literal(display, tcsh=False),
+            "__VIRTUAL_PROMPT_DISPLAY_TCSH__": _prompt_literal(display, tcsh=True),
+            "__VIRTUAL_PROMPT_DISPLAY_PLAIN__": _prompt_literal(display, tcsh=False),
         }
 
 
-def _prompt_literal(value: str, *, tcsh: bool) -> str:
-    """Prompt drawing interprets history escapes and tcsh percent codes a second time."""
+def _prompt_literal(value: str, *, tcsh: bool) -> str:  # fmt: skip
+    # Prompt drawing interprets history escapes and tcsh percent codes a second time.
     parts = ["'"]
     for char in value:
         if char == "'":

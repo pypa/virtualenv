@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -19,7 +20,7 @@ from virtualenv.activation import (
 if TYPE_CHECKING:
     from virtualenv.activation.activator import Activator
 
-_SUPPORTED_OS: Final[dict[type[Activator], set[str]]] = {
+_SUPPORTED_OS: Final[MappingProxyType[type[Activator], set[str]]] = MappingProxyType({
     BashActivator: {"nt", "posix"},
     BatchActivator: {"nt"},
     CShellActivator: {"posix"},
@@ -27,7 +28,7 @@ _SUPPORTED_OS: Final[dict[type[Activator], set[str]]] = {
     PowerShellActivator: {"nt", "posix"},
     PythonActivator: {"nt", "posix"},
     XonshActivator: {"nt", "posix"},
-}
+})
 
 
 @pytest.mark.parametrize(
@@ -40,6 +41,5 @@ _SUPPORTED_OS: Final[dict[type[Activator], set[str]]] = {
 )
 def test_activator_support(mocker, activator_class: type[Activator], os_name: str) -> None:
     activator = activator_class(Namespace(prompt=None))
-    interpreter = mocker.Mock(spec=PythonInfo)
-    interpreter.os = os_name
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, os=os_name)
     assert activator.supports(interpreter) is (os_name in _SUPPORTED_OS[activator_class])

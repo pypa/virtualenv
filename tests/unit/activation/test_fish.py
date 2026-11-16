@@ -18,16 +18,16 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-FISH = shutil.which("fish")
+_FISH: Final[str | None] = shutil.which("fish")
 
 
-@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+@pytest.mark.skipif(IS_WIN or _FISH is None, reason="fish is required")
 @pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/some/pythonhome", id="path")])
 def test_fish_restores_pythonhome(tmp_path: Path, original: str) -> None:
     session = cli_run(["--no-seed", "--activators", "fish", str(tmp_path / "env")])
     result = subprocess.run(
         [
-            FISH,
+            _FISH,
             "--no-config",
             "-c",
             (
@@ -46,7 +46,7 @@ def test_fish_restores_pythonhome(tmp_path: Path, original: str) -> None:
     assert (result.returncode, result.stdout, result.stderr) == (0, f"1\n0\n{original}\n", "")
 
 
-@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+@pytest.mark.skipif(IS_WIN or _FISH is None, reason="fish is required")
 @pytest.mark.parametrize(
     "value",
     [
@@ -58,7 +58,7 @@ def test_fish_restores_pythonhome(tmp_path: Path, original: str) -> None:
 )
 def test_fish_quote_preserves_literal(value: str) -> None:
     result: Final = subprocess.run(
-        [FISH, "--no-config"],
+        [_FISH, "--no-config"],
         input=f"printf '%s' {FishActivator.quote(value)}\n",
         capture_output=True,
         text=True,
@@ -69,17 +69,19 @@ def test_fish_quote_preserves_literal(value: str) -> None:
     assert result.stdout == value
 
 
-@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+def _fish_3_with_gbk_locale() -> bool:
+    return (
+        _FISH is not None
+        and subprocess.check_output([_FISH, "--version"], text=True, encoding="utf-8").startswith("fish, version 3.")
+        and "zh_CN.gbk" in subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    )
+
+
+@pytest.mark.skipif(IS_WIN or not _fish_3_with_gbk_locale(), reason="needs fish 3 and the zh_CN.gbk locale")
 @pytest.mark.parametrize("value", [pytest.param("中's", id="apostrophe"), pytest.param("中\\path", id="backslash")])
 def test_fish_quote_preserves_legacy_locale_bytes(value: str) -> None:
-    version: Final = subprocess.check_output([FISH, "--version"], text=True, encoding="utf-8")
-    if not version.startswith("fish, version 3."):
-        pytest.skip("fish 4 always decodes UTF-8")
-    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
-    if "zh_CN.gbk" not in locales:
-        pytest.skip("GBK locale is unavailable")
     result: Final = subprocess.run(
-        [FISH, "--no-config"],
+        [_FISH, "--no-config"],
         input=f"printf '%s' {FishActivator.quote(value)}\n".encode(),
         env={**os.environ, "LC_ALL": "zh_CN.gbk"},
         capture_output=True,
@@ -118,68 +120,90 @@ def rendered_activate_fish(tmp_path: Path) -> Callable[[str | None, str | None],
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        ("/path/to/tcl", "/path/to/tk", True),
-        ("/Program Files/tcl", "/Program Files/tk", True),
-        (None, None, False),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            ["set -gx TCL_LIBRARY '/path/to/tcl'\n", "set -gx TK_LIBRARY '/path/to/tk'\n"],
+            id="present",
+        ),
+        pytest.param(
+            "/Program Files/tcl",
+            "/Program Files/tk",
+            ["set -gx TCL_LIBRARY '/Program Files/tcl'\n", "set -gx TK_LIBRARY '/Program Files/tk'\n"],
+            id="spaces",
+        ),
+        pytest.param(
+            None,
+            None,
+            ["if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY", "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY"],
+            id="missing",
+        ),
     ],
 )
 def test_fish_tkinter_generation(
     rendered_activate_fish: Callable[[str | None, str | None], Path],
     tcl_lib: str | None,
     tk_lib: str | None,
-    present: bool,
+    expected_lines: list[str],
 ) -> None:
     content = rendered_activate_fish(tcl_lib, tk_lib).read_text(encoding="utf-8")
 
     assert 'set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"' in content
     assert 'set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"' in content
     assert "set -e _OLD_PKG_CONFIG_PATH" in content
-
-    if present:
-        assert f"set -gx TCL_LIBRARY {FishActivator.quote(tcl_lib)}\n" in content
-        assert f"set -gx TK_LIBRARY {FishActivator.quote(tk_lib)}\n" in content
-    else:
-        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
-        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
-@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.skipif(_FISH is None, reason="fish is not installed")
 def test_fish_tkinter_path_does_not_run_commands(
     rendered_activate_fish: Callable[[str | None, str | None], Path], tmp_path: Path
 ) -> None:
     marker = tmp_path / "PWNED"
     script = rendered_activate_fish(f"/tcl/(touch {marker})/lib", "/tk/lib")
 
-    subprocess.run([FISH, "-c", f"source '{script}'"], capture_output=True, text=True, timeout=60, check=False)
+    subprocess.run([_FISH, "-c", f"source '{script}'"], capture_output=True, text=True, timeout=60, check=False)
 
     assert not marker.exists()
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
-@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.skipif(_FISH is None, reason="fish is not installed")
 @pytest.mark.parametrize(
-    ("prompt", "env_name"),
+    ("prompt_args", "env_name"),
     [
-        pytest.param(r"x\'$(touch PWNED)'\'", "env", id="prompt-backslash-quote"),
-        pytest.param(None, r"x\'$(touch PWNED)'\'", id="dirname-backslash-quote"),
+        pytest.param(["--prompt", r"x\'$(touch PWNED)'\'"], "env", id="prompt-backslash-quote"),
+        pytest.param([], r"x\'$(touch PWNED)'\'", id="dirname-backslash-quote"),
     ],
 )
 def test_fish_activate_does_not_run_commands(
-    tmp_path: Path, current_fastest: str, prompt: str | None, env_name: str
+    tmp_path: Path, current_fastest: str, prompt_args: list[str], env_name: str
 ) -> None:
     dest = tmp_path / env_name
-    args = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "fish"]
-    if prompt is not None:
-        args += ["--prompt", prompt]
+    args = [
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "fish",
+        *prompt_args,
+    ]
     cli_run(args)
     (work_dir := tmp_path / "workdir").mkdir()
 
     # the path is passed as an argument so the driver cannot expand a payload dir name while locating the script
     result = subprocess.run(
-        [FISH, "--no-config", "-c", 'source $argv[1]; printf "%s" "$VIRTUAL_ENV"', str(dest / "bin" / "activate.fish")],
+        [
+            _FISH,
+            "--no-config",
+            "-c",
+            'source $argv[1]; printf "%s" "$VIRTUAL_ENV"',
+            str(dest / "bin" / "activate.fish"),
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -193,7 +217,7 @@ def test_fish_activate_does_not_run_commands(
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
-@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.skipif(_FISH is None, reason="fish is not installed")
 @pytest.mark.parametrize(
     ("original", "expected"),
     [
@@ -216,7 +240,7 @@ def test_fish_deactivate_restores_path(tmp_path, current_fastest, original, expe
 
     out = subprocess.run(
         [
-            FISH,
+            _FISH,
             "--no-config",
             "-c",
             f"set -gx PATH {original}\nsource '{dest / 'bin' / 'activate.fish'}'\ndeactivate\necho \"PATH=<$PATH>\"\n",
@@ -232,7 +256,7 @@ def test_fish_deactivate_restores_path(tmp_path, current_fastest, original, expe
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
-@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.skipif(_FISH is None, reason="fish is not installed")
 def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> None:
     # A user function shadowing `.`/`source` must not hijack the prompt's exit-status restore. Source a copy of the
     # rendered script from an ASCII path so the driver avoids the venv path's special characters.
@@ -248,7 +272,7 @@ def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> No
         encoding="utf-8",
     )
     out = subprocess.run(
-        [FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
+        [_FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
     ).stdout
     assert f"PWD={start}\n" in out, out
 
@@ -265,9 +289,6 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
         def __init__(self, session) -> None:
             super().__init__(FishActivator, session, "fish", "activate.fish", "fish")
 
-        def print_prompt(self) -> str:
-            return "fish_prompt"
-
         def _get_test_lines(self, activate_script):
             names = ("VIRTUAL_ENV", "VIRTUAL_ENV_PROMPT", "PATH", "TCL_LIBRARY", "TK_LIBRARY", "PKG_CONFIG_PATH")
             return [
@@ -282,8 +303,11 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 "",  # just finish with an empty new line
             ]
 
+        def print_prompt(self) -> str:
+            return "fish_prompt"
+
         def assert_output(self, out, raw, _) -> None:
-            """Compare _get_test_lines() with the expected values."""
+            # Compare _get_test_lines() with the expected values.
             assert out[0], raw
             assert out[1] == "None", raw
             assert out[2] == "None", raw

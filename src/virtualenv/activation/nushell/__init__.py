@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -11,8 +11,15 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-class NushellActivator(ViaTemplateActivator):
+class NushellActivator(ViaTemplateActivator):  # fmt: skip
+    """Generate the ``activate.nu`` script for Nushell."""
+
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.nu"
 
     @staticmethod
@@ -22,6 +29,10 @@ class NushellActivator(ViaTemplateActivator):
         https://github.com/nushell/nushell.github.io/blob/main/book/working_with_strings.md
 
         This method finds the maximum continuous sharps in the string and then quote it with an extra sharp.
+
+        :param string: the value to quote
+
+        :returns: the string wrapped in a raw string literal with enough sharps to not clash with its content
 
         """
         max_sharps = 0
@@ -35,7 +46,16 @@ class NushellActivator(ViaTemplateActivator):
         wrapping = "#" * (max_sharps + 1)
         return f"r{wrapping}'{string}'{wrapping}"
 
+    # the replacement hook signature, nushell needs neither argument
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
+        """The raw placeholder values, including the Tcl and Tk library paths.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),

@@ -13,10 +13,6 @@ if TYPE_CHECKING:
     from tests.types import MakeInterpreter
 
 
-def _shared_lib_copy_refs(sources: list[PathRefToDest]) -> list[PathRefToDest]:
-    return [s for s in sources if isinstance(s, PathRefToDest) and s.when == RefWhen.COPY]
-
-
 def test_shared_lib_included(tmp_path: Path, collect_sources: CollectSources) -> None:
     lib_dir = tmp_path / "lib"
     lib_dir.mkdir()
@@ -25,6 +21,10 @@ def test_shared_lib_included(tmp_path: Path, collect_sources: CollectSources) ->
     shared_refs = _shared_lib_copy_refs(sources)
     assert len(shared_refs) == 1
     assert shared_refs[0].src.name == "libpython3.14.so"
+
+
+def _shared_lib_copy_refs(sources: list[PathRefToDest]) -> list[PathRefToDest]:
+    return [s for s in sources if isinstance(s, PathRefToDest) and s.when == RefWhen.COPY]
 
 
 def test_shared_lib_excluded_when_static(collect_sources: CollectSources) -> None:

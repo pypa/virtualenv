@@ -8,8 +8,7 @@ import subprocess
 from argparse import Namespace
 from ast import literal_eval
 from shutil import which
-from typing import TYPE_CHECKING, Final
-from unittest.mock import create_autospec
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 from python_discovery import PythonInfo
@@ -20,14 +19,17 @@ from virtualenv.create.creator import Creator
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
-_NEEDS_XONSH: Final = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+_NEEDS_XONSH: Final[pytest.MarkDecorator] = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+
+
+class _Xonsh(Protocol):
+    def __call__(self, script: str, **env: str) -> str: ...
 
 
 @pytest.fixture
-def xonsh() -> Callable[..., str]:
+def xonsh() -> _Xonsh:
     def run(script: str, **env: str) -> str:
         return subprocess.run(
             ["xonsh", "--no-rc", "-c", script],
@@ -62,45 +64,53 @@ def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str, caplog: py
 
 @_NEEDS_XONSH
 @pytest.mark.parametrize(
-    "original", [pytest.param(None, id="unset"), pytest.param("__virtualenv_was_not_set__", id="sentinel-value")]
+    ("prelude", "original"),
+    [
+        pytest.param("", None, id="unset"),
+        pytest.param("$PYTHONHOME = '__virtualenv_was_not_set__'\n", "__virtualenv_was_not_set__", id="sentinel-value"),
+    ],
 )
 def test_xonsh_restores_pythonhome_without_exported_sentinel(
-    tmp_path: Path, xonsh: Callable[..., str], original: str | None
+    tmp_path: Path, xonsh: _Xonsh, prelude: str, original: str | None
 ) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    activate: Final = session.creator.bin_dir / "activate.xsh"
     script: Final = (
-        "import json\n"
-        + ("" if original is None else f"$PYTHONHOME = {original!r}\n")
-        + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
-        + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
-        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
-        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
+        f'import json\n{prelude}source "{activate}"\n'
+        "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
+        "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
+        "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
     )
     assert [json.loads(line) for line in xonsh(script).splitlines()] == [original, None, original]
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        ("/path/to/tcl", "/path/to/tk", True),
-        (None, None, False),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            ["self.embedded_tcl_library = '/path/to/tcl'", "self.embedded_tk_library = '/path/to/tk'"],
+            id="present",
+        ),
+        pytest.param(
+            None,
+            None,
+            ["self.embedded_tcl_library = ''", "self.embedded_tk_library = ''"],
+            id="missing",
+        ),
     ],
 )
-def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, expected_lines) -> None:
     # GIVEN
-    interpreter = create_autospec(PythonInfo, instance=True)
-    interpreter.tcl_lib = tcl_lib
-    interpreter.tk_lib = tk_lib
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
 
-    creator = create_autospec(Creator, instance=True)
-    creator.dest = tmp_path
-    creator.bin_dir = bin_dir
-    creator.interpreter = interpreter
-    creator.pyenv_cfg = {}
-    creator.env_name = "my-env"
+    creator = mocker.create_autospec(
+        Creator, instance=True, dest=tmp_path, bin_dir=bin_dir, interpreter=interpreter, pyenv_cfg={}, env_name="my-env"
+    )
 
     activator = XonshActivator(Namespace(prompt=None))
 
@@ -115,15 +125,8 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert '"TCL_LIBRARY"' in content
     assert '"TK_LIBRARY"' in content
 
-    if present:
-        # Paths are embedded in __init__ as Python string literals and used
-        # from self.embedded_* attributes during activate().
-        assert "self.embedded_tcl_library = '/path/to/tcl'" in content
-        assert "self.embedded_tk_library = '/path/to/tk'" in content
-    else:
-        # Empty strings are falsy, so the override loop is skipped at runtime.
-        assert "self.embedded_tcl_library = ''" in content
-        assert "self.embedded_tk_library = ''" in content
+    # Paths are embedded in __init__ as Python string literals; empty strings are falsy, so the override loop is skipped
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.parametrize(
@@ -168,7 +171,7 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
 
 
 @_NEEDS_XONSH
-def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: Callable[..., str]) -> None:
+def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: _Xonsh) -> None:
     activations: Final[list[Path]] = []
     for name, library in (("first", "/test/library"), ("second", None)):
         session = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
@@ -190,7 +193,7 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: Callabl
 
 @_NEEDS_XONSH
 @pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
-def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: Callable[..., str], encoding: str) -> None:
+def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding: str) -> None:
     destination: Final = tmp_path / "中文環境"
     prompt: Final = "中文提示"
     session: Final = cli_run([str(destination), "--no-seed", "--activators", "xonsh", "--prompt", prompt])

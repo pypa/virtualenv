@@ -53,14 +53,9 @@ def test_flag(gen_parser_no_conf_env) -> None:
     assert result.clear is True
 
 
-@pytest.mark.parametrize("source", ["default", "env var"])
-def test_extend_action_resets_between_parses(gen_parser_no_conf_env, monkeypatch, source: str) -> None:
-    if source == "env var":
-        monkeypatch.setenv("VIRTUALENV_PATHS", "configured")
+def test_extend_action_resets_between_parses(gen_parser_no_conf_env) -> None:
     with gen_parser_no_conf_env() as (parser, run):
-        action = parser.add_argument(
-            "--paths", action=ExtendAction, type=str, nargs="+", default=["configured"] if source == "default" else []
-        )
+        action = parser.add_argument("--paths", action=ExtendAction, type=str, nargs="+", default=["configured"])
 
     args = ("--paths", "first", "second", "--paths", "third")
     for _ in range(2):
@@ -71,7 +66,25 @@ def test_extend_action_resets_between_parses(gen_parser_no_conf_env, monkeypatch
 
     result = run()
     assert result.paths == ["configured"]
-    assert result.get_source("paths") == source
+    assert result.get_source("paths") == "default"
+    assert action.default == ["configured"]
+
+
+def test_extend_action_resets_between_parses_from_env_var(gen_parser_no_conf_env, monkeypatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_PATHS", "configured")
+    with gen_parser_no_conf_env() as (parser, run):
+        action = parser.add_argument("--paths", action=ExtendAction, type=str, nargs="+", default=[])
+
+    args = ("--paths", "first", "second", "--paths", "third")
+    for _ in range(2):
+        result = run(*args)
+        assert result.paths == ["first", "second", "third"]
+        assert result.get_source("paths") == "cli"
+    assert run("--paths", "replacement").paths == ["replacement"]
+
+    result = run()
+    assert result.paths == ["configured"]
+    assert result.get_source("paths") == "env var"
     assert action.default == ["configured"]
 
 
@@ -118,6 +131,7 @@ def test_builtin_discovery_class_preferred(mocker) -> None:
     mocker.patch(
         "virtualenv.run.plugin.discovery._get_default_discovery",
         return_value=["pluginA", "pluginX", "builtin", "Aplugin", "Xplugin"],
+        autospec=True,
     )
 
     options = VirtualEnvOptions()

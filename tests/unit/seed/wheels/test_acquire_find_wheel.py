@@ -39,25 +39,31 @@ def test_find_bad_spec(spec: str) -> None:
         find_compatible_in_house("setuptools", spec, MAX, BUNDLE_FOLDER)
 
 
-@pytest.mark.parametrize(
-    ("other", "requested"),
-    [
-        pytest.param("26.2", "26.2.1rc1", id="prerelease"),
-        pytest.param("26.2.1rc1", "26.2.1rc1.dev2", id="prerelease-dev"),
-        pytest.param("26.2.1.post1", "26.2.1.post1.dev2", id="postrelease-dev"),
-        pytest.param("26.2.1", "26.2.1.1", id="four-release-components"),
-        pytest.param("26.2.1", "26.2.1+local.1", id="local"),
-        pytest.param("1!26.2.1", "1!26.2.2", id="epoch"),
-    ],
-)
-@pytest.mark.parametrize("available", [True, False], ids=["present", "missing"])
-def test_find_exact_version(
-    tmp_path: Path, make_wheel: Callable[[str], Path], other: str, requested: str, available: bool
+_EXACT_VERSION_CASES: Final[list[pytest.ParameterSet]] = [
+    pytest.param("26.2", "26.2.1rc1", id="prerelease"),
+    pytest.param("26.2.1rc1", "26.2.1rc1.dev2", id="prerelease-dev"),
+    pytest.param("26.2.1.post1", "26.2.1.post1.dev2", id="postrelease-dev"),
+    pytest.param("26.2.1", "26.2.1.1", id="four-release-components"),
+    pytest.param("26.2.1", "26.2.1+local.1", id="local"),
+    pytest.param("1!26.2.1", "1!26.2.2", id="epoch"),
+]
+
+
+@pytest.mark.parametrize(("other", "requested"), _EXACT_VERSION_CASES)
+def test_find_exact_version(tmp_path: Path, make_wheel: Callable[[str], Path], other: str, requested: str) -> None:
+    make_wheel(other)
+    expected: Final[Path] = make_wheel(requested)
+    result: Final[Wheel | None] = find_compatible_in_house("pip", f"=={requested}", "3.14", tmp_path)
+    assert result is not None
+    assert result.path == expected
+
+
+@pytest.mark.parametrize(("other", "requested"), _EXACT_VERSION_CASES)
+def test_find_exact_version_missing(
+    tmp_path: Path, make_wheel: Callable[[str], Path], other: str, requested: str
 ) -> None:
     make_wheel(other)
-    expected: Final[Path | None] = make_wheel(requested) if available else None
-    result: Final[Wheel | None] = find_compatible_in_house("pip", f"=={requested}", "3.14", tmp_path)
-    assert (result.path if result else None) == expected
+    assert find_compatible_in_house("pip", f"=={requested}", "3.14", tmp_path) is None
 
 
 @pytest.mark.parametrize(

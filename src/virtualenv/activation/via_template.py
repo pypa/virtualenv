@@ -28,39 +28,21 @@ else:
 
 
 class ViaTemplateActivator(Activator, ABC):
-    @abstractmethod
-    def templates(self) -> Iterator[str]:
-        raise NotImplementedError
-
-    @staticmethod
-    def quote(string: str) -> str:
-        """Quote strings in the activation script.
-
-        :param string: the string to quote
-
-        :returns: quoted string that works in the activation script
-
-        """
-        return shlex.quote(string)
+    """Base for activators that fill placeholders in a template file and write the result beside the interpreter."""
 
     def generate(self, creator: Creator) -> list[Path]:
+        """Write the activation scripts into the bin folder and set the prompt in ``pyvenv.cfg`` when one was given.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts
+
+        """
         dest_folder = creator.bin_dir
-        replacements = self.replacements(creator, dest_folder)
-        generated = self._generate(replacements, self.templates(), dest_folder, creator)
+        generated = self._generate(self.replacements(creator, dest_folder), self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
         return generated
-
-    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
-        return {
-            "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": str(creator.dest),
-            "__VIRTUAL_NAME__": creator.env_name,
-            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
-            "__PATH_SEP__": os.pathsep,
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
-        }
 
     def _generate(
         self, replacements: dict[str, str], templates: Iterable[str], to_folder: Path, creator: Creator
@@ -75,13 +57,22 @@ class ViaTemplateActivator(Activator, ABC):
             generated.append(dest)
         return generated
 
-    def as_name(self, template: str) -> str:
-        return template
-
     def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
+        """Fill the placeholders in a template file with the substituted values.
+
+        :param replacements: the raw placeholder values
+        :param template: the name of the template file
+        :param creator: the creator of the environment
+
+        :returns: the template text with every placeholder replaced
+
+        """
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
-        binary = read_binary(self.__module__, template)
-        text = binary.decode("utf-8", errors="strict")
+        # templates ship beside the activator's package, which is the class's own module when it is a package
+        package: Final = (
+            self.__module__ if hasattr(sys.modules[self.__module__], "__path__") else self.__module__.rpartition(".")[0]
+        )
+        text = read_binary(package, template).decode("utf-8", errors="strict")
         substitutions = self.substitutions(replacements, creator)
         # one pass over the template, so a placeholder name inside an already quoted value (a path component named
         # __VIRTUAL_NAME__) stays data instead of being rewritten by a later key from inside the finished literal
@@ -100,8 +91,59 @@ class ViaTemplateActivator(Activator, ABC):
         return {key: self.quote(self._repr_unicode(creator, value)) for key, value in replacements.items()}
 
     @staticmethod
+    def quote(string: str) -> str:
+        """Quote strings in the activation script.
+
+        :param string: the string to quote
+
+        :returns: quoted string that works in the activation script
+
+        """
+        return shlex.quote(string)
+
+    @staticmethod
+    # the quoting hook shares its signature with the other quoters, creator is unused
     def _repr_unicode(creator: Creator, value: str) -> str:  # ruff:ignore[unused-static-method-argument]
         return value  # by default, we just let it be unicode
+
+    def as_name(self, template: str) -> str:
+        """The file name of the generated script, which is the template name by default.
+
+        :param template: the name of the template file
+
+        :returns: the name of the generated script
+
+        """
+        return template
+
+    # the replacement hook signature, subclasses use these arguments
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
+        """The raw placeholder values shared by the activation scripts.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
+        return {
+            "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
+            "__VIRTUAL_ENV__": str(creator.dest),
+            "__VIRTUAL_NAME__": creator.env_name,
+            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
+            "__PATH_SEP__": os.pathsep,
+            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
+            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
+        }
+
+    @abstractmethod
+    def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :returns: the template file names
+
+        """
+        raise NotImplementedError
 
 
 __all__ = [

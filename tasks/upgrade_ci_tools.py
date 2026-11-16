@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Final
 from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
-    from _hashlib import HASH
     from typing import NotRequired, TypedDict
 
     class _Pin(TypedDict):
@@ -42,31 +41,6 @@ if TYPE_CHECKING:
 
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
-_TOOLS: Final[dict[str, tuple[str, bool, dict[str, str]]]] = {
-    "fish": (
-        "fish-shell/fish-shell",
-        False,
-        {"Linux": "fish-{version}-linux-x86_64.tar.xz", "macOS": "fish-{version}.pkg"},
-    ),
-    "nushell": (
-        "nushell/nushell",
-        False,
-        {
-            "Linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
-            "macOS": "nu-{version}-aarch64-apple-darwin.tar.gz",
-            "Windows": "nu-{version}-x86_64-pc-windows-msvc.zip",
-        },
-    ),
-    "rustpython": (
-        "RustPython/RustPython",
-        True,
-        {
-            "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
-            "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
-            "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
-        },
-    ),
-}
 # the REST release listing of RustPython/RustPython comes back empty, so query GraphQL, which sees its releases
 _QUERY: Final[str] = """
 query($owner: String!, $name: String!) {
@@ -80,12 +54,37 @@ query($owner: String!, $name: String!) {
 _NPM_COOLDOWN: Final[timedelta] = timedelta(days=7)
 
 
-def main() -> None:
+def _main() -> None:
     if not (token := os.environ.get("GH_TOKEN")):
         msg = "GH_TOKEN is required to query GitHub releases"
         raise SystemExit(msg)
     pins: Final[dict[str, _Pin]] = json.loads(_PINS.read_text(encoding="utf-8"))
-    for tool, (repository, prerelease, patterns) in _TOOLS.items():
+    tools: dict[str, tuple[str, bool, dict[str, str]]] = {
+        "fish": (
+            "fish-shell/fish-shell",
+            False,
+            {"Linux": "fish-{version}-linux-x86_64.tar.xz", "macOS": "fish-{version}.pkg"},
+        ),
+        "nushell": (
+            "nushell/nushell",
+            False,
+            {
+                "Linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
+                "macOS": "nu-{version}-aarch64-apple-darwin.tar.gz",
+                "Windows": "nu-{version}-x86_64-pc-windows-msvc.zip",
+            },
+        ),
+        "rustpython": (
+            "RustPython/RustPython",
+            True,
+            {
+                "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
+                "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
+                "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
+            },
+        ),
+    }
+    for tool, (repository, prerelease, patterns) in tools.items():
         # an unchanged tag keeps its recorded hashes, so an asset replaced under the same tag fails CI instead
         if (tag := _newest_tag(token, repository, prerelease=prerelease)) != pins[tool]["tag"]:
             pins[tool] = {"tag": tag, "assets": _pin_assets(token, repository, tag, patterns)}
@@ -130,7 +129,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
 
 
 def _sha256(repository: str, asset_id: int) -> str:
-    digest: Final[HASH] = hashlib.sha256()
+    digest: Final = hashlib.sha256()
     # no token: the API redirects to a signed storage URL, and urllib would forward the Authorization header there
     with urlopen(
         Request(
@@ -144,6 +143,9 @@ def _sha256(repository: str, asset_id: int) -> str:
     return digest.hexdigest()
 
 
+_NEWEST_NPM_VERSION_PATTERN: Final[re.Pattern[str]] = re.compile(r"\d+\.\d+\.\d+")
+
+
 def _newest_npm_version(package: str, pinned: str) -> str:
     with urlopen(Request(f"https://registry.npmjs.org/{package}"), timeout=30) as response:
         metadata: Final[_NpmPackage] = json.load(response)
@@ -155,7 +157,7 @@ def _newest_npm_version(package: str, pinned: str) -> str:
             *(
                 version
                 for version, published in metadata["time"].items()
-                if re.fullmatch(r"\d+\.\d+\.\d+", version)
+                if _NEWEST_NPM_VERSION_PATTERN.fullmatch(version)
                 and datetime.strptime(published, "%Y-%m-%dT%H:%M:%S.%f%z") <= cutoff
                 and version in metadata["versions"]
                 and not metadata["versions"][version].get("deprecated")
@@ -169,8 +171,8 @@ def _release_key(version: str) -> tuple[int, ...]:
     return tuple(map(int, version.split(".")))
 
 
-__all__ = ["main"]
+__all__ = []
 
 
 if __name__ == "__main__":
-    main()
+    _main()

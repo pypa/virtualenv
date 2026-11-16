@@ -148,8 +148,8 @@ Python 3.10 or newer to avoid them.
 The release sets ``SOURCE_DATE_EPOCH`` to the commit time of the tag (``git log -1 --pretty=%ct``). Rebuilding the tag
 with the same value reproduces the sdist byte for byte.
 
-The wheel, whose SBOM `hatch_build.py <https://github.com/pypa/virtualenv/blob/main/hatch_build.py>`_ writes, reproduces
-byte for byte on any operating system and architecture when these inputs match the release:
+The wheel, whose SBOM `python-sbom <https://github.com/tox-dev/python-sbom>`_ writes, reproduces byte for byte on any
+operating system and architecture when these inputs match the release:
 
 - the source tree, as a git checkout of the tag, since the SBOM records the commit;
 - ``SOURCE_DATE_EPOCH``;
