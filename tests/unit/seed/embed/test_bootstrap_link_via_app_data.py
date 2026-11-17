@@ -21,7 +21,7 @@ import pytest
 from python_discovery import PythonInfo
 from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # disk cache  # fmt: skip
 
-from virtualenv.info import fs_supports_symlink
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
@@ -262,6 +262,7 @@ def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
     assert (session.creator.purelib / "pip" / "__init__.py").is_file()
 
 
+@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
 @pytest.mark.parametrize(
     "name",
     [
