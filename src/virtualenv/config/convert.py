@@ -108,11 +108,7 @@ class ListType(TypeData):
         :returns: the converted items
 
         """  # simplint: ignore[function-docstring]  # existing docs
-        values = self.split_values(value)
-        result = []
-        for a_value in values:
-            result.extend(a_value.split(os.pathsep))
-        return [self.as_type(i) for i in result]
+        return [self.as_type(i) for a_value in self.split_values(value) for i in a_value.split(os.pathsep)]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
         """Split a raw value into its items: by line when it has several lines, otherwise by comma.
