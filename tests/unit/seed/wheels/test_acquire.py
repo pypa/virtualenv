@@ -14,7 +14,7 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, pip_wheel_env_run
-from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, MAX, MIN, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
 from virtualenv.seed.wheels.util import Wheel
 
@@ -34,6 +34,13 @@ def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
     mocker.patch("virtualenv.seed.wheels.acquire.from_bundle", return_value=None, autospec=True)
     with pytest.raises(RuntimeError, match="could not find the embedded pip"):
         pip_wheel_env_run([], session_app_data, os.environ)
+
+
+@pytest.mark.parametrize("for_py_version", [MIN, MAX])
+def test_pip_wheel_env_run_uses_pip_for_target_version(session_app_data, for_py_version: str) -> None:
+    env: Final = pip_wheel_env_run([], session_app_data, os.environ, for_py_version)
+
+    assert Path(env["PYTHONPATH"]).name == get_embed_wheel("pip", for_py_version).name
 
 
 @pytest.mark.parametrize(

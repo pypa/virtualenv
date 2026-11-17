@@ -51,9 +51,11 @@ class PipInvoke(BaseEmbed):
         """
         if not self.enabled:
             return
-        with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
+        for_py_version: Final = creator.interpreter.version_release_str
+        with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
             self._detach_links(creator)
-            self._execute(cmd, pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env))
+            # pip runs under the interpreter of the environment, so it must be a pip that supports that version
+            self._execute(cmd, pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env, for_py_version))
         if os.name == "posix":
             self._rewrite_launchers(creator)
 

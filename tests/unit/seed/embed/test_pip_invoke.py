@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.info import fs_supports_symlink
-from virtualenv.run import cli_run
-from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
+from virtualenv.run import cli_run, session_via_cli
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, MAX, MIN, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
@@ -209,6 +210,26 @@ def test_base_bootstrap_via_pip_invoke(
     ]
     session: Final = cli_run([*command, *excluded])
     assert {path.name for path in session.creator.purelib.iterdir()} & {"pip", "setuptools"} == expected
+
+
+def test_pip_invoke_runs_pip_for_environment_python(tmp_path: Path, mocker: MockerFixture) -> None:
+    session: Final = session_via_cli([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--no-download",
+        "--no-periodic-update",
+    ])
+    session.creator.run()
+    # no other interpreter is needed: report a version whose bundled pip differs from the one of this interpreter
+    target: Final = {MIN: MAX}.get(session.creator.interpreter.version_release_str, MIN)
+    mocker.patch.object(PythonInfo, "version_release_str", new_callable=mocker.PropertyMock, return_value=target)
+    process: Final = mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True)
+    process.return_value.configure_mock(returncode=0)
+
+    session.seeder.run(session.creator)
+
+    assert Path(process.call_args.kwargs["env"]["PYTHONPATH"]).name == get_embed_wheel("pip", target).name
 
 
 def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:
