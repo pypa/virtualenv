@@ -12,6 +12,7 @@ import zipfile
 from base64 import urlsafe_b64encode
 from importlib.metadata import PathDistribution
 from pathlib import Path
+from shutil import copy2
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call, run
 from threading import Thread
@@ -21,11 +22,12 @@ import pytest
 from python_discovery import PythonInfo
 from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # disk cache  # fmt: skip
 
+from virtualenv.app_data import ReadOnlyAppData
 from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
-from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
@@ -448,6 +450,18 @@ def read_only_dir(directory):
             for filename in filenames:
                 name = os.path.join(root, filename)
                 os.chmod(name, os.stat(name).st_mode | write)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
+def test_read_only_app_data_extracts_from_populated_house(temp_app_data: Path) -> None:
+    wheel: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").path
+    (house := temp_app_data / "wheel" / "house").mkdir(parents=True)
+    copy2(wheel, house / wheel.name)
+    app_data: Final = ReadOnlyAppData(str(temp_app_data))
+
+    # this is how a zipapp makes its embedded wheels available, see ensure_extracted
+    with read_only_dir(temp_app_data), app_data.extract(wheel, lambda: app_data.house) as extracted:
+        assert extracted == app_data.house / wheel.name
 
 
 @pytest.mark.slow

@@ -110,8 +110,9 @@ class AppDataDiskFolder(AppData):
         :yields: the path of the extracted file
 
         """
-        # callers pass a callable for to_folder, despite the Path | None annotation
-        root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[not-callable]
+        # callers pass a callable for to_folder, despite the Path | None annotation; use the app data's own lock type,
+        # so a read-only app data does not create lock files in the folder
+        root = type(self.lock)(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[not-callable]
         with root.lock_for_key(path.name):
             dest = root.path / path.name
             if not dest.exists():
