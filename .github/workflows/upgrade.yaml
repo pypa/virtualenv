@@ -18,7 +18,7 @@ jobs:
       patch-artifact-id: ${{ steps.upload-patch.outputs.artifact-id }}
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@v2.22.3
+        uses: step-security/harden-runner@v2.22.4
         with:
           egress-policy: block
           disable-sudo-and-containers: true
