@@ -381,7 +381,11 @@ def _select_version(u_log: UpdateLog, of_version: str | None, wheel: Wheel | Non
             if version.wheel.has_version(of_version):
                 return version
         return None
-    for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
+    # successive updates append newer downloads of older minors, so the stored log is not guaranteed
+    # sorted; newest-first keeps the per-minor groups whole and the iteration deterministic, or a patch
+    # landing in a later update would shadow the newest usable version behind its own minor's grace
+    entries = sorted(u_log.versions, key=lambda entry: entry.wheel.parsed_version, reverse=True)
+    for _, group in groupby(entries, key=lambda entry: entry.wheel.version_tuple[0:2]):
         # use only latest patch version per minor, earlier assumed to be buggy
         all_patches = list(group)
         ignore_grace_period_minor = any(version for version in all_patches if version.use(now))

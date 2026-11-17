@@ -29,6 +29,8 @@ from virtualenv.seed.wheels.periodic_update import (
     NewVersion,
     UnverifiedWheelError,
     UpdateLog,
+    # ruff:ignore[import-private-name]  # the selection logic is the unit under test
+    _select_version,
     add_wheel_to_update_log,
     do_update,
     dump_datetime,
@@ -1037,3 +1039,36 @@ def test_update_uses_selected_installation_and_environment(
         True,
     )
     assert {"99.0.0", "supplied"} <= set(capfd.readouterr().out.splitlines())
+
+
+def _version_entry(name: str, days_ago: int, now: datetime) -> NewVersion:
+    return NewVersion(
+        filename=name,
+        found_date=now - timedelta(days=days_ago),
+        release_date=now - timedelta(days=days_ago),
+        source="periodic",
+    )
+
+
+@pytest.mark.parametrize(
+    "order",
+    [
+        pytest.param(["25.1.2", "25.2.0", "25.1.1"], id="split-group"),
+        pytest.param(["25.2.0", "25.1.2", "25.1.1"], id="sorted"),
+    ],
+)
+def test_select_version_picks_newest_usable_regardless_of_log_order(order: list[str], tmp_path: Path) -> None:
+    now = datetime.now(tz=timezone.utc)
+    # successive updates append newer downloads of older minors, so the stored log is not guaranteed
+    # sorted; the newest usable version must win regardless of the order the updates stored
+    u_log = UpdateLog(
+        started=now - timedelta(days=36),
+        completed=None,
+        versions=[_version_entry(f"pip-{v}-py3-none-any.whl", 35, now) for v in order],
+        periodic=True,
+    )
+    bundled = Wheel(tmp_path / "pip-25.1.0-py3-none-any.whl")
+
+    selected = _select_version(u_log, None, bundled, now)
+
+    assert selected.filename == "pip-25.2.0-py3-none-any.whl"
