@@ -152,7 +152,8 @@ def safe_delete(dest: Path) -> None:
         # path holds files whose long path is longer. The extended-length \\?\ form has no such limit, but it skips
         # normalization, so the path is made absolute first.
         target = os.path.abspath(target)
-        # keep a path already in that form, and a \\.\ device path, which the UNC form would point at a server named .
+        # a path already in the \\?\ form is not prefixed again, nor is a \\.\ device path, which the UNC form would
+        # turn into a server named "."
         if not target.startswith(("\\\\?\\", "\\\\.\\")):
             target = f"\\\\?\\UNC\\{target[2:]}" if target.startswith("\\\\") else f"\\\\?\\{target}"
     if sys.version_info >= (3, 12):
