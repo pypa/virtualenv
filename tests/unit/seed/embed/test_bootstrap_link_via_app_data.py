@@ -851,6 +851,43 @@ def test_seed_image_short_path_limits(
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+@pytest.mark.parametrize(
+    ("installer_class", "longest", "shortened"),
+    [
+        pytest.param(CopyPipInstall, "{}.py", 0, id="copy"),
+        pytest.param(SymlinkPipInstall, "{}.py", 1, id="symlink-compiled-file"),
+        pytest.param(
+            SymlinkPipInstall,
+            f"__pycache__/{{}}.{sys.implementation.cache_tag}.pyc",
+            1,
+            id="symlink-temporary-file",
+        ),
+    ],
+)
+# the parametrize fields are passed as separate arguments
+def test_seed_image_short_path_counts_compiled_files(  # ruff:ignore[too-many-arguments]
+    tmp_path: Path,
+    mocker: MockerFixture,
+    no_seed_session: Session,
+    installer_class: type[CopyPipInstall | SymlinkPipInstall],
+    longest: str,
+    shortened: int,
+) -> None:
+    image: Final = tmp_path / "image"
+    image.mkdir()
+    (image / "content").touch()
+    # the symlink installer compiles inside the image, writing each compiled file through a temporary one with a longer
+    # name, so a module whose source or compiled file is the longest that fits under MAX_PATH needs the short path there
+    module: Final = "m" * (258 - len(str(image)) - len(longest.format("")))
+    wheel: Final = tmp_path / "pkg.whl"
+    with zipfile.ZipFile(str(wheel), "w") as archive:
+        archive.writestr(f"{module}.py", "payload")
+    shorten: Final = mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image))
+    found: Final = installer_class(wheel, no_seed_session.creator, image).has_image()
+    assert (found, shorten.call_count) == (True, shortened)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
 def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixture, no_seed_session: Session) -> None:
     wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
     image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
@@ -858,7 +895,7 @@ def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixtur
     mocker.patch(
         "virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall._short_path_if_needed",
         autospec=True,
-        side_effect=lambda _zip_ref, folder: folder.with_name(folder.name.upper()),
+        side_effect=lambda _names, folder: folder.with_name(folder.name.upper()),
     )
     synced: Final = mocker.spy(CopyPipInstall, "_sync")
     built: Final = CopyPipInstall(wheel, no_seed_session.creator, image)

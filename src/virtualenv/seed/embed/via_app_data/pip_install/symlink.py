@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+import posixpath
 from stat import S_IREAD, S_IRGRP, S_IROTH
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import safe_delete, set_tree
@@ -53,6 +54,22 @@ class SymlinkPipInstall(PipInstall):
                 pass
             new_files.add(file)
         return new_files
+
+    def _image_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        names: Final = super()._image_names(zip_ref)
+        version: Final = self._creator.interpreter.version_info
+        tag: Final = f"{self._creator.interpreter.implementation.lower()}-{version.major}{version.minor}"
+        # compileall writes each pyc into the image through a temporary file that adds a dot and an id of up to 20
+        # digits; four spare ones cover a longer cache tag, such as GraalPy's, which carries its own version
+        compiled: Final = f".{tag}.pyc.{'0' * 24}"
+        return [
+            *names,
+            *(
+                posixpath.join(posixpath.dirname(name), "__pycache__", f"{posixpath.basename(name)[:-3]}{compiled}")
+                for name in names
+                if name.endswith(".py")
+            ),
+        ]
 
     def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
         extra_record_data.update(folder.iterdir())

@@ -180,7 +180,8 @@ class PipInstall(ABC):
         self._image_dir.parent.mkdir(parents=True, exist_ok=True)
         staging.mkdir()
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-            folder: Final = self._short_path_if_needed(zip_ref, staging)
+            names: Final = self._image_names(zip_ref)
+            folder: Final = self._short_path_if_needed(names, staging)
             try:
                 self._populate_image(zip_ref, folder)
                 # keep the short path Windows may have switched to, the install reads through it
@@ -192,13 +193,15 @@ class PipInstall(ABC):
                 safe_delete(folder)
                 raise
             # built ends in two long names again, so the files may only fit under the short path of the image itself
-            self._image_dir = self._short_path_if_needed(zip_ref, built)
+            self._image_dir = self._short_path_if_needed(names, built)
+
+    def _image_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        return zip_ref.namelist()
 
     @staticmethod
-    def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
+    def _short_path_if_needed(names: list[str], folder: Path) -> Path:
         if os.name != "nt":
             return folder
-        names: Final = zip_ref.namelist()
         prefix: Final = len(str(folder)) + 1  # the separator before each entry
         longest_file: Final = prefix + max(len(i) for i in names)
         longest_dir: Final = prefix + max(len(posixpath.dirname(i)) for i in names)
@@ -266,7 +269,7 @@ class PipInstall(ABC):
             return False
         if os.name == "nt":
             with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-                self._image_dir = self._short_path_if_needed(zip_ref, self._image_dir)
+                self._image_dir = self._short_path_if_needed(self._image_names(zip_ref), self._image_dir)
         return True
 
 
