@@ -20,7 +20,7 @@ jobs:
       contents: read # check out the tagged source
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@v2.22.3
+        uses: step-security/harden-runner@v2.22.4
         with:
           egress-policy: block
           disable-sudo-and-containers: true
@@ -101,7 +101,7 @@ jobs:
       artifact-metadata: write
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@v2.22.3
+        uses: step-security/harden-runner@v2.22.4
         with:
           egress-policy: block
           disable-sudo-and-containers: true
@@ -189,7 +189,7 @@ jobs:
       id-token: write
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@v2.22.3
+        uses: step-security/harden-runner@v2.22.4
         with:
           egress-policy: block
           allowed-endpoints: >-
@@ -384,7 +384,7 @@ jobs:
       attestations: read # verify the zipapp provenance
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@v2.22.3
+        uses: step-security/harden-runner@v2.22.4
         with:
           egress-policy: block
           disable-sudo-and-containers: true

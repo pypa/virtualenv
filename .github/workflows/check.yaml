@@ -368,7 +368,7 @@ jobs:
           persist-credentials: false
       - name: 🛡️ Initialize CodeQL
         id: codeql
-        uses: github/codeql-action/init@v4.39.2
+        uses: github/codeql-action/init@v4.39.3
         with:
           languages: python
       - name: 🎨 Check query formatting
