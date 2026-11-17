@@ -101,3 +101,13 @@ def test_value_alias(monkeypatch, mocker) -> None:
     monkeypatch.setenv("VIRTUALENV_ALWAYS_COPY", "1")
     result = session_via_cli(["venv"])
     assert result.creator.symlinks is False
+
+
+@pytest.mark.usefixtures("_empty_conf")
+@pytest.mark.parametrize(
+    "value", [pytest.param("bash\npython", id="newline"), pytest.param("bash, python", id="comma")]
+)
+def test_activators_via_env_var(monkeypatch, value) -> None:
+    monkeypatch.setenv("VIRTUALENV_ACTIVATORS", value)
+    session = session_via_cli(["venv"])
+    assert [type(activator).__name__ for activator in session.activators] == ["BashActivator", "PythonActivator"]
