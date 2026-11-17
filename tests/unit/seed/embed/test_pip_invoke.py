@@ -12,6 +12,7 @@ import pytest
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed import pip_invoke
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
@@ -209,6 +210,21 @@ def test_base_bootstrap_via_pip_invoke(
     ]
     session: Final = cli_run([*command, *excluded])
     assert {path.name for path in session.creator.purelib.iterdir()} & {"pip", "setuptools"} == expected
+
+
+def test_pip_invoke_runs_pip_for_target_version(tmp_path: Path, current_fastest: str, mocker: MockerFixture) -> None:
+    env_run: Final = mocker.spy(pip_invoke, "pip_wheel_env_run")
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--creator",
+        current_fastest,
+        "--seeder",
+        "pip",
+        "--no-download",
+        "--no-periodic-update",
+    ])
+
+    assert env_run.call_args.args[3] == session.creator.interpreter.version_release_str
 
 
 def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:

@@ -210,12 +210,15 @@ def _check_version_spec(version_spec: str | None) -> None:
         raise ValueError(msg) from exception
 
 
-def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
+def pip_wheel_env_run(
+    search_dirs: list[Path], app_data: AppData, env: dict[str, str], for_py_version: str | None = None
+) -> dict[str, str]:
     """Build the environment that runs pip from the cached wheels, with the options that keep it offline.
 
     :param search_dirs: the folders searched for wheels
     :param app_data: the application data folder
     :param env: the environment variables to extend
+    :param for_py_version: the version of the Python that runs pip, defaults to the running interpreter
 
     :returns: the environment variables to run pip with
 
@@ -227,7 +230,7 @@ def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str,
     wheel = get_wheel(
         distribution="pip",
         version=None,
-        for_py_version=f"{sys.version_info.major}.{sys.version_info.minor}",
+        for_py_version=for_py_version or f"{sys.version_info.major}.{sys.version_info.minor}",
         search_dirs=search_dirs,
         download=False,
         app_data=app_data,
