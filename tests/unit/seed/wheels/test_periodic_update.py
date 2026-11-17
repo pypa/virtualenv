@@ -1067,8 +1067,7 @@ def test_select_version_picks_newest_usable_regardless_of_log_order(order: list[
         versions=[_version_entry(f"pip-{v}-py3-none-any.whl", 35, now) for v in order],
         periodic=True,
     )
-    bundled = Wheel(tmp_path / "pip-25.1.0-py3-none-any.whl")
 
-    selected = _select_version(u_log, None, bundled, now)
+    selected = _select_version(u_log, None, Wheel(tmp_path / "pip-25.1.0-py3-none-any.whl"), now)
 
     assert selected.filename == "pip-25.2.0-py3-none-any.whl"
