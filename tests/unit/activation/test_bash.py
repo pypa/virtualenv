@@ -485,6 +485,51 @@ def test_bash_activate_sources_under_dash(tmp_path: Path, current_fastest: str) 
     assert (result.returncode, result.stdout) == (0, f"{dest}|base ")
 
 
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param(
+            ["bash", "--norc", "--noprofile", "-O", "expand_aliases", "-c"],
+            id="bash",
+            marks=pytest.mark.skipif(_BASH is None, reason="bash is not installed"),
+        ),
+        pytest.param(
+            ["zsh", "-f", "-c"],
+            id="zsh",
+            marks=pytest.mark.skipif(shutil.which("zsh") is None, reason="zsh is not installed"),
+        ),
+    ],
+)
+def test_bash_activate_with_pydoc_alias(tmp_path: Path, current_fastest: str, shell: list[str]) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+
+    # the alias is defined on its own line, so it is in effect when the shell parses the sourced script
+    result = subprocess.run(
+        [
+            *shell,
+            'alias pydoc="python3 -m pydoc"\nsource "$1" && printf "%s" "$VIRTUAL_ENV"',
+            shell[0],
+            str(dest / "bin" / "activate"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, str(dest), "")
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
