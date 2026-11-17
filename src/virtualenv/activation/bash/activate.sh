@@ -80,6 +80,10 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
+# Make sure to unalias pydoc if it's already there. This must run before the if block below is parsed: the shell
+# expands aliases while parsing, so an alias would turn the pydoc function definition into a syntax error
+alias pydoc 2>/dev/null >/dev/null && unalias pydoc || true
+
 if [ ! -d __VIRTUAL_ENV__ ] &&
     { [ -z "${BASH_VERSION-}" ] || [ -z "${BASH_SOURCE-}" ]; }; then
     echo "Relocating this activation script requires sourcing it from bash." >&2
@@ -178,9 +182,6 @@ else
         PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
         unset _VIRTUAL_PROMPT
     fi
-
-    # Make sure to unalias pydoc if it's already there
-    alias pydoc 2>/dev/null >/dev/null && unalias pydoc || true
 
     pydoc () {
         python -m pydoc "$@"
