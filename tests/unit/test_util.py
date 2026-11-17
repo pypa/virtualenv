@@ -513,10 +513,14 @@ def test_safe_delete_refuses_a_directory_link_as_the_root(
     link: Final = tmp_path / "link"
     make_link(link, outside)
 
-    with pytest.raises(OSError, match="Cannot call rmtree on a symbolic link"):
+    with pytest.raises(OSError) as raised:  # ruff: ignore[pytest-raises-too-broad] # str() differs on POSIX
         safe_delete(link)
 
-    assert (os.path.lexists(link), kept.read_text(encoding="utf-8")) == (True, "kept")
+    assert (raised.value.args, os.path.lexists(link), kept.read_text(encoding="utf-8")) == (
+        ("Cannot call rmtree on a symbolic link",),
+        True,
+        "kept",
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
