@@ -79,7 +79,7 @@ repos:
       - id: zizmor
         priority: 8
   - repo: https://github.com/crate-ci/typos
-    rev: 2611abd15acb0c2e317fb9e45855aabb8b35a414 # frozen: v1.52.1
+    rev: 4c8b7f51ca60df14e3c5ca82770dfbbe6c3dae85 # frozen: v1.52.0
     hooks:
       - id: typos
         priority: 8
