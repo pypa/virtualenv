@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_PYPY, IS_WIN
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
@@ -97,6 +97,7 @@ def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
     )
 
 
+@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
     ("name", "mode"),

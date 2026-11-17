@@ -7,6 +7,7 @@ import pytest
 from prompt_matrix import PROMPT_CASES, SHELLS, generate_script, prompt_shown, run_prompt, unavailable_mark
 
 from virtualenv.activation.activator import Activator
+from virtualenv.info import IS_PYPY
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -26,6 +27,7 @@ def test_activator_prompt_cwd(monkeypatch, tmp_path) -> None:
     assert activator.flag_prompt == "magic"
 
 
+@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "case",
