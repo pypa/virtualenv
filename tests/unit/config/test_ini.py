@@ -127,3 +127,13 @@ def test_ini_value_is_read_literally(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     creator: Final = session_via_cli(["venv"]).creator
     assert (creator.prompt, creator.clear) == (prompt, True)
+
+
+def test_ini_activators_on_separate_lines(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    custom_ini: Final[Path] = tmp_path / "conf.ini"
+    custom_ini.write_text("[virtualenv]\nactivators =\n    bash\n    python\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(custom_ini))
+
+    session: Final = session_via_cli([str(tmp_path / "venv")])
+
+    assert [type(activator).__name__ for activator in session.activators] == ["BashActivator", "PythonActivator"]

@@ -59,7 +59,8 @@ class ActivationSelector(ComponentBuilder):
         )
 
     def _extract_activators(self, entered_str: str) -> list[str]:
-        elements = [e.strip() for e in entered_str.split(",") if e.strip()]
+        # a config file or environment variable may also list the activators on separate lines
+        elements = [name for e in ",".join(entered_str.splitlines()).split(",") if (name := e.strip())]
         if missing := [e for e in elements if e not in self.possible]:
             msg = f"the following activators are not available {','.join(missing)}"
             raise ArgumentTypeError(msg)
