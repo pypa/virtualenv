@@ -6,6 +6,85 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-7:
+
+**********************
+ 21.15.7 (2026-11-17)
+**********************
+
+.. _release-21-15-7-fixed:
+
+Fixed
+-----
+
+- Fix seeding from a deep ``--app-data`` folder on Windows without long path support, which failed with ``WinError 206``
+  or ``WinError 3``. The check for whether the seed wheel image needs its 8.3 short path now counts the separator and
+  the 248 character limit on directories, and the install reads the image through its short path whether it was just
+  built or reused from an earlier run (:pr:`3545`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Honor ``VIRTUALENV_NO_DOWNLOAD=1`` and ``no_download = true``: the parser ignored both, so ``download = true`` in the
+  configuration file overrode the environment variable. The opt-out now wins when both flags are set at the same level,
+  as it does for ``--no-venv-redirect`` (:pr:`3533`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Keep a version specifier such as ``>=3.9,<3.10`` as one value when it is given through ``VIRTUALENV_PYTHON`` or the
+  config file on a single line. It was split at the comma, so the upper bound was dropped and a newer interpreter could
+  be picked (:pr:`3552`) by :user:`hemtilva` and :user:`gaborbernat`.
+- Leave a FIFO named ``.venv`` in the parent folder alone when ``--venv-redirect`` is on, instead of hanging forever
+  after the environment is created while waiting to read from it (:pr:`3523`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Make ``VIRTUALENV_VENV_REDIRECT=1`` write the ``.venv`` redirect when ``no_venv_redirect = true`` is set in the
+  configuration file, since environment variables rank above the configuration file (:pr:`3525`) by :user:`darrenhuai`
+  and :user:`gaborbernat`.
+- Match a pinned seed version such as ``--pip 26.3.0`` or ``--pip v26.3`` against the bundled, cached or extra search
+  dir wheel by PEP 440 equality rather than by exact string. A spelling that differs from the wheel filename skipped the
+  bundled wheel and downloaded the same release from PyPI, even under ``--no-download``, so it failed offline. The
+  ``embed``, ``bundle`` and ``none`` keywords now accept surrounding whitespace, such as a trailing carriage return
+  (:pr:`3526`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Name the option, the value and the available choices when ``VIRTUALENV_CREATOR``, ``VIRTUALENV_SEEDER`` or
+  ``virtualenv.ini`` sets a creator or seeder that is not available, as ``VIRTUALENV_DISCOVERY`` already does. The error
+  used to be ``No implementation for PythonInfo(...)``, which blamed the interpreter (:pr:`3524`) by :user:`darrenhuai`
+  and :user:`gaborbernat`.
+- Pass the environment supplied to the Python API to the stdlib venv creator, symlink seed compilation and periodic
+  wheel update subprocesses instead of inheriting the parent process environment (:pr:`3542`) by :user:`Muneer320` and
+  :user:`gaborbernat`.
+- Point ``sys.exec_prefix`` at the environment when ``activate_this.py`` activates it, as ``sys.prefix`` already is.
+  Before, ``sysconfig`` kept the ``platlib`` path at the base Python on POSIX, so pip in the activated process installed
+  compiled packages into the system ``site-packages`` instead of the environment (:pr:`3547`) by
+  :user:`HarshJamgaonkar05` and :user:`gaborbernat`.
+- Preserve separate file records when seeding from a wheel whose ``RECORD`` file has no final newline (:pr:`3527`) by
+  :user:`Jinyong-Li` and :user:`gaborbernat`.
+- Read and write seed package ``RECORD`` files as CSV, preserving filenames containing commas, quotes or newlines during
+  seeding and removal of an existing seed package (:pr:`3559`) by :user:`Ramji-Purwar` and :user:`gaborbernat`.
+- Reject an empty or whitespace-only ``--app-data``, and a whitespace-only ``VIRTUALENV_APP_DATA``. An empty one, and on
+  Windows one made only of spaces, made the current directory the cache, so ``--reset-app-data`` deleted it (:pr:`3522`)
+  by :user:`darrenhuai` and :user:`gaborbernat`.
+- Release the thread lock for each nested app-data lock acquisition, so waiting threads can acquire it after the
+  outermost context exits (:pr:`3558`) by :user:`Ramji-Purwar` and :user:`gaborbernat`.
+- Restore an existing PowerShell ``pydoc`` function when deactivating an environment, including after repeated
+  activation or switching environments (:pr:`3529`) by :user:`subotac` and :user:`gaborbernat`.
+- Restore module exports renamed or removed by the simplint 0.11.0 update so existing imports continue to work
+  (:pr:`3548`) by :user:`gaborbernat`.
+- Stop logging ``SystemExit: None`` as an error after a successful ``virtualenv --upgrade-embed-wheels``. The command
+  already exited with status 0; its output now ends with the upgrade summary instead of a line that looks like a crash
+  (:pr:`3532`) by :user:`darrenhuai` and :user:`gaborbernat`.
+
+.. _release-21-15-7-documentation:
+
+Documentation
+-------------
+
+- Name ``virtualenv.seed.embed.base_embed`` as the module distributions patch to turn ``PERIODIC_UPDATE_ON_BY_DEFAULT``
+  off in the distribution maintainer guide; it pointed at ``virtualenv.seed.wheels.embed``, which has no such name
+  (:pr:`3534`) by :user:`darrenhuai` and :user:`gaborbernat`.
+
+.. _release-21-15-7-packaging:
+
+Packaging
+---------
+
+- Write the wheel and zipapp SBOMs with `python-sbom <https://github.com/tox-dev/python-sbom>`_ instead of virtualenv's
+  own generator. Each bundled seed wheel is now identified by its path inside the wheel rather than by its PyPI purl, so
+  the wheel's and the zipapp's SBOMs name it alike; the metadata also names the SBOM file and its repository, and the
+  build tools include python-sbom and virtualenv's content provider (:pr:`3530`) by :user:`gaborbernat`.
+
 .. _release-21-15-6:
 
 **********************
