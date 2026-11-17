@@ -6,6 +6,31 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-8:
+
+**********************
+ 21.15.8 (2026-11-17)
+**********************
+
+.. _release-21-15-8-fixed:
+
+Fixed
+-----
+
+- Accept ``activators`` listed on separate lines in the config file or the ``VIRTUALENV_ACTIVATORS`` environment
+  variable, as the documentation describes for multi-value options. Such a value was rejected as an unknown activator
+  (:pr:`3566`) by :user:`arpangupta1805` and :user:`gaborbernat`.
+- Activate the environment again from bash and zsh when a ``pydoc`` alias is defined. Since 21.14.9 the alias was
+  expanded in the ``pydoc`` function definition, so ``source bin/activate`` stopped with a syntax error and did not
+  activate (:pr:`3563`) by :user:`arpangupta1805`.
+- Create environments from the zipapp with ``--read-only-app-data`` when the app data already holds the seed wheels.
+  Making the embedded wheels available tried to create a lock file in the read-only wheel folder, so seeding failed with
+  a ``PermissionError`` (:pr:`3565`) by :user:`arpangupta1805`.
+- Run the ``pip`` seeder with the embedded ``pip`` that supports the Python version of the environment, not the one of
+  the Python running virtualenv. Seeding a Python 3.9 environment with ``--seeder pip`` from Python 3.10 or later
+  failed, as the newer ``pip`` does not run on Python 3.9 (:pr:`3564`) by :user:`arpangupta1805` and
+  :user:`gaborbernat`.
+
 .. _release-21-15-7:
 
 **********************
