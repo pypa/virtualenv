@@ -7,6 +7,7 @@ import hashlib
 import io
 import logging
 import os
+import re
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
@@ -25,6 +26,7 @@ from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[im
 from virtualenv.app_data import ReadOnlyAppData
 from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
@@ -885,6 +887,38 @@ def test_seed_image_short_path_counts_compiled_files(  # ruff:ignore[too-many-ar
     shorten: Final = mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image))
     found: Final = installer_class(wheel, no_seed_session.creator, image).has_image()
     assert (found, shorten.call_count) == (True, shortened)
+
+
+# the cache tag differs between implementations, and 24 zeros stand in for the id of the temporary file
+_COMPILED_SUFFIX: Final[re.Pattern[str]] = re.compile(r"\.[^./]+\.pyc\.0{24}$")
+
+
+@pytest.mark.parametrize(
+    ("installer_class", "compiled"),
+    [
+        pytest.param(CopyPipInstall, [], id="copy"),
+        pytest.param(SymlinkPipInstall, ["pkg/__pycache__/mod.<tag>.pyc.<id>"], id="symlink"),
+    ],
+)
+def test_seed_image_build_measures_compiled_files(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    no_seed_session: Session,
+    installer_class: type[CopyPipInstall | SymlinkPipInstall],
+    compiled: list[str],
+) -> None:
+    wheel: Final = tmp_path / "pkg-1-py3-none-any.whl"
+    with zipfile.ZipFile(str(wheel), "w") as archive:
+        archive.writestr("pkg/mod.py", "")
+        archive.writestr("pkg-1.dist-info/RECORD", "")
+    measured: Final = mocker.spy(PipInstall, "_short_path_if_needed")
+    image: Final = tmp_path / "image" / installer_class.__name__ / wheel.stem
+    installer_class(wheel, no_seed_session.creator, image).build_image()
+    # the staging folder and the built image are both measured
+    names: Final = [
+        [_COMPILED_SUFFIX.sub(".<tag>.pyc.<id>", name) for name in call.args[0]] for call in measured.call_args_list
+    ]
+    assert names == [["pkg/mod.py", "pkg-1.dist-info/RECORD", *compiled]] * 2
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
