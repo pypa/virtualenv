@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import sys
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING, Final
 
 from packaging.specifiers import InvalidSpecifier, Specifier
 from packaging.utils import canonicalize_name
+from packaging.version import VERSION_PATTERN
 
 from .bundle import from_bundle
 from .periodic_update import UnverifiedWheelError, add_wheel_to_update_log, verify_wheel_digest
@@ -145,20 +147,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         raise ValueError(msg)
     _check_version_spec(version_spec)
     to_download: Final = f"{distribution}{version_spec or ''}"
-    if to_download.lower().endswith((
-        ".zip",
-        ".whl",
-        ".tar",
-        ".tar.gz",
-        ".tgz",
-        ".tar.bz2",
-        ".tbz",
-        ".tar.xz",
-        ".txz",
-        ".tlz",
-        ".tar.lz",
-        ".tar.lzma",
-    )):
+    if to_download.lower().endswith(_ARCHIVE_SUFFIXES):
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
@@ -260,7 +249,93 @@ def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None)
     return result
 
 
+# pip reads a requirement ending in one of these as a path to a local archive, not as a release on the index
+_ARCHIVE_SUFFIXES: Final[tuple[str, ...]] = (
+    ".zip",
+    ".whl",
+    ".tar",
+    ".tar.gz",
+    ".tgz",
+    ".tar.bz2",
+    ".tbz",
+    ".tar.xz",
+    ".txz",
+    ".tlz",
+    ".tar.lz",
+    ".tar.lzma",
+)
+
+
 _CHECK_VERSION_SPEC_PATTERN: Final[re.Pattern[str]] = re.compile(r"(?:==|<)[A-Za-z0-9._+!-]+")
+
+
+_RELEASE_VERSION_RE: Final[re.Pattern[str]] = re.compile(VERSION_PATTERN, re.VERBOSE | re.IGNORECASE)
+
+
+def is_yanked(
+    wheel: Wheel, for_py_version: str, search_dirs: list[Path], app_data: AppData, env: dict[str, str]
+) -> bool:
+    """Whether the configured package index marks the release of a wheel as yanked.
+
+    pip answers, so its index, credential, proxy and certificate settings apply as they do for downloads.
+
+    :param wheel: the wheel whose release to look up
+    :param for_py_version: the Python version the release must support, as ``major.minor``
+    :param search_dirs: extra directories pip searches for wheels
+    :param app_data: the application data folder
+    :param env: the environment variables the pip invocation runs with
+
+    :returns: ``True`` when the index reports the release as yanked, ``False`` when it does not or pip cannot tell
+
+    """
+    # the name comes from the update log on disk, so it must not reach pip as anything but a pinned release
+    if not (
+        _DISTRIBUTION_RE.fullmatch(wheel.distribution) and _RELEASE_VERSION_RE.fullmatch(wheel.version)
+    ) or wheel.version.lower().endswith(_ARCHIVE_SUFFIXES):
+        LOGGER.warning("could not check whether %s is yanked: not a valid release name", wheel.name)
+        return False
+    with TemporaryDirectory() as folder:
+        report: Final = Path(folder) / "report.json"
+        # pip still selects a yanked release pinned with ==, and its report carries the index's yank flag; the report
+        # goes to a file because a verbose pip configuration prints log lines to stdout
+        cmd: Final = [
+            sys.executable,
+            "-c",
+            PIP_RUN,
+            "install",
+            "--dry-run",
+            "--ignore-installed",
+            "--no-deps",
+            "--only-binary=:all:",
+            "--disable-pip-version-check",
+            "--quiet",
+            "--python-version",
+            for_py_version,
+            "--report",
+            str(report),
+            f"{wheel.distribution}=={wheel.version}",
+        ]
+        process: Final = Popen(
+            cmd,
+            env=pip_wheel_env_run(search_dirs, app_data, env),
+            stdout=PIPE,
+            stderr=PIPE,
+            universal_newlines=True,
+            encoding="utf-8",
+        )
+        _, err = process.communicate()
+        if process.returncode != 0:
+            LOGGER.warning("could not check whether %s is yanked: %s", wheel.name, err.strip())
+            return False
+        try:
+            content: Final = json.loads(report.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exception:
+            LOGGER.warning("could not check whether %s is yanked: %r", wheel.name, exception)
+            return False
+    entries: Final = content.get("install") if isinstance(content, dict) else None
+    return isinstance(entries, list) and any(
+        isinstance(entry, dict) and entry.get("is_yanked") is True for entry in entries
+    )
 
 
 def find_compatible_in_house(
@@ -292,5 +367,6 @@ __all__ = [
     "download_wheel",
     "find_compatible_in_house",
     "get_wheel",
+    "is_yanked",
     "pip_wheel_env_run",
 ]

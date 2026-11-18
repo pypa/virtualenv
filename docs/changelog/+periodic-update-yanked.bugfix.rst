@@ -1,3 +1,3 @@
-Stop seeding a release yanked from PyPI once the next periodic update or ``--upgrade-embed-wheels`` runs. The update
-drops logged releases PyPI reports as yanked whenever it finds a new release or a logged one newer than the newest one
-``pip`` offers.
+Stop seeding a release yanked from the package index once the next periodic update or ``--upgrade-embed-wheels`` runs.
+The update asks ``pip`` about logged releases newer than the bundled wheel, so the configured index, credentials and
+proxy apply.

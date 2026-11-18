@@ -455,18 +455,15 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
 
 def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
-    digests = _pypi_release_file(wheel).get("digests")
-    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
-    return sha256 if isinstance(sha256, str) else None
-
-
-def _pypi_release_file(wheel: Wheel) -> _PyPIJson:
     content = _pypi_get_distribution_info_cached(wheel.distribution)
     releases = content.get("releases") if isinstance(content, dict) else None
     entries = releases.get(wheel.version) if isinstance(releases, dict) else None
     if not isinstance(entries, list):
-        return {}
-    return next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
+        return None
+    entry = next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
+    digests = entry.get("digests")
+    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
+    return sha256 if isinstance(sha256, str) else None
 
 
 def _pypi_get_distribution_info_cached(distribution: str) -> _PyPIJson | None:
@@ -644,11 +641,17 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
     versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
-    # check the log for yanked releases when the release dates of new finds already fetched PyPI's JSON, or when a
-    # logged version is newer than anything pip offers, as pip skips yanked releases
+    # pip skips yanked releases, so a logged release above its newest offer or below a new find may have been yanked;
+    # an update that finds nothing new skips the check, and the bundled wheel wins over any release at or below it
     if versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions)):
+        # acquire imports this module, so the import must wait until it is needed
+        from . import acquire  # ruff:ignore[import-outside-top-level]
+
         update_versions = [
-            version for version in update_versions if _pypi_release_file(version.wheel).get("yanked") is not True
+            version
+            for version in update_versions
+            if (embed_version is not None and version.wheel.parsed_version <= embed_version)
+            or not acquire.is_yanked(version.wheel, for_py_version, search_dirs, app_data, dict(os.environ))
         ]
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic

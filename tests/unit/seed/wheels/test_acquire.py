@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Final, NamedTuple
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, is_yanked, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, MAX, MIN, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
 from virtualenv.seed.wheels.util import Wheel
@@ -388,3 +388,48 @@ def test_download_wheel_rejects_bad_version_spec(
 def test_download_wheel_rejects_archive_local_version(suffix: str, session_app_data: AppDataDiskFolder) -> None:
     with pytest.raises(ValueError, match="archive-like requirement"):
         download_wheel("pip", f"==1+local.{suffix}", "3.14", [], session_app_data, session_app_data.house, {})
+
+
+@pytest.mark.parametrize(
+    ("yank", "version", "verbose", "expected"),
+    [
+        pytest.param(' data-yanked="broken"', None, "0", True, id="yanked"),
+        pytest.param(' data-yanked="broken"', None, "2", True, id="yanked-verbose-pip"),
+        pytest.param("", None, "0", False, id="listed"),
+        pytest.param(' data-yanked="broken"', "99.0", "0", False, id="missing"),
+    ],
+)
+def test_is_yanked_asks_the_configured_index(  # ruff:ignore[too-many-arguments]  # fixtures plus four parameters
+    tmp_path: Path, session_app_data: AppDataDiskFolder, yank: str, version: str | None, verbose: str, expected: bool
+) -> None:
+    for_py_version: Final = f"{sys.version_info.major}.{sys.version_info.minor}"
+    bundled: Final = get_embed_wheel("pip", for_py_version)
+    assert bundled is not None
+    project: Final = tmp_path / "simple" / "pip"
+    project.mkdir(parents=True)
+    (project / bundled.name).write_bytes(bundled.path.read_bytes())
+    (project / "index.html").write_text(f'<a href="{bundled.name}"{yank}>{bundled.name}</a>\n', encoding="utf-8")
+    wheel: Final = Wheel(Path(bundled.name.replace(bundled.version, version or bundled.version)))
+    env: Final = {
+        **os.environ,
+        "PIP_INDEX_URL": (tmp_path / "simple").as_uri(),
+        "PIP_CONFIG_FILE": os.devnull,
+        "PIP_VERBOSE": verbose,
+    }
+
+    assert is_yanked(wheel, for_py_version, [], session_app_data, env) is expected
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("pip@file:x-1.0-py3-none-any.whl", id="url-distribution"),
+        pytest.param("pip-1..0-py3-none-any.whl", id="malformed-version"),
+        pytest.param("pip-1+local.tar.gz-py3-none-any.whl", id="archive-version"),
+    ],
+)
+def test_is_yanked_rejects_logged_name_that_is_not_a_release(
+    session_app_data: AppDataDiskFolder, caplog: pytest.LogCaptureFixture, name: str
+) -> None:
+    assert is_yanked(Wheel(Path(name)), "3.14", [], session_app_data, {}) is False
+    assert "not a valid release name" in caplog.text
