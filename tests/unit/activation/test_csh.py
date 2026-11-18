@@ -314,6 +314,24 @@ def test_cshell_deactivate_restores_path(csh_plain_activate: Path, original: str
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 @pytest.mark.parametrize(
+    ("original", "suffix"),
+    [
+        pytest.param("", "", id="empty"),
+        pytest.param(":first", "::first", id="leading-empty-entry"),
+        pytest.param("/usr/bin:/bin", ":/usr/bin:/bin", id="populated"),
+    ],
+)
+def test_cshell_prepends_bin_to_path(csh_plain_activate: Path, original: str, suffix: str) -> None:
+    driver = f'setenv PATH "{original}"\nsource {csh_plain_activate}\necho "PATH=<$PATH>"\n'
+
+    result = run([_TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+
+    assert result.stdout == f"PATH=<{csh_plain_activate.parent}{suffix}>\n", result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
+@pytest.mark.parametrize(
     ("original_env", "restored"),
     [
         pytest.param({}, "<unset>", id="unset"),

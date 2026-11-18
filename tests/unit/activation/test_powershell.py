@@ -97,6 +97,40 @@ def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
     )
 
 
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.parametrize(
+    ("original", "suffix"),
+    [
+        pytest.param("", "", id="empty"),
+        pytest.param(f"{os.pathsep}first", f"{os.pathsep}{os.pathsep}first", id="leading-empty-entry"),
+        pytest.param("first", f"{os.pathsep}first", id="populated"),
+    ],
+)
+def test_powershell_prepends_bin_to_path(tmp_path: Path, powershell: str, original: str, suffix: str) -> None:
+    session: Final = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
+    driver: Final = tmp_path / "path.ps1"
+    driver.write_text(
+        f"$env:PATH = {PowerShellActivator.quote(original)}\n"
+        f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}\n"
+        "Write-Output $env:PATH\n",
+        encoding="utf-8-sig",
+    )
+    result: Final = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (
+        0,
+        f"{session.creator.dest}/{_VENV_BIN_DIR}{suffix}\n",
+        "",
+    )
+
+
 @pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
