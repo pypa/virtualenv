@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "python_discovery",
+    "virtualenv.util.error",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+    "virtualenv.util.text",
+    f"{__spec__.parent}.builtin.cpython.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.builtin.cpython.mac_os",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.store",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Final

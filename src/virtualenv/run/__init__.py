@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "functools",
+    "logging",
+    "virtualenv.app_data",
+    "virtualenv.config.cli.parser",
+    "virtualenv.report",
+    "virtualenv.seed.wheels.periodic_update",
+    "virtualenv.version",
+    f"{__spec__.parent}.plugin.activators",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.creators",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.discovery",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.seeders",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.session",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 from argparse import ArgumentParser

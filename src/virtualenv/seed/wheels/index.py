@@ -2,6 +2,20 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "base64",
+    "http.client",
+    "json",
+    "locale",
+    "netrc",
+    "packaging.utils",
+    "pathlib",
+    "platformdirs",
+    "ssl",
+    "urllib.parse",
+    "urllib.request",
+]
+
 import codecs
 import configparser
 import json

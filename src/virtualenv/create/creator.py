@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "ast",
+    "collections",
+    "json",
+    "textwrap",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+    "virtualenv.util.text",
+    "virtualenv.version",
+    f"{__spec__.parent}.pyenv_cfg",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 import logging
 import os

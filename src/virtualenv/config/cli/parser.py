@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "shutil",
+    "virtualenv.config.convert",
+    "virtualenv.config.env_var",
+    "virtualenv.config.ini",
+]
+
 import os
 import shutil
 from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace

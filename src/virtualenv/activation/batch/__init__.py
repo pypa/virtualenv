@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["virtualenv.util.text"]
+
 import logging  # isort: skip # fmt: skip
 import os  # isort: skip # fmt: skip
 from types import MappingProxyType  # isort: skip # fmt: skip

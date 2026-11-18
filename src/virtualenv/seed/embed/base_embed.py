@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "pathlib",
+    "virtualenv.config.cli.parser",
+    "virtualenv.seed.wheels",
+    "virtualenv.seed.wheels.embed",
+]
+
 import logging
 from abc import ABC
 from argparse import SUPPRESS, ArgumentTypeError

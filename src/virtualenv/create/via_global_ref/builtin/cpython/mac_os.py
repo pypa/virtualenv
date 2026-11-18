@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "struct",
+    "subprocess",
+    "textwrap",
+    "virtualenv.create.via_global_ref.builtin.ref",
+    "virtualenv.create.via_global_ref.builtin.via_global_self_do",
+]
+
 import logging
 import os
 import struct

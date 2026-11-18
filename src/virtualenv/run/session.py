@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "json",
+    "typing_extensions",
+    "virtualenv.activation.batch",
+    "virtualenv.config.cli.parser",
+]
+
 import json
 import logging
 import sys

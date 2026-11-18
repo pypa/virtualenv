@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "csv",
+    "io",
+    "itertools",
+    "pathlib",
+    "shlex",
+    "tempfile",
+    "virtualenv.util.path",
+    "zipfile",
+    f"{__spec__.parent}._safe_extract_zip",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import csv
 import io
 import logging

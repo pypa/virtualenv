@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["pathlib"]
+
 from pathlib import Path  # fmt: skip
 from typing import TYPE_CHECKING  # fmt: skip
 

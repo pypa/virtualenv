@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["python_discovery"]
+
 from python_discovery import PythonSpec
 
 __all__ = [

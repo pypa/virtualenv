@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "packaging.specifiers",
+    "packaging.utils",
+    "pathlib",
+    "subprocess",
+    "tempfile",
+    f"{__spec__.parent}.bundle",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.periodic_update",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import re
 import sys

@@ -7,6 +7,11 @@ modes it can support given the constraints: e.g. can the file system symlink, ca
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "virtualenv.util.path",
+]
+
 import os
 import sys
 from abc import ABC, abstractmethod
