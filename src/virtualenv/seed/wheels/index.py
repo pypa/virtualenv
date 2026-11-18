@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import codecs
 import configparser
 import json
 import locale
@@ -65,9 +66,13 @@ def yanked_files(distribution: str, env: Mapping[str, str]) -> frozenset[str] | 
 def _pip_settings(env: Mapping[str, str]) -> dict[str, str]:
     # mirrors pip's precedence: later configuration files win, [download] wins over [global], PIP_* wins over both
     parser: Final = _PipConfigParser()
-    if env.get("PIP_CONFIG_FILE") != os.devnull:
+    if (env_file := env.get("PIP_CONFIG_FILE")) != os.devnull:
         # pip reads its configuration files in the locale encoding unless Python runs in UTF-8 mode
-        parser.read(_pip_config_files(env), encoding="utf-8" if sys.flags.utf8_mode else _locale_encoding())
+        encoding: Final = "utf-8" if sys.flags.utf8_mode else _locale_encoding()
+        # pip skips the per-user files when PIP_CONFIG_FILE names an existing file; reading it answers that without a
+        # separate check, which before Python 3.14 raised on a folder it may not enter
+        env_file_read: Final = bool(env_file and _PipConfigParser().read(env_file, encoding=encoding))
+        parser.read(_pip_config_files(env_file, skip_user=env_file_read), encoding=encoding)
     settings: Final = {
         key: value
         for section in ("global", "download")
@@ -86,7 +91,13 @@ class _PipConfigParser(configparser.RawConfigParser):
         return optionstr.lower().replace("_", "-")
 
 
-def _pip_config_files(env: Mapping[str, str]) -> list[Path]:
+def _locale_encoding() -> str:
+    if sys.version_info >= (3, 11):
+        return locale.getencoding()
+    return locale.getpreferredencoding(do_setlocale=False)
+
+
+def _pip_config_files(env_file: str | None, skip_user: bool) -> list[Path]:
     name: Final = "pip.ini" if sys.platform == "win32" else "pip.conf"
     if sys.platform == "darwin":
         site_folders = site_data_dir("pip", appauthor=False, multipath=True).split(os.pathsep)
@@ -95,27 +106,26 @@ def _pip_config_files(env: Mapping[str, str]) -> list[Path]:
     else:
         site_folders = [*site_config_dir("pip", appauthor=False, multipath=True).split(os.pathsep), "/etc"]
     files: Final = [Path(folder, name) for folder in site_folders]
-    env_file: Final = env.get("PIP_CONFIG_FILE")
-    # pip skips the per-user files when PIP_CONFIG_FILE names an existing file
-    # os.path answers False where Path raises on a folder it may not enter, before Python 3.14
-    if not (env_file and os.path.exists(env_file)):
-        user_folder = Path(user_config_dir("pip", appauthor=False, roaming=True))
-        if sys.platform == "darwin":
-            mac_folder = user_data_dir("pip", appauthor=False, roaming=True)
-            user_folder = Path(mac_folder if os.path.isdir(mac_folder) else os.path.expanduser("~/.config/pip"))
-        # os.path leaves ~ as is when no home folder is known, where Path.expanduser raises
-        legacy_folder = os.path.expanduser(os.path.join("~", "pip" if sys.platform == "win32" else ".pip"))
-        files.extend((Path(legacy_folder, name), user_folder / name))
+    if not skip_user:
+        files.extend(_pip_user_config_files(name))
     files.append(Path(sys.prefix, name))
     if env_file:
         files.append(Path(env_file))
     return files
 
 
-def _locale_encoding() -> str:
-    if sys.version_info >= (3, 11):
-        return locale.getencoding()
-    return locale.getpreferredencoding(do_setlocale=False)
+def _pip_user_config_files(name: str) -> list[Path]:
+    try:
+        user_folder = Path(user_config_dir("pip", appauthor=False, roaming=True))
+        if sys.platform == "darwin":
+            mac_folder = user_data_dir("pip", appauthor=False, roaming=True)
+            user_folder = Path(mac_folder if os.path.isdir(mac_folder) else os.path.expanduser("~/.config/pip"))
+    # platformdirs raises when no home folder is known, and without one there is no per-user configuration
+    except RuntimeError:
+        return []
+    # os.path leaves ~ as is when no home folder is known, where Path.expanduser raises
+    legacy_folder: Final = os.path.expanduser(os.path.join("~", "pip" if sys.platform == "win32" else ".pip"))
+    return [Path(legacy_folder, name), user_folder / name]
 
 
 def _read_project_page(
@@ -212,11 +222,11 @@ def _fetch(
         msg = f"the project page ended after {len(body)} of {declared} bytes"
         raise ValueError(msg)
     try:
-        text = body.decode(charset, errors="replace")
-    # an unknown charset, or a codec that is not a text encoding such as base64
+        # bytes.decode refuses a codec such as base64 on CPython by this flag, while GraalPy runs it and fails inside
+        text_encoding = getattr(codecs.lookup(charset), "_is_text_encoding", True)
     except LookupError:
-        text = body.decode("utf-8", errors="replace")
-    return content_type, text
+        text_encoding = False
+    return content_type, body.decode(charset if text_encoding else "utf-8", errors="replace")
 
 
 def _credentials(
@@ -253,8 +263,3 @@ def _handlers(settings: Mapping[str, str]) -> list[BaseHandler]:
     if cert := settings.get("cert"):
         handlers.append(HTTPSHandler(context=ssl.create_default_context(cafile=cert)))
     return handlers
-
-
-__all__ = [
-    "yanked_files",
-]

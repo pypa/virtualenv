@@ -343,7 +343,19 @@ def _no_passwd_entry(uid: int) -> NoReturn:
     raise KeyError(uid)
 
 
-@pytest.mark.parametrize("charset", ["utf8mb4", "base64"])
+def test_yanked_files_reads_the_index_when_the_user_folders_are_unknown(tmp_path: Path, mocker: MockerFixture) -> None:
+    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    # platformdirs raises like this on macOS without a home folder, where it ignores XDG variables
+    mocker.patch(
+        "virtualenv.seed.wheels.index.user_config_dir",
+        autospec=True,
+        side_effect=RuntimeError("could not determine the home directory for '~/Library/Application Support'"),
+    )
+
+    assert yanked_files("pip", {"PIP_INDEX_URL": index}) == {"pip-2.0-py3-none-any.whl"}
+
+
+@pytest.mark.parametrize("charset", ["utf8mb4", "base64", "zlib", "rot13"])
 def test_yanked_files_reads_a_page_with_a_charset_it_cannot_decode_with(server: _Server, charset: str) -> None:
     html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
     server.pages["/simple/pip/"] = _Page(200, {"Content-Type": f"text/html; charset={charset}"}, html)
@@ -490,10 +502,6 @@ class _Failure(NamedTuple):
             id="netrc-malformed",
         ),
         # no HOME and no passwd entry, as in a container run under an arbitrary user id
-        # Windows finds its configuration folders without a home folder, so the index must refuse there
-        pytest.param(
-            _Failure({"PIP_CONFIG_FILE": ""}, auth="Basic never", homeless=True), id="home-unknown-for-config"
-        ),
         pytest.param(_Failure({}, auth="Basic never", homeless=True), id="home-unknown-for-netrc"),
         pytest.param(
             _Failure(
