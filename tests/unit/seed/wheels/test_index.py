@@ -408,6 +408,19 @@ def test_yanked_files_reads_a_page_whose_length_is_not_a_decimal_number(server: 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
 
+def test_yanked_files_reports_markup_the_parser_rejects_as_unknown(server: _Server, mocker: MockerFixture) -> None:
+    html: Final = f"{_html({'pip-2.0-py3-none-any.whl': ''})}<![foo bar]>"
+    server.pages["/simple/pip/"] = _Page(200, {"Content-Type": "text/html"}, html.encode())
+    # html.parser before its 2025 hardening, as in 3.12.0, raised AssertionError on such a marked section
+    mocker.patch(
+        "html.parser.HTMLParser.parse_html_declaration",
+        autospec=True,
+        side_effect=AssertionError("unknown status keyword 'foo ' in marked section"),
+    )
+
+    assert yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}) is None
+
+
 def test_yanked_files_reads_a_chunked_page(server: _Server) -> None:
     html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
     chunked: Final = f"{len(html):x}\r\n".encode() + html + b"\r\n0\r\n\r\n"

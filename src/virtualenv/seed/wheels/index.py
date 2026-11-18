@@ -145,7 +145,12 @@ def _read_project_page(
 def _parse_project_page(content_type: str, body: str) -> dict[str, bool]:
     if content_type != "application/vnd.pypi.simple.v1+json":
         anchors: Final = _AnchorParser()
-        anchors.feed(body)
+        try:
+            anchors.feed(body)
+        except AssertionError as exception:
+            # html.parser raised AssertionError on some malformed markup until its 2025 hardening, as in 3.12.0
+            msg = f"the project page has markup the parser rejects: {exception}"
+            raise ValueError(msg) from exception
         return anchors.files
     document: Final = json.loads(body)
     files: Final = document.get("files") if isinstance(document, dict) else None

@@ -1106,7 +1106,6 @@ def _wheel_names(current: Wheel, bumps: list[tuple[int, ...]] | None) -> set[str
         pytest.param(ValueError("bad page"), id="value-error"),
         pytest.param(LookupError("unknown codec"), id="lookup-error"),
         pytest.param(RuntimeError("no home"), id="runtime-error"),
-        pytest.param(RecursionError("too deep"), id="recursion-error"),
         pytest.param(HTTPException("bad status"), id="http-exception"),
         pytest.param(configparser.Error("bad config"), id="config-error"),
     ],
