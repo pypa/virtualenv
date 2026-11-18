@@ -1022,6 +1022,9 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch) -> None:
         str(result.creator.script("pip")),
         "--disable-pip-version-check",
         "install",
+        # build with the seeded setuptools instead of downloading one into an isolated build environment
+        "--no-build-isolation",
+        "--no-index",
         str(dest),
         "-vv",
     ]
