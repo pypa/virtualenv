@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import glob
 import io
 import logging
 import os
@@ -147,10 +146,13 @@ class PipInstall(ABC):
 
     @staticmethod
     def _bytecode_of(source: Path) -> list[Path]:
+        # a cache file is <stem>.<tag>.pyc or <stem>.<tag>.opt-<n>.pyc; foo.bar.<tag>.pyc is the bytecode of another
+        # module, foo.bar.py, which may belong to another distribution
+        cached: Final = re.compile(rf"{re.escape(source.stem)}\.[^.]+(?:\.opt-\d+)?\.pyc")
         return [
             source.with_suffix(".pyc"),
             source.with_suffix(".pyo"),
-            *source.parent.glob(f"__pycache__/{glob.escape(source.stem)}.*.pyc"),
+            *(path for path in (source.parent / "__pycache__").glob("*.pyc") if cached.fullmatch(path.name)),
         ]
 
     @staticmethod

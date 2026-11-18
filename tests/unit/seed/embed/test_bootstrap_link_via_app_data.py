@@ -265,6 +265,22 @@ def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None
     assert outside.is_dir()
 
 
+def test_seed_metadata_keeps_bytecode_of_dotted_module(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    cache: Final = session.creator.purelib / "__pycache__"
+    cache.mkdir(exist_ok=True)
+    (session.creator.purelib / "foo.py").write_text("", encoding="utf-8")
+    own: Final = [cache / "foo.cpython-314.pyc", cache / "foo.cpython-314.opt-1.pyc"]
+    other: Final = cache / "foo.bar.cpython-314.pyc"
+    for path in [*own, other]:
+        path.write_bytes(b"")
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record.write_text(f"{record.read_text(encoding='utf-8')}\nfoo.py,,", encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert (other.exists(), [path.exists() for path in own]) == (True, [False, False])
+
+
 @pytest.mark.parametrize(
     ("install_args", "run_args"),
     [
