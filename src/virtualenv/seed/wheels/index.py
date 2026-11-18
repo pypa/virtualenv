@@ -147,8 +147,9 @@ def _parse_project_page(content_type: str, body: str) -> dict[str, bool]:
         anchors: Final = _AnchorParser()
         try:
             anchors.feed(body)
-        except AssertionError as exception:
-            # html.parser raised AssertionError on some malformed markup until its 2025 hardening, as in 3.12.0
+        except (AssertionError, NotImplementedError) as exception:
+            # until its 2025 hardening html.parser rejected some malformed markup by raising: NotImplementedError on 3.9,
+            # AssertionError from 3.10
             msg = f"the project page has markup the parser rejects: {exception}"
             raise ValueError(msg) from exception
         return anchors.files
