@@ -263,3 +263,8 @@ def _handlers(settings: Mapping[str, str]) -> list[BaseHandler]:
     if cert := settings.get("cert"):
         handlers.append(HTTPSHandler(context=ssl.create_default_context(cafile=cert)))
     return handlers
+
+
+__all__ = [
+    "yanked_files",
+]
