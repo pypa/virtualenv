@@ -37,6 +37,7 @@ def module_entry_version(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
     return run
 
 
+@pytest.mark.skipif(getattr(sys.flags, "safe_path", False), reason="-P keeps the working directory on sys.path")
 def test_module_entry_removes_implicit_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
@@ -205,7 +206,8 @@ def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pyth
     check_output(
         [str(executable), *flags, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
         cwd=target,
-        env={**os.environ, "PYTHONPATH": pythonpath},
+        # an inherited PYTHONSAFEPATH would run every case as -P
+        env={**{k: v for k, v in os.environ.items() if k != "PYTHONSAFEPATH"}, "PYTHONPATH": pythonpath},
         text=True,
         encoding="utf-8",
     )
