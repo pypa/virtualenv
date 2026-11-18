@@ -13,10 +13,11 @@ import sys
 import zipapp
 import zipfile
 from collections import defaultdict
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from packaging.markers import Marker
@@ -54,13 +55,17 @@ def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dest", default="virtualenv.pyz")
     parser.add_argument("--wheel-dir", type=Path, help="bundle the virtualenv wheel from here instead of building one")
+    parser.add_argument("--wheel-cache", type=Path, help="reuse locked wheels from here and store the ones downloaded")
     args = parser.parse_args()
     with TemporaryDirectory() as folder:
-        _create_zipapp(os.path.abspath(args.dest), _get_wheels_for_support_versions(Path(folder), args.wheel_dir))
+        _create_zipapp(
+            os.path.abspath(args.dest),
+            _get_wheels_for_support_versions(Path(folder), args.wheel_dir, args.wheel_cache),
+        )
 
 
 def _get_wheels_for_support_versions(
-    folder: Path, wheel_dir: Path | None
+    folder: Path, wheel_dir: Path | None, wheel_cache: Path | None
 ) -> dict[str, dict[str, dict[str, WheelForVersion]]]:
     packages: defaultdict[str, dict[str, dict[str, WheelForVersion]]] = defaultdict(lambda: {"==any": {}})
     wheel = _build_virtualenv_wheel(folder) if wheel_dir is None else next(wheel_dir.glob("virtualenv-*.whl"))
@@ -68,7 +73,7 @@ def _get_wheels_for_support_versions(
     for package in tomllib.loads(_LOCK.read_text(encoding="utf-8"))["packages"]:
         if not (versions := python_versions_for(package)):
             continue
-        wheel = _download_locked_wheel(package, folder)
+        wheel = _download_locked_wheel(package, folder if wheel_cache is None else wheel_cache)
         packages[package["name"]]["==any"][wheel.name] = WheelForVersion(wheel, versions)
     for name, platforms in packages.items():
         for wheel_name, wheel_for_version in platforms["==any"].items():
@@ -95,10 +100,18 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
         msg = f"{_LOCK.name} has no pure-Python wheel for {package['name']} {package['version']}"
         raise RuntimeError(msg)
     url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
+    dest: Final = into / url.rsplit("/", 1)[1]
+    with suppress(FileNotFoundError):
+        if hashlib.sha256(dest.read_bytes()).hexdigest() == expected:
+            return dest
     if (actual := hashlib.sha256(content := fetch(url)).hexdigest()) != expected:
         msg = f"{url} has sha256 {actual}, but {_LOCK.name} records {expected}"
         raise RuntimeError(msg)
-    (dest := into / url.rsplit("/", 1)[1]).write_bytes(content)
+    into.mkdir(parents=True, exist_ok=True)
+    # parallel builds can share a wheel cache, so a reader must never see a partly written wheel
+    with NamedTemporaryFile(dir=into, delete=False) as staged:
+        staged.write(content)
+    Path(staged.name).replace(dest)
     return dest
 
 

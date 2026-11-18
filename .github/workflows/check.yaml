@@ -169,6 +169,32 @@ jobs:
           echo "Set TOXENV=$py"
       - name: 📦 Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
+      - name: 📦 Restore zipapp wheel cache
+        id: zipapp-wheels
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: .tox/zipapp-wheels
+          key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
+          enableCrossOsArchive: true
+      # the zipapp tests bundle these wheels, so fetch them here once per lock instead of from every test run
+      - name: 📦 Fill zipapp wheel cache
+        if: steps.zipapp-wheels.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python_path=".tox/$TOXENV/Scripts/python.exe"
+          else
+            python_path=".tox/$TOXENV/bin/python"
+          fi
+          "$python_path" -m tasks.make_zipapp --wheel-dir .tox/.pkg/dist --wheel-cache .tox/zipapp-wheels \
+            --dest "$RUNNER_TEMP/virtualenv.pyz"
+      - name: 📦 Save zipapp wheel cache
+        if: steps.zipapp-wheels.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: .tox/zipapp-wheels
+          key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
+          enableCrossOsArchive: true
       - name: 🧪 Verify pytest diagnostics
         if: matrix.diagnostics
         shell: bash

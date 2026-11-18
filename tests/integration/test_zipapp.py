@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
 import shutil
@@ -17,9 +18,13 @@ from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.periodic_update import trigger_update
+from virtualenv.version import __version__
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from types import ModuleType
+
+    from pytest_mock import MockerFixture, MockType
 
 _HERE: Final[Path] = Path(__file__).parent
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
@@ -82,11 +87,18 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
     # bundle the wheel tox built and installed, as building from source downloads the build backend
-    if package := os.environ.get("TOX_PACKAGE"):
-        cmd.extend(["--wheel-dir", str(Path(package).parent)])
-    subprocess.run(cmd, check=True, timeout=300, cwd=_HERE.parent.parent)
+    wheel_name: Final = f"virtualenv-{__version__}-py3-none-any.whl"
+    if (dist := os.environ.get("ZIPAPP_WHEEL_DIR")) and (wheel := Path(dist) / wheel_name).is_file():
+        shutil.copy2(wheel, into)
+        cmd.extend(["--wheel-dir", str(into)])
+    subprocess.run([*cmd, *_wheel_cache()], check=True, timeout=300, cwd=_HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))
+
+
+def _wheel_cache() -> list[str]:
+    # tox points this at a cache CI restores, so the build bundles the locked wheels without downloading them
+    return ["--wheel-cache", cache] if (cache := os.environ.get("ZIPAPP_WHEEL_CACHE")) else []
 
 
 @pytest.fixture(scope="session")
@@ -217,6 +229,7 @@ def test_zipapp_bundles_prebuilt_wheel(zipapp_build_env: str, tmp_path: Path) ->
             str(pyz := tmp_path / "virtualenv.pyz"),
             "--wheel-dir",
             str(wheel_dir),
+            *_wheel_cache(),
         ],
         check=True,
         timeout=300,
@@ -255,3 +268,71 @@ def test_zipapp_lock_covers_supported_python() -> None:
 
     assert "3.15" in versions
     assert "3.8" not in versions
+
+
+_LOCKED_CONTENT: Final[bytes] = b"wheel"
+_LOCKED_NAME: Final[str] = "demo-1.0-py3-none-any.whl"
+
+
+@pytest.fixture
+def make_zipapp() -> ModuleType:
+    return pytest.importorskip("tasks.make_zipapp")
+
+
+@pytest.fixture
+def fetch(mocker: MockerFixture, make_zipapp: ModuleType) -> MockType:
+    return mocker.patch.object(make_zipapp, "fetch", autospec=True, return_value=_LOCKED_CONTENT)
+
+
+@pytest.fixture
+def download(make_zipapp: ModuleType) -> Callable[[Path], Path]:
+    package: Final = {
+        "name": "demo",
+        "version": "1.0",
+        "wheels": [
+            {
+                "url": f"https://files.example/{_LOCKED_NAME}",
+                "hashes": {"sha256": hashlib.sha256(_LOCKED_CONTENT).hexdigest()},
+            }
+        ],
+    }
+    # only a full zipapp build reaches the download otherwise
+    function: Final = make_zipapp._download_locked_wheel  # ruff:ignore[private-member-access]
+    return lambda into: function(package, into)
+
+
+def test_locked_wheel_reused_from_cache_when_hash_matches(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    (tmp_path / _LOCKED_NAME).write_bytes(_LOCKED_CONTENT)
+
+    assert download(tmp_path).read_bytes() == _LOCKED_CONTENT
+    fetch.assert_not_called()
+
+
+def test_locked_wheel_fetched_into_new_cache(download: Callable[[Path], Path], fetch: MockType, tmp_path: Path) -> None:
+    cache: Final = tmp_path / "cache"
+
+    assert download(cache).read_bytes() == _LOCKED_CONTENT
+    assert [path.name for path in cache.iterdir()] == [_LOCKED_NAME]
+    fetch.assert_called_once_with(f"https://files.example/{_LOCKED_NAME}")
+
+
+def test_locked_wheel_refetched_over_cached_file_with_other_hash(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    (tmp_path / _LOCKED_NAME).write_bytes(b"stale")
+
+    assert download(tmp_path).read_bytes() == _LOCKED_CONTENT
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+    fetch.assert_called_once_with(f"https://files.example/{_LOCKED_NAME}")
+
+
+def test_locked_wheel_not_matching_lock_is_rejected(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    fetch.return_value = b"tampered"
+
+    with pytest.raises(RuntimeError, match="records"):
+        download(tmp_path)
+    assert not list(tmp_path.iterdir())
