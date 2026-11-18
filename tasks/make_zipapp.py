@@ -111,7 +111,14 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
     # parallel builds can share a wheel cache, so a reader must never see a partly written wheel
     with NamedTemporaryFile(dir=into, delete=False) as staged:
         staged.write(content)
-    Path(staged.name).replace(dest)
+    try:
+        Path(staged.name).replace(dest)
+    except PermissionError:
+        # Windows refuses to replace a file another build has open, which a build sharing the cache only does after
+        # writing the same verified wheel
+        Path(staged.name).unlink()
+        if hashlib.sha256(dest.read_bytes()).hexdigest() != expected:
+            raise
     return dest
 
 

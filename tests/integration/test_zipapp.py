@@ -84,13 +84,20 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
     # bundle the wheel tox built and installed, as building from source downloads the build backend
-    wheel_name: Final = f"virtualenv-{__version__}-py3-none-any.whl"
-    if (dist := os.environ.get("ZIPAPP_WHEEL_DIR")) and (wheel := Path(dist) / wheel_name).is_file():
+    if (wheel := _tox_built_wheel(os.environ.get("ZIPAPP_WHEEL_DIR"))) is not None:
         shutil.copy2(wheel, into)
         cmd.extend(["--wheel-dir", str(into)])
     subprocess.run([*cmd, *_wheel_cache()], check=True, timeout=300, cwd=_HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))
+
+
+def _tox_built_wheel(dist: str | None) -> Path | None:
+    if dist is None or not (wheel := Path(dist) / f"virtualenv-{__version__}-py3-none-any.whl").is_file():
+        return None
+    # an editable install, as tox's dev environment makes, writes a wheel of the same name that holds only a .pth file
+    with zipfile.ZipFile(wheel) as archive:
+        return wheel if "virtualenv/__init__.py" in archive.namelist() else None
 
 
 def _wheel_cache() -> list[str]:
@@ -333,3 +340,53 @@ def test_locked_wheel_not_matching_lock_is_rejected(
     with pytest.raises(RuntimeError, match="records"):
         download(tmp_path)
     assert not list(tmp_path.iterdir())
+
+
+@pytest.fixture
+def peer_holds_wheel_open(fetch: MockType, mocker: MockerFixture, tmp_path: Path) -> Callable[[bytes], None]:
+    def written_by_peer(content: bytes) -> None:
+        # another build stores its copy while this one downloads, and Windows then refuses to replace the open file
+        fetch.side_effect = lambda _url: (tmp_path / _LOCKED_NAME).write_bytes(content) and _LOCKED_CONTENT
+        mocker.patch.object(Path, "replace", autospec=True, side_effect=PermissionError("in use"))
+
+    return written_by_peer
+
+
+def test_locked_wheel_kept_when_another_build_stored_the_same(
+    download: Callable[[Path], Path], peer_holds_wheel_open: Callable[[bytes], None], tmp_path: Path
+) -> None:
+    peer_holds_wheel_open(_LOCKED_CONTENT)
+
+    assert download(tmp_path) == tmp_path / _LOCKED_NAME
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+
+
+def test_locked_wheel_replace_refused_over_other_file_raises(
+    download: Callable[[Path], Path], peer_holds_wheel_open: Callable[[bytes], None], tmp_path: Path
+) -> None:
+    peer_holds_wheel_open(b"other")
+
+    with pytest.raises(PermissionError, match="in use"):
+        download(tmp_path)
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+
+
+@pytest.mark.parametrize(
+    ("files", "found"),
+    [
+        pytest.param({"virtualenv/__init__.py": ""}, True, id="built"),
+        pytest.param({"_virtualenv_editable.pth": "/src"}, False, id="editable"),
+    ],
+)
+def test_tox_built_wheel_needs_the_package(tmp_path: Path, files: dict[str, str], found: bool) -> None:
+    wheel: Final = tmp_path / f"virtualenv-{__version__}-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        for name, content in files.items():
+            archive.writestr(name, content)
+
+    assert (_tox_built_wheel(str(tmp_path)) == wheel) is found
+
+
+@pytest.mark.parametrize("dist", [pytest.param(None, id="no-tox"), pytest.param("missing", id="not-built")])
+def test_tox_built_wheel_absent(tmp_path: Path, dist: str | None) -> None:
+    assert _tox_built_wheel(dist and str(tmp_path / dist)) is None

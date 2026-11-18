@@ -169,7 +169,16 @@ jobs:
           echo "Set TOXENV=$py"
       - name: 📦 Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
+      # the zipapp tests are integration tests, so only an environment whose tox commands pass --int runs them
+      - name: ⚙️ Check whether the suite runs the zipapp tests
+        id: zipapp-tests
+        shell: bash
+        run: |
+          if tox config -e "$TOXENV" -k commands | grep -q -- --int; then
+            echo "run=true" >>"$GITHUB_OUTPUT"
+          fi
       - name: 📦 Restore zipapp wheel cache
+        if: steps.zipapp-tests.outputs.run == 'true'
         id: zipapp-wheels
         uses: actions/cache/restore@v6.1.0
         with:
@@ -178,7 +187,7 @@ jobs:
           enableCrossOsArchive: true
       # the zipapp tests bundle these wheels, so fetch them here once per lock instead of from every test run
       - name: 📦 Fill zipapp wheel cache
-        if: steps.zipapp-wheels.outputs.cache-hit != 'true'
+        if: steps.zipapp-tests.outputs.run == 'true' && steps.zipapp-wheels.outputs.cache-hit != 'true'
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -189,7 +198,7 @@ jobs:
           "$python_path" -m tasks.make_zipapp --wheel-dir .tox/.pkg/dist --wheel-cache .tox/zipapp-wheels \
             --dest "$RUNNER_TEMP/virtualenv.pyz"
       - name: 📦 Save zipapp wheel cache
-        if: steps.zipapp-wheels.outputs.cache-hit != 'true'
+        if: steps.zipapp-tests.outputs.run == 'true' && steps.zipapp-wheels.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6.1.0
         with:
           path: .tox/zipapp-wheels
