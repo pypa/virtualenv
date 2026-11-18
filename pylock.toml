@@ -2681,35 +2681,6 @@ size = 8969
 sha256 = "fb9004e6821422291087d0294fd62f45ff304094db11fbdff8f2fe1ed20764d8"
 
 [[packages]]
-name = "pytest-rerunfailures"
-version = "16.7"
-marker = "\"dev\" in dependency_groups or \"property\" in dependency_groups or \"tasks\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups"
-requires-python = ">=3.10"
-dependencies = [
-    { name = "packaging" },
-    { name = "pytest" },
-]
-index = "https://pypi.org/simple/"
-
-[packages.sdist]
-name = "pytest_rerunfailures-16.7.tar.gz"
-upload-time = 2026-09-17T07:08:48.871724+00:00
-url = "https://files.pythonhosted.org/packages/d1/b0/6b5337f9d59b26b0069ea3d5e863c31dc04b69e51bbfb1cf2ea6328fba87/pytest_rerunfailures-16.7.tar.gz"
-size = 59666
-
-[packages.sdist.hashes]
-sha256 = "6956ddfb65ca1d07e7e3d99e2c5359d82300f4cb062e6049563bd2c106f72d5c"
-
-[[packages.wheels]]
-name = "pytest_rerunfailures-16.7-py3-none-any.whl"
-upload-time = 2026-09-17T07:08:47.635167+00:00
-url = "https://files.pythonhosted.org/packages/c1/d3/07ea35102cf2020ddaaac368d2a6f0bcc63d6523fb8918805bac3eb8b98f/pytest_rerunfailures-16.7-py3-none-any.whl"
-size = 23952
-
-[packages.wheels.hashes]
-sha256 = "edf1886209c2b7dafe35b5bf1708d6ec40ccf6c6b357f0f02807efcec0204c99"
-
-[[packages]]
 name = "pytest-timeout"
 version = "2.4.0"
 marker = "\"dev\" in dependency_groups or \"property\" in dependency_groups or \"tasks\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups"
@@ -4889,7 +4860,6 @@ command-line = [
     "--all-groups",
     "--all-extras",
     "--no-cache",
-    "--upgrade",
 ]
 input-path = "pyproject.toml"
 mode = "universal"
@@ -4901,6 +4871,6 @@ platforms = [
 
 [tool.nab.validation]
 version = 1
-all-inputs-sha256 = "086120d59ef7001d0ddf0d816235debf8d6f11fc7e9110e52a17e2af81c8a35f"
-selection-inputs-sha256 = "471dfc1f376610ac7ca486fc655b701f70d97c7ae24455f185098ad67e7caec0"
-contents-sha256 = "ee0a62b4a8e0e552fd6ce88a4b9e0c86180b378dd0771398f8b99125ba17244c"
+all-inputs-sha256 = "b8d6e5d2d6cf3d7b222b33895584ebc721802bcc2a8a3f22907a8f72d48e748d"
+selection-inputs-sha256 = "f417d484f30dbffa8b7155dac39c6b90daab7a4c84096690238fc1a4234b96cb"
+contents-sha256 = "b86a98430001b9dc242190dabde3e193efbe30523f18061e090090f976b3505e"
