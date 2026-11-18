@@ -266,6 +266,14 @@ def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize(
+    ("install_args", "run_args"),
+    [
+        pytest.param([], [], id="compiled"),
+        pytest.param(["--no-compile"], [], id="no-compile-then-run"),
+        pytest.param([], ["-O"], id="optimized-run"),
+    ],
+)
+@pytest.mark.parametrize(
     "linked",
     [
         pytest.param(False, id="copy"),
@@ -274,7 +282,9 @@ def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None
         ),
     ],
 )
-def test_reseed_over_pip_installed_by_pip(tmp_path: Path, linked: bool) -> None:
+def test_reseed_over_pip_installed_by_pip(
+    tmp_path: Path, linked: bool, install_args: list[str], run_args: list[str]
+) -> None:
     args: Final = [
         str(tmp_path / "env"),
         "--pip",
@@ -294,11 +304,14 @@ def test_reseed_over_pip_installed_by_pip(tmp_path: Path, linked: bool) -> None:
         "-q",
         "--disable-pip-version-check",
         "--force-reinstall",
+        *install_args,
         "--no-index",
         "--find-links",
         str(BUNDLE_FOLDER),
         f"pip=={version}",
     ])
+    # running pip writes bytecode RECORD does not list
+    check_call([str(session.creator.exe), *run_args, "-m", "pip", "--version"])
     package: Final = cli_run(args, setup_logging=False).creator.purelib / "pip"
     assert ((package / "__init__.py").is_file(), package.is_symlink()) == (True, linked)
 

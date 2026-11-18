@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import glob
 import io
 import logging
 import os
@@ -104,16 +105,7 @@ class PipInstall(ABC):
         )
         paths.add(dist)
 
-        base_dirs: Final = paths.copy()
-        record: Final = dist / "RECORD"
-        for name in (
-            (row[0] for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")) if row)
-            if record.exists()
-            else ()
-        ):
-            path: Final = dist_base / name
-            if not any(p in base_dirs for p in path.parents):
-                paths.add(path)
+        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy()))
 
         root: Final = env_dir.resolve()
         metadata_parents: Final = set(dist.resolve().parents)
@@ -135,6 +127,31 @@ class PipInstall(ABC):
                     remove_file(entry)
         # without top_level.txt, as in wheels pip itself installs, RECORD lists files only and their directories stay behind
         PipInstall._remove_emptied_folders(paths, dist_base)
+
+    @staticmethod
+    def _record_paths(dist: Path, base_dirs: set[Path]) -> set[Path]:
+        record: Final = dist / "RECORD"
+        if not record.exists():
+            return set()
+        paths: Final[set[Path]] = set()
+        for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")):
+            if not row:
+                continue
+            path = dist.parent / row[0]
+            if not any(p in base_dirs for p in path.parents):
+                paths.add(path)
+                # bytecode written after the install, by a --no-compile install or an -O run, is not in RECORD
+                if path.suffix == ".py":
+                    paths.update(PipInstall._bytecode_of(path))
+        return paths
+
+    @staticmethod
+    def _bytecode_of(source: Path) -> list[Path]:
+        return [
+            source.with_suffix(".pyc"),
+            source.with_suffix(".pyo"),
+            *source.parent.glob(f"__pycache__/{glob.escape(source.stem)}.*.pyc"),
+        ]
 
     @staticmethod
     def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
