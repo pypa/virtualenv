@@ -15,8 +15,6 @@ from license_policy import ALLOWED_LICENSES
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-# python-sbom archive --embed writes it at the archive root, next to the zipapp's __main__.py
-_ZIPAPP_SBOM: Final[str] = "virtualenv.pyz.cdx.json"
 _Component = dict[str, Any]
 
 
@@ -38,12 +36,14 @@ def main() -> None:
 
 
 def describes_archive(pyz: Path) -> list[str]:
+    # python-sbom archive --embed writes it at the archive root, next to the zipapp's __main__.py
+    sbom: Final = "virtualenv.pyz.cdx.json"
     with zipfile.ZipFile(pyz) as archive:
-        document = json.loads(archive.read(_ZIPAPP_SBOM))
+        document = json.loads(archive.read(sbom))
         contents: Final[dict[str, str]] = {
             name: hashlib.sha256(archive.read(name)).hexdigest()
             for name in archive.namelist()
-            if not name.endswith("/") and name != _ZIPAPP_SBOM
+            if not name.endswith("/") and name != sbom
         }
     described: Final[dict[str, str]] = dict(
         _described_files([document["metadata"]["component"], *document["components"]])

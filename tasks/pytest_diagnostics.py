@@ -19,9 +19,6 @@ if TYPE_CHECKING:
 
 # faulthandler has one timer per process, including nested pytest sessions.
 _DIAGNOSTICS: Final[list[_Diagnostics]] = []
-# faulthandler's native timer walks other threads' frames without the GIL and can crash or hang CPython, so it only
-# backs up the dump thread: re-armed after every dump, it fires once a thread holds the GIL long enough to stall it
-_STALL_INTERVALS: Final[int] = 10
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -70,7 +67,10 @@ class _Diagnostics:
 
     def _arm_stall_timer(self) -> None:
         with self._faulthandler_lock:
-            faulthandler.dump_traceback_later(self.interval * _STALL_INTERVALS, repeat=True, file=self.stream)
+            # faulthandler's native timer walks other threads' frames without the GIL and can crash or hang CPython, so
+            # it only backs up the dump thread: re-armed after every dump, it fires once a thread holds the GIL for ten
+            # dump intervals
+            faulthandler.dump_traceback_later(self.interval * 10, repeat=True, file=self.stream)
 
     def _dump_periodically(self) -> None:
         while not self._stopped.wait(self.interval):
