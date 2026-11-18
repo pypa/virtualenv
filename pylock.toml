@@ -4860,7 +4860,6 @@ command-line = [
     "--all-groups",
     "--all-extras",
     "--no-cache",
-    "--upgrade",
 ]
 input-path = "pyproject.toml"
 mode = "universal"
@@ -4872,6 +4871,6 @@ platforms = [
 
 [tool.nab.validation]
 version = 1
-all-inputs-sha256 = "086120d59ef7001d0ddf0d816235debf8d6f11fc7e9110e52a17e2af81c8a35f"
-selection-inputs-sha256 = "471dfc1f376610ac7ca486fc655b701f70d97c7ae24455f185098ad67e7caec0"
-contents-sha256 = "ee0a62b4a8e0e552fd6ce88a4b9e0c86180b378dd0771398f8b99125ba17244c"
+all-inputs-sha256 = "b8d6e5d2d6cf3d7b222b33895584ebc721802bcc2a8a3f22907a8f72d48e748d"
+selection-inputs-sha256 = "f417d484f30dbffa8b7155dac39c6b90daab7a4c84096690238fc1a4234b96cb"
+contents-sha256 = "b86a98430001b9dc242190dabde3e193efbe30523f18061e090090f976b3505e"
