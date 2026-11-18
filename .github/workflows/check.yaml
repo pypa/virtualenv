@@ -196,7 +196,7 @@ jobs:
           else
             python_path=".tox/$TOXENV/bin/python"
           fi
-          "$python_path" -m tasks.make_zipapp --wheel-dir .tox/.pkg/dist --wheel-cache .tox/zipapp-wheels \
+          "$python_path" -m tasks.make_zipapp --wheel-dir .tox/.pkg/dist --wheel-cache \
             --dest "$RUNNER_TEMP/virtualenv.pyz"
       - name: 📦 Save zipapp wheel cache
         if: steps.zipapp-tests.outputs.run == 'true' && steps.zipapp-wheels.outputs.cache-hit != 'true'

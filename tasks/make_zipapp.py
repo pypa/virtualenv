@@ -55,12 +55,19 @@ def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dest", default="virtualenv.pyz")
     parser.add_argument("--wheel-dir", type=Path, help="bundle the virtualenv wheel from here instead of building one")
-    parser.add_argument("--wheel-cache", type=Path, help="reuse locked wheels from here and store the ones downloaded")
+    parser.add_argument(
+        "--wheel-cache",
+        action="store_true",
+        help="reuse locked wheels from .tox/zipapp-wheels and store the ones downloaded there",
+    )
     args = parser.parse_args()
     with TemporaryDirectory() as folder:
         _create_zipapp(
             os.path.abspath(args.dest),
-            _get_wheels_for_support_versions(Path(folder), args.wheel_dir, args.wheel_cache),
+            # a fixed location, not a path from the command line, keeps every cached file inside the checkout
+            _get_wheels_for_support_versions(
+                Path(folder), args.wheel_dir, _HERE.parent / ".tox" / "zipapp-wheels" if args.wheel_cache else None
+            ),
         )
 
 
@@ -102,7 +109,8 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
     url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
     # the file name comes from the lock, and a separator Windows accepts there would place the wheel outside the folder
     folder: Final = os.path.join(os.path.normpath(into), "")
-    if not (target := os.path.normpath(os.path.join(folder, url.rsplit("/", 1)[1]))).startswith(folder):
+    target: Final = os.path.normpath(os.path.join(folder, url.rsplit("/", 1)[1]))
+    if not target.startswith(folder):
         msg = f"{url} names a file outside {into}"
         raise RuntimeError(msg)
     dest: Final = Path(target)

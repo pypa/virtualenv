@@ -104,8 +104,8 @@ def _tox_built_wheel(dist: str | None) -> Path | None:
 
 
 def _wheel_cache() -> list[str]:
-    # tox points this at a cache CI restores, so the build bundles the locked wheels without downloading them
-    return ["--wheel-cache", cache] if (cache := os.environ.get("ZIPAPP_WHEEL_CACHE")) else []
+    # tox turns on the cache CI restores into .tox/zipapp-wheels, so the build bundles the locked wheels offline
+    return ["--wheel-cache"] if os.environ.get("ZIPAPP_WHEEL_CACHE") else []
 
 
 @pytest.fixture(scope="session")
