@@ -1120,7 +1120,7 @@ def test_periodic_update_seeds_replacement_of_yanked(
     assert result.name == replacement.name
 
 
-def test_periodic_update_skips_yanked_patch_below_newest(
+def test_do_update_drops_yanked_patch_below_newest(
     app_data: AppDataDiskFolder, mocker: MockerFixture, time_freeze: Callable[[datetime], None]
 ) -> None:
     current: Final = get_embed_wheel("pip", "3.9")
@@ -1149,10 +1149,10 @@ def test_periodic_update_skips_yanked_patch_below_newest(
         autospec=True,
     )
     time_freeze(_UP_NOW)
+
     do_update("pip", "3.9", None, str(app_data), [], True)
-    time_freeze(_UP_NOW + timedelta(minutes=30))
 
-    result: Final = periodic_update("pip", None, "3.9", current, [], app_data, False, {})
-
-    assert result is not None
-    assert result.name == current.name
+    assert [v.filename for v in UpdateLog.from_app_data(app_data, "pip", "3.9").versions] == [
+        newer_minor.name,
+        older_patch.name,
+    ]
