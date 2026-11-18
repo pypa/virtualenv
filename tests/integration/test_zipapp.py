@@ -11,6 +11,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+import packaging
 import pytest
 from python_discovery import PythonInfo
 
@@ -43,7 +44,8 @@ def zipapp_build_env(tmp_path_factory):
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
             for threaded in ["", "t"]:
-                for version in range(11, 6, -1):
+                # 3.11 brings tomllib, so the build script needs only packaging
+                for version in range(15, 10, -1):
                     with suppress(Exception):
                         # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                         session = cli_run(
@@ -59,6 +61,7 @@ def zipapp_build_env(tmp_path_factory):
                             ],
                         )
                         exe = str(session.creator.exe)
+                        purelib = session.creator.purelib
                         found = True
                         break
                 if found:
@@ -68,14 +71,8 @@ def zipapp_build_env(tmp_path_factory):
         else:
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
-        cmd = [
-            str(Path(exe).parent / "pip"),
-            "install",
-            "pip>=23",
-            "packaging>=23",
-            "tomli>=2.0.1; python_version<'3.11'",
-        ]
-        subprocess.run(cmd, check=True, timeout=300)
+        # packaging is pure Python, so the copy the tests run with works in the builder without reaching an index
+        shutil.copytree(Path(packaging.__file__).parent, purelib / "packaging")
     yield exe
     if create_env_path is not None:
         shutil.rmtree(str(create_env_path))
