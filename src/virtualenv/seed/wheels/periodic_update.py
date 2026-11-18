@@ -731,8 +731,8 @@ def _drop_yanked(
     newest: PackagingVersion | None,
     embed_version: PackagingVersion | None,
 ) -> list[NewVersion]:
-    # pip skips yanked releases, so a logged release above its newest offer or below a new find may have been yanked;
-    # an update that finds nothing new skips the check, and the bundled wheel wins over any release at or below it
+    # pip skips yanked releases, so a logged one above its newest offer or below a new find may be yanked; the
+    # bundled wheel beats any release at or below it
     above_bundle: Final = {
         version.filename
         for version in update_versions
@@ -743,7 +743,7 @@ def _drop_yanked(
     ):
         try:
             yanked = yanked_files(distribution, os.environ)
-        # yanked_files turns what it cannot read into None; an error it misses must not cost the whole update log
+        # an error yanked_files does not turn into None must not lose the update log
         except (OSError, ValueError, LookupError, RuntimeError, HTTPException, configparser.Error) as exception:
             LOGGER.warning("could not check %s for yanked releases, keeping them: %r", distribution, exception)
             return update_versions

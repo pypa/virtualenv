@@ -1146,7 +1146,7 @@ def test_periodic_update_seeds_replacement_of_yanked(
     released: Final = _UP_NOW - timedelta(days=40)
     replacement: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
     yanked: Final = Wheel(Path(wheel_path(current, (0, 2))))
-    # a day old, the replacement is usable only once no yanked entry splits it from its minor's older patch
+    # the day-old replacement is usable only once no yanked entry sits between it and its minor's older patch
     app_data.embed_update_log("pip", "3.9").write(
         UpdateLog(
             released,
@@ -1207,7 +1207,7 @@ def test_do_update_keeps_yanked_at_or_below_bundle(
         UpdateLog(released, released, [NewVersion(below.name, released, released, "periodic")], True).to_dict()
     )
     mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
-    # the bundled wheel wins over a release at or below it, so whether the index yanked it does not matter
+    # the bundled wheel beats a release at or below it, yanked or not
     index: Final = _fake_index(mocker, {below.name}, {})
     time_freeze(_UP_NOW)
 

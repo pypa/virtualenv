@@ -284,7 +284,7 @@ def test_yanked_files_reads_the_per_user_configuration(
     (home / user_file).write_text(f"[global]\nindex-url = {index}\n", encoding="utf-8")
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
-    # keep the real platform's per-user folder away from the file each row expects
+    # hide the host's per-user pip folder
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
     assert yanked_files("pip", {}) == {"pip-2.0-py3-none-any.whl"}
@@ -324,7 +324,7 @@ def test_yanked_files_ignores_a_config_file_in_a_folder_it_may_not_enter(
 def test_yanked_files_reads_the_index_without_a_home_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
     _forget_home(monkeypatch, forget=True)
-    # the per-user folder comes from here, so only the legacy ~/.pip folder is left to resolve without a home
+    # leaves only the legacy ~/.pip folder to resolve without a home
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
     assert yanked_files("pip", {"PIP_INDEX_URL": index}) == {"pip-2.0-py3-none-any.whl"}
@@ -345,7 +345,7 @@ def _no_passwd_entry(uid: int) -> NoReturn:
 
 def test_yanked_files_reads_the_index_when_the_user_folders_are_unknown(tmp_path: Path, mocker: MockerFixture) -> None:
     index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    # platformdirs raises like this on macOS without a home folder, where it ignores XDG variables
+    # as platformdirs does on macOS without a home folder, where XDG variables do not apply
     mocker.patch(
         "virtualenv.seed.wheels.index.user_config_dir",
         autospec=True,
@@ -445,7 +445,7 @@ def test_yanked_files_reports_markup_the_parser_rejects_as_unknown(
 def test_yanked_files_reads_a_chunked_page(server: _Server) -> None:
     html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
     chunked: Final = f"{len(html):x}\r\n".encode() + html + b"\r\n0\r\n\r\n"
-    # http.client ignores Content-Length on a chunked response, so a wrong one must not make the page look cut off
+    # http.client ignores Content-Length on a chunked response, so the truncation check must too
     headers: Final = {"Content-Type": "text/html", "Transfer-Encoding": "chunked", "Content-Length": "99999"}
     server.pages["/simple/pip/"] = _Page(200, headers, chunked)
 

@@ -1,4 +1,4 @@
-"""Read which release files the package index pip is configured with marks as yanked."""
+"""Find the release files that pip's configured package indexes mark as yanked."""
 
 from __future__ import annotations
 
@@ -30,22 +30,21 @@ _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def yanked_files(distribution: str, env: Mapping[str, str]) -> frozenset[str] | None:
-    """Ask the package indexes pip would use which files of a distribution are yanked (PEP 592).
+    """Return the files of a distribution that pip's configured indexes mark as yanked (PEP 592).
 
-    pip is not run: its index, extra index, certificate and proxy settings are read from the same configuration files
-    and ``PIP_*`` environment variables it reads, and each index answers one simple API request (PEP 691 JSON or PEP 503
-    HTML).
+    Reads pip's index, certificate and proxy settings from its configuration files and ``PIP_*`` variables without
+    running pip, then makes one simple API request per index (PEP 691 JSON or PEP 503 HTML).
 
     :param distribution: the distribution name, for example ``pip``
     :param env: the environment variables pip would run with
 
-    :returns: the yanked file names, a file listed on several indexes only when every one of them yanked it; ``None``
-        when an index could not be read or pip is configured not to use one
+    :returns: the yanked file names, where a file on several indexes counts only if all of them yanked it; ``None`` when
+        an index cannot be read or pip is configured not to use one
 
     """
     try:
         settings: Final = _pip_settings(env)
-    # platformdirs raises RuntimeError when no home folder is known, so the per-user configuration cannot be found
+    # platformdirs raises RuntimeError when it finds no home folder
     except (configparser.Error, UnicodeDecodeError, RuntimeError) as exception:
         _LOGGER.warning("could not read the pip configuration to check for yanked releases: %r", exception)
         return None
@@ -64,13 +63,13 @@ def yanked_files(distribution: str, env: Mapping[str, str]) -> frozenset[str] | 
 
 
 def _pip_settings(env: Mapping[str, str]) -> dict[str, str]:
-    # mirrors pip's precedence: later configuration files win, [download] wins over [global], PIP_* wins over both
+    # pip's precedence: later files win, [download] beats [global], PIP_* beats both
     parser: Final = _PipConfigParser()
     if (env_file := env.get("PIP_CONFIG_FILE")) != os.devnull:
-        # pip reads its configuration files in the locale encoding unless Python runs in UTF-8 mode
+        # pip decodes its configuration files in the locale encoding outside UTF-8 mode
         encoding: Final = "utf-8" if sys.flags.utf8_mode else _locale_encoding()
-        # pip skips the per-user files when PIP_CONFIG_FILE names an existing file; reading it answers that without a
-        # separate check, which before Python 3.14 raised on a folder it may not enter
+        # pip skips the per-user files when PIP_CONFIG_FILE exists; a read answers that without Path.exists, which
+        # raised on an unreadable folder before Python 3.14
         env_file_read: Final = bool(env_file and _PipConfigParser().read(env_file, encoding=encoding))
         parser.read(_pip_config_files(env_file, skip_user=env_file_read), encoding=encoding)
     settings: Final = {
@@ -120,10 +119,10 @@ def _pip_user_config_files(name: str) -> list[Path]:
         if sys.platform == "darwin":
             mac_folder = user_data_dir("pip", appauthor=False, roaming=True)
             user_folder = Path(mac_folder if os.path.isdir(mac_folder) else os.path.expanduser("~/.config/pip"))
-    # platformdirs raises when no home folder is known, and without one there is no per-user configuration
+    # without a home folder there is no per-user configuration
     except RuntimeError:
         return []
-    # os.path leaves ~ as is when no home folder is known, where Path.expanduser raises
+    # os.path leaves ~ as is without a home folder, where Path.expanduser raises
     legacy_folder: Final = os.path.expanduser(os.path.join("~", "pip" if sys.platform == "win32" else ".pip"))
     return [Path(legacy_folder, name), user_folder / name]
 
@@ -131,7 +130,7 @@ def _pip_user_config_files(name: str) -> list[Path]:
 def _read_project_page(
     index_url: str, distribution: str, settings: Mapping[str, str], env: Mapping[str, str]
 ) -> dict[str, bool] | None:
-    # the raw index URL may carry a password, so the log names it only once the credentials are stripped
+    # the index URL may carry a password, so only the stripped URL is logged
     page_url = "an index URL that does not parse"
     try:
         split = urlsplit(index_url)
@@ -145,7 +144,7 @@ def _read_project_page(
         if split.scheme == "file":
             page_url += "index.html"
         files: Final = _parse_project_page(*_fetch(page_url, split.username, split.password, settings, env))
-    # a page nested deeply enough to exhaust the JSON parser's recursion is as unreadable as a malformed one
+    # json.loads raises RecursionError on deeply nested input
     except (OSError, ValueError, HTTPException, RecursionError) as exception:
         _LOGGER.warning("could not read %s to check for yanked releases: %r", page_url, exception)
         return None
@@ -158,8 +157,8 @@ def _parse_project_page(content_type: str, body: str) -> dict[str, bool]:
         try:
             anchors.feed(body)
         except (AssertionError, NotImplementedError) as exception:
-            # until its 2025 hardening html.parser rejected some malformed markup by raising: NotImplementedError on 3.9,
-            # AssertionError from 3.10
+            # html.parser before its 2025 hardening raises on some malformed markup: NotImplementedError on 3.9,
+            # AssertionError on 3.10+
             msg = f"the project page has markup the parser rejects: {exception}"
             raise ValueError(msg) from exception
         return anchors.files
@@ -167,12 +166,12 @@ def _parse_project_page(content_type: str, body: str) -> dict[str, bool]:
     files: Final = document.get("files") if isinstance(document, dict) else None
     if not isinstance(files, list):
         msg = "the project page has no files list"
-        # a malformed page is a ValueError so it is reported like an unparsable one
+        # ValueError, not TypeError, so the caller reports it like an unparsable page
         raise ValueError(msg)  # ruff:ignore[type-check-without-type-error]
     result: Final[dict[str, bool]] = {}
     for entry in files:
         if isinstance(entry, dict) and isinstance(filename := entry.get("filename"), str):
-            # PEP 691 marks a yanked file with true or with the reason as a string
+            # PEP 691 sets yanked to true or to the reason
             _add_listing(result, filename, yanked=bool(entry.get("yanked")))
     return result
 
@@ -185,31 +184,30 @@ class _AnchorParser(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes: Final = dict(attrs)
         if tag == "a" and (href := attributes.get("href")):
-            # PEP 592 marks a yanked file with the data-yanked attribute, its value is the optional reason
+            # PEP 592 allows an empty data-yanked value, so its presence marks the yank
             _add_listing(
                 self.files, unquote(urlsplit(href).path.rpartition("/")[2]), yanked="data-yanked" in attributes
             )
 
 
 def _add_listing(files: dict[str, bool], filename: str, *, yanked: bool) -> None:
-    # a file listed more than once counts as yanked only when every listing says so
+    # a file listed twice is yanked only if every listing says so
     files[filename] = files.get(filename, True) and yanked
 
 
 def _fetch(
     page_url: str, username: str | None, password: str | None, settings: Mapping[str, str], env: Mapping[str, str]
 ) -> tuple[str, str]:
-    # the URL is the index pip is configured with, and a file:// mirror is a valid one
+    # file:// is allowed because pip accepts a local mirror as its index
     request: Final = Request(  # ruff:ignore[suspicious-url-open-usage]
         page_url, headers={"Accept": "application/vnd.pypi.simple.v1+json, text/html;q=0.1"}
     )
     if (credentials := _credentials(username, password, urlsplit(page_url).hostname, env)) is not None:
         request.add_unredirected_header("Authorization", f"Basic {b64encode(credentials.encode()).decode()}")
     limit: Final = 16 * 1024 * 1024
-    # the timeout bounds each socket operation, not the whole request
     with build_opener(*_handlers(settings)).open(request, timeout=15) as response:
         body = response.read(limit + 1)
-        # a chunked response has no length to check, http.client ignores Content-Length then
+        # http.client ignores Content-Length on a chunked response
         chunked = response.headers.get("Transfer-Encoding", "").lower() == "chunked"
         declared = "" if chunked else response.headers.get("Content-Length", "")
         content_type = response.headers.get_content_type()
@@ -217,12 +215,12 @@ def _fetch(
     if len(body) > limit:
         msg = f"the project page is larger than {limit} bytes"
         raise ValueError(msg)
-    # a short read returns what arrived, so a page cut off mid-transfer would look like a shorter listing
+    # read() returns a truncated body without error, which would pass for a shorter listing
     if declared.isdecimal() and len(body) < int(declared):
         msg = f"the project page ended after {len(body)} of {declared} bytes"
         raise ValueError(msg)
     try:
-        # bytes.decode refuses a codec such as base64 on CPython by this flag, while GraalPy runs it and fails inside
+        # CPython's decode rejects non-text codecs such as base64 by this flag; GraalPy runs them and fails
         text_encoding = getattr(codecs.lookup(charset), "_is_text_encoding", True)
     except LookupError:
         text_encoding = False
@@ -232,7 +230,7 @@ def _fetch(
 def _credentials(
     username: str | None, password: str | None, hostname: str | None, env: Mapping[str, str]
 ) -> str | None:
-    # like pip: a user and password in the URL win, then .netrc, then the URL's user without a password
+    # pip's order: user and password from the URL, then .netrc, then the URL's user alone
     if username is not None and password is not None:
         return f"{unquote(username)}:{unquote(password)}"
     if (from_netrc := _netrc_credentials(hostname, env)) is not None:
@@ -241,13 +239,13 @@ def _credentials(
 
 
 def _netrc_credentials(hostname: str | None, env: Mapping[str, str]) -> str | None:
-    # follows requests, which pip uses: NETRC names the file, otherwise the first of ~/.netrc and ~/_netrc that exists
+    # matches how requests, which pip uses, finds the file
     candidates: Final = [env["NETRC"]] if "NETRC" in env else ["~/.netrc", "~/_netrc"]
     path: Final = next((path for path in map(os.path.expanduser, candidates) if os.path.exists(path)), None)
     if hostname is None or path is None:
         return None
     try:
-        # an explicit path skips the ownership and permission checks netrc applies to its default file
+        # an explicit path skips netrc's ownership and permission checks on the default file
         entry = netrc.netrc(path).authenticators(hostname)
     except (netrc.NetrcParseError, OSError):
         return None
