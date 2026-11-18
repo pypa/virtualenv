@@ -6,6 +6,39 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-9:
+
+**********************
+ 21.15.9 (2026-11-18)
+**********************
+
+.. _release-21-15-9-fixed:
+
+Fixed
+-----
+
+- Delete app data trees holding files past the 260 character path limit on Windows without long path support.
+  ``--reset-app-data`` failed with ``WinError 145`` after removing part of the seed ``pip`` image, so later environments
+  got a ``pip`` that could not be imported, and the staging folder of a killed seed image build failed every later run
+  (:pr:`3568`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Reseeding an environment with ``--symlink-app-data`` no longer fails with ``FileExistsError`` and leaves it without
+  ``pip`` when ``pip`` was upgraded or reinstalled by ``pip`` itself, including bytecode written after that install
+  (:pr:`3577`) by :user:`gaborbernat`.
+- Stop seeding a release yanked from the package index once the next periodic update or ``--upgrade-embed-wheels`` runs.
+  The yank flags come from the index ``pip`` is configured with, so an index that needs keyring credentials or a client
+  certificate keeps its logged releases (:pr:`3570`) by :user:`AP24110011695` and :user:`gaborbernat`.
+- Stop the ``bash``, ``csh`` and PowerShell activators from adding an empty entry when ``PATH`` is empty. On POSIX an
+  empty entry searches the current directory, so activating with an empty ``PATH`` put it on the search path
+  (:pr:`3572`) by :user:`gaborbernat`.
+
+.. _release-21-15-9-performance:
+
+Performance
+-----------
+
+- Defer eligible imports on Python 3.15 until virtualenv uses them, reducing package and CLI startup time (:pr:`3580`)
+  by :user:`gaborbernat`.
+
 .. _release-21-15-8:
 
 **********************
