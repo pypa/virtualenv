@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import IS_PYPY, IS_WIN
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
@@ -19,6 +19,9 @@ if TYPE_CHECKING:
 
 _POWERSHELLS: Final[list[str]] = [path for path in map(shutil.which, ("pwsh", "powershell.exe")) if path]
 _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
+_INTERPRETER_INDEPENDENT: Final[pytest.MarkDecorator] = pytest.mark.skipif(
+    IS_PYPY or IS_GRAALPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix"
+)
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
@@ -131,7 +134,7 @@ def test_powershell_prepends_bin_to_path(tmp_path: Path, powershell: str, origin
     )
 
 
-@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
+@_INTERPRETER_INDEPENDENT
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
     ("name", "mode"),
@@ -215,6 +218,7 @@ def test_powershell_reports_missing_config(tmp_path: Path, current_fastest: str,
     assert "Cannot find configuration file" in result.stderr
 
 
+@_INTERPRETER_INDEPENDENT
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="requires PowerShell Core")
 @pytest.mark.parametrize(
     "delimiter",
