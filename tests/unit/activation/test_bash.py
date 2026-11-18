@@ -51,6 +51,39 @@ def test_bash_clears_pythonhome(tmp_path: Path, original: str) -> None:
     assert (result.returncode, result.stdout, result.stderr) == (0, f"|\nx|{original}\n", "")
 
 
+@pytest.mark.skipif(_BASH is None or IS_WIN, reason="Git Bash rewrites the bin path with cygpath")
+@pytest.mark.parametrize(
+    ("original", "suffix"),
+    [
+        pytest.param("", "", id="empty"),
+        pytest.param(":first", "::first", id="leading-empty-entry"),
+        pytest.param("/usr/bin:/bin", ":/usr/bin:/bin", id="populated"),
+    ],
+)
+def test_bash_prepends_bin_to_path(tmp_path: Path, original: str, suffix: str) -> None:
+    session: Final = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / "env")])
+    result: Final = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            '. "$1"; printf "%s" "$PATH"',
+            "test",
+            str(session.creator.bin_dir / "activate"),
+        ],
+        env={**os.environ, "PATH": original},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    # with PATH emptied, activate cannot find uname or basename, so only stdout is checked
+    assert result.stdout == f"{session.creator.bin_dir}{suffix}"
+
+
 @pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
 @pytest.mark.parametrize(
     ("setup", "expected"),

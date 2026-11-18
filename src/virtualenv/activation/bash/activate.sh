@@ -113,7 +113,7 @@ else
     export VIRTUAL_ENV
 
     _OLD_VIRTUAL_PATH="$PATH"
-    PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
+    PATH="$VIRTUAL_ENV/"__BIN_NAME__"${PATH:+:$PATH}"
     export PATH
 
     _OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"

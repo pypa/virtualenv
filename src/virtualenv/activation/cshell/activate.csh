@@ -11,7 +11,11 @@ if ($?_OLD_VIRTUAL_PATH) source __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
 setenv VIRTUAL_ENV __VIRTUAL_ENV__
 
 set _OLD_VIRTUAL_PATH="$PATH:q"
-setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
+if ("$PATH:q" == "") then
+    setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__
+else
+    setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
+endif
 
 # PYTHONHOME can redirect the standard library lookup away from this environment.
 if ($?PYTHONHOME) then

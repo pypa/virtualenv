@@ -169,6 +169,42 @@ jobs:
           echo "Set TOXENV=$py"
       - name: 📦 Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
+      # the zipapp tests are integration tests, so only an environment whose tox commands pass --int runs them
+      - name: ⚙️ Check whether the suite runs the zipapp tests
+        id: zipapp-tests
+        shell: bash
+        run: |
+          commands=$(tox config -e "$TOXENV" -k commands)
+          if grep -q -- --int <<<"$commands"; then
+            echo "run=true" >>"$GITHUB_OUTPUT"
+          fi
+      - name: 📦 Restore zipapp wheel cache
+        if: steps.zipapp-tests.outputs.run == 'true'
+        id: zipapp-wheels
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: .tox/zipapp-wheels
+          key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
+          enableCrossOsArchive: true
+      # the zipapp tests bundle these wheels, so fetch them here once per lock instead of from every test run
+      - name: 📦 Fill zipapp wheel cache
+        if: steps.zipapp-tests.outputs.run == 'true' && steps.zipapp-wheels.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python_path=".tox/$TOXENV/Scripts/python.exe"
+          else
+            python_path=".tox/$TOXENV/bin/python"
+          fi
+          "$python_path" -m tasks.make_zipapp --wheel-dir .tox/.pkg/dist --wheel-cache \
+            --dest "$RUNNER_TEMP/virtualenv.pyz"
+      - name: 📦 Save zipapp wheel cache
+        if: steps.zipapp-tests.outputs.run == 'true' && steps.zipapp-wheels.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: .tox/zipapp-wheels
+          key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
+          enableCrossOsArchive: true
       - name: 🧪 Verify pytest diagnostics
         if: matrix.diagnostics
         shell: bash
@@ -185,16 +221,13 @@ jobs:
         env:
           GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
-          # --reruns lets a single test recover from a transient worker crash (see
-          # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
-          # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
           # graalpy skips xdist: tasks/run_graalpy_tests.py runs one serial pytest process per
           # CPU instead, each on its own --shard slice of the tests. graalpy also dropped its
           # --timeout-method=thread override: that method spawns a watcher thread per test,
           # and GraalVM's Context.close() treats any Python-visible thread still alive as
           # fatal, crashing the job even after every test passed (see #3240). The default
           # signal-based method needs no such thread. --timeout=300 stays as a safety net.
-          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
+          PYTEST_ADDOPTS: "-vv --durations=20${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.
           PYTHONFAULTHANDLER: "1"

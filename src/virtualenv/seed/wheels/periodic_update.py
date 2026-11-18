@@ -419,11 +419,6 @@ DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-va
 _PyPIJson = dict[str, object]
 
 
-#: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON
-#: API that has not caught up with a fresh upload.
-_DIGEST_RETRY_DELAYS: Final[tuple[float, ...]] = (1.0, 2.0, 4.0)
-
-
 def verify_wheel_digest(wheel: Wheel) -> None:
     """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
 
@@ -439,7 +434,8 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
     """
     expected = _pypi_sha256_for_wheel(wheel)
-    for delay in _DIGEST_RETRY_DELAYS:
+    # ride out a brief PyPI outage or a JSON API that has not caught up with a fresh upload before refusing the wheel
+    for delay in (1.0, 2.0, 4.0):
         if expected is not None:
             break
         LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
