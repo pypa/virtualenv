@@ -237,7 +237,7 @@ jobs:
         if: always() && matrix.diagnostics && runner.os == 'macOS'
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: crash-reports-${{ matrix.py }}-${{ matrix.os }}
+          name: crash-reports-${{ matrix.py }}-${{ matrix.os }}-${{ github.run_attempt }}
           path: ~/Library/Logs/DiagnosticReports/
           if-no-files-found: ignore
           retention-days: 14
@@ -245,7 +245,7 @@ jobs:
         if: always() && matrix.diagnostics
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: hang-diagnostics-${{ matrix.py }}-${{ matrix.os }}
+          name: hang-diagnostics-${{ matrix.py }}-${{ matrix.os }}-${{ github.run_attempt }}
           path: |
             .tox/hang-diagnostics/
             .tox/diagnostics-self-test/**/diagnostics/*.log
