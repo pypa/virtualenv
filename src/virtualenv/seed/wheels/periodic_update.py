@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import configparser
 import hashlib
 import json
 import logging
@@ -10,6 +11,7 @@ import ssl
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPException
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
@@ -28,6 +30,7 @@ from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 from .embed import BUNDLE_SUPPORT
+from .index import yanked_files
 from .util import Wheel
 
 if TYPE_CHECKING:
@@ -641,18 +644,7 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
     versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
-    # pip skips yanked releases, so a logged release above its newest offer or below a new find may have been yanked;
-    # an update that finds nothing new skips the check, and the bundled wheel wins over any release at or below it
-    if versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions)):
-        # acquire imports this module, so the import must wait until it is needed
-        from . import acquire  # ruff:ignore[import-outside-top-level]
-
-        update_versions = [
-            version
-            for version in update_versions
-            if (embed_version is not None and version.wheel.parsed_version <= embed_version)
-            or not acquire.is_yanked(version.wheel, for_py_version, search_dirs, app_data, dict(os.environ))
-        ]
+    update_versions = _drop_yanked(distribution, update_versions, versions, newest, embed_version)
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic
     if not u_log.periodic:
@@ -730,6 +722,34 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
             # the log line carries the exception repr, a traceback adds nothing
             LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
+
+
+def _drop_yanked(
+    distribution: str,
+    update_versions: list[NewVersion],
+    versions: list[NewVersion],
+    newest: PackagingVersion | None,
+    embed_version: PackagingVersion | None,
+) -> list[NewVersion]:
+    # pip skips yanked releases, so a logged release above its newest offer or below a new find may have been yanked;
+    # an update that finds nothing new skips the check, and the bundled wheel wins over any release at or below it
+    above_bundle: Final = {
+        version.filename
+        for version in update_versions
+        if embed_version is None or version.wheel.parsed_version > embed_version
+    }
+    if above_bundle and (
+        versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions))
+    ):
+        try:
+            yanked = yanked_files(distribution, os.environ)
+        # yanked_files turns what it cannot read into None; an error it misses must not cost the whole update log
+        except (OSError, ValueError, LookupError, RuntimeError, HTTPException, configparser.Error) as exception:
+            LOGGER.warning("could not check %s for yanked releases, keeping them: %r", distribution, exception)
+            return update_versions
+        dropped = above_bundle & (yanked or frozenset())
+        return [version for version in update_versions if version.filename not in dropped]
+    return update_versions
 
 
 __all__ = [

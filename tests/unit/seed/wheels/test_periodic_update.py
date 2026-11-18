@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import configparser
 import hashlib
 import json
 import logging
@@ -9,6 +10,7 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPException
 from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
@@ -1045,6 +1047,7 @@ def test_update_uses_selected_installation_and_environment(
         pytest.param([(0, 2), (0, 1, 1)], [(0, 2)], [(0, 1, 2), (0, 1, 1)], id="yanked-on-top"),
         pytest.param([(0, 1, 2), (0, 2), (0, 1, 1)], [(0, 2)], [(0, 1, 2), (0, 1, 1)], id="replacement-on-top"),
         pytest.param([(0, 2), (0, 1, 1)], [], [(0, 1, 2), (0, 2), (0, 1, 1)], id="not-yanked"),
+        pytest.param([(0, 2), (0, 1, 1)], None, [(0, 1, 2), (0, 2), (0, 1, 1)], id="index-unreadable"),
     ],
 )
 def test_do_update_drops_yanked_versions(  # ruff:ignore[too-many-arguments]  # fixtures plus the three parameters
@@ -1052,7 +1055,7 @@ def test_do_update_drops_yanked_versions(  # ruff:ignore[too-many-arguments]  # 
     mocker: MockerFixture,
     time_freeze: Callable[[datetime], None],
     logged: list[tuple[int, ...]],
-    yanked: list[tuple[int, ...]],
+    yanked: list[tuple[int, ...]] | None,
     kept: list[tuple[int, ...]],
 ) -> None:
     current: Final = get_embed_wheel("pip", "3.9")
@@ -1068,7 +1071,7 @@ def test_do_update_drops_yanked_versions(  # ruff:ignore[too-many-arguments]  # 
     )
     replacement: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
     mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
-    _fake_index(mocker, {Path(wheel_path(current, bump)).name for bump in yanked}, {})
+    _fake_index(mocker, _wheel_names(current, yanked), {})
     time_freeze(_UP_NOW)
 
     do_update("pip", "3.9", None, str(app_data), [], True)
@@ -1078,16 +1081,62 @@ def test_do_update_drops_yanked_versions(  # ruff:ignore[too-many-arguments]  # 
     ]
 
 
-def _fake_index(mocker: MockerFixture, yanked: set[str], released: dict[str, datetime]) -> None:
+def _fake_index(mocker: MockerFixture, yanked: set[str] | None, released: dict[str, datetime]) -> MockType:
     default: Final = _UP_NOW - timedelta(days=40)
     mocker.patch(
         "virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path",
         autospec=True,
         side_effect=lambda path: released.get(path.name, default),
     )
-    mocker.patch(
-        "virtualenv.seed.wheels.acquire.is_yanked", autospec=True, side_effect=lambda wheel, *_: wheel.name in yanked
+    return mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.yanked_files",
+        autospec=True,
+        return_value=None if yanked is None else frozenset(yanked),
     )
+
+
+def _wheel_names(current: Wheel, bumps: list[tuple[int, ...]] | None) -> set[str] | None:
+    return None if bumps is None else {Path(wheel_path(current, bump)).name for bump in bumps}
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        pytest.param(PermissionError(13, "denied"), id="os-error"),
+        pytest.param(ValueError("bad page"), id="value-error"),
+        pytest.param(LookupError("unknown codec"), id="lookup-error"),
+        pytest.param(RuntimeError("no home"), id="runtime-error"),
+        pytest.param(RecursionError("too deep"), id="recursion-error"),
+        pytest.param(HTTPException("bad status"), id="http-exception"),
+        pytest.param(configparser.Error("bad config"), id="config-error"),
+    ],
+)
+def test_do_update_keeps_logged_versions_when_yank_check_raises(
+    app_data: AppDataDiskFolder,
+    mocker: MockerFixture,
+    time_freeze: Callable[[datetime], None],
+    caplog: pytest.LogCaptureFixture,
+    error: Exception,
+) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    released: Final = _UP_NOW - timedelta(days=40)
+    logged: Final = [Path(wheel_path(current, bump)).name for bump in [(0, 2), (0, 1, 1)]]
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(
+            released, released, [NewVersion(name, released, released, "periodic") for name in logged], True
+        ).to_dict()
+    )
+    replacement: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
+    _fake_index(mocker, None, {}).side_effect = error
+    time_freeze(_UP_NOW)
+    caplog.set_level(logging.WARNING)
+
+    do_update("pip", "3.9", None, str(app_data), [], True)
+
+    assert [v.filename for v in UpdateLog.from_app_data(app_data, "pip", "3.9").versions] == [replacement.name, *logged]
+    assert f"could not check pip for yanked releases, keeping them: {error!r}" in caplog.text
 
 
 def test_periodic_update_seeds_replacement_of_yanked(
@@ -1160,7 +1209,7 @@ def test_do_update_keeps_yanked_at_or_below_bundle(
     )
     mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
     # the bundled wheel wins over a release at or below it, so whether the index yanked it does not matter
-    _fake_index(mocker, {below.name}, {})
+    index: Final = _fake_index(mocker, {below.name}, {})
     time_freeze(_UP_NOW)
 
     do_update("pip", "3.9", str(current.path), str(app_data), [], True)
@@ -1169,6 +1218,7 @@ def test_do_update_keeps_yanked_at_or_below_bundle(
         replacement.name,
         below.name,
     ]
+    index.assert_not_called()
 
 
 def test_do_update_finding_nothing_new_skips_yank_check(
@@ -1183,9 +1233,10 @@ def test_do_update_finding_nothing_new_skips_yank_check(
     )
     mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=logged)
     # the index would report it yanked, but an update that finds nothing new does not ask
-    _fake_index(mocker, {logged.name}, {})
+    index: Final = _fake_index(mocker, {logged.name}, {})
     time_freeze(_UP_NOW)
 
     do_update("pip", "3.9", str(current.path), str(app_data), [], True)
 
     assert [v.filename for v in UpdateLog.from_app_data(app_data, "pip", "3.9").versions] == [logged.name]
+    index.assert_not_called()
