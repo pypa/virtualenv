@@ -100,7 +100,12 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
         msg = f"{_LOCK.name} has no pure-Python wheel for {package['name']} {package['version']}"
         raise RuntimeError(msg)
     url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
-    dest: Final = into / url.rsplit("/", 1)[1]
+    # the file name comes from the lock, and a separator Windows accepts there would place the wheel outside the folder
+    folder: Final = os.path.join(os.path.normpath(into), "")
+    if not (target := os.path.normpath(os.path.join(folder, url.rsplit("/", 1)[1]))).startswith(folder):
+        msg = f"{url} names a file outside {into}"
+        raise RuntimeError(msg)
+    dest: Final = Path(target)
     with suppress(FileNotFoundError):
         if hashlib.sha256(dest.read_bytes()).hexdigest() == expected:
             return dest

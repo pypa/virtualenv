@@ -345,6 +345,19 @@ def test_locked_wheel_not_matching_lock_is_rejected(
     assert not list(tmp_path.iterdir())
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="only Windows reads a backslash as a separator")
+def test_locked_wheel_outside_the_folder_rejected(make_zipapp: ModuleType, fetch: MockType, tmp_path: Path) -> None:
+    package: Final = {
+        "name": "demo",
+        "version": "1.0",
+        "wheels": [{"url": "https://files.example/..\\demo-1.0-py3-none-any.whl", "hashes": {"sha256": "0"}}],
+    }
+
+    with pytest.raises(RuntimeError, match="outside"):
+        make_zipapp._download_locked_wheel(package, tmp_path / "cache")  # ruff:ignore[private-member-access]  # no public entry point reaches it
+    fetch.assert_not_called()
+
+
 @pytest.fixture
 def peer_holds_wheel_open(fetch: MockType, mocker: MockerFixture, tmp_path: Path) -> Callable[[bytes], None]:
     def written_by_peer(content: bytes) -> None:
