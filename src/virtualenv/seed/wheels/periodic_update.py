@@ -644,12 +644,11 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
     versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
-    if newest is not None:
-        # pip skips yanked releases, so a logged version above the newest wheel it offers may have been yanked
+    # check the log for yanked releases when the release dates of new finds already fetched PyPI's JSON, or when a
+    # logged version is newer than anything pip offers, as pip skips yanked releases
+    if versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions)):
         update_versions = [
-            version
-            for version in update_versions
-            if version.wheel.parsed_version <= newest or _pypi_release_file(version.wheel).get("yanked") is not True
+            version for version in update_versions if _pypi_release_file(version.wheel).get("yanked") is not True
         ]
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic

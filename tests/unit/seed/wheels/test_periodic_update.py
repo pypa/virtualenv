@@ -1118,3 +1118,41 @@ def test_periodic_update_seeds_replacement_of_yanked(
 
     assert result is not None
     assert result.name == replacement.name
+
+
+def test_periodic_update_skips_yanked_patch_below_newest(
+    app_data: AppDataDiskFolder, mocker: MockerFixture, time_freeze: Callable[[datetime], None]
+) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    released: Final = _UP_NOW - timedelta(days=40)
+    yanked: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
+    newer_minor: Final = Wheel(Path(wheel_path(current, (0, 2))))
+    older_patch: Final = Wheel(Path(wheel_path(current, (0, 1, 1))))
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(released, released, [NewVersion(yanked.name, released, released, "periodic")], True).to_dict()
+    )
+    # pip offers the new minor, still in its grace period, then skips the yanked patch for the one below it
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, side_effect=[newer_minor, older_patch])
+    upload: Final = {
+        newer_minor: (_UP_NOW - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S"),
+        older_patch: released.strftime("%Y-%m-%dT%H:%M:%S"),
+        yanked: released.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    releases: Final = {
+        wheel.version: [{"filename": wheel.name, "upload_time": uploaded, "yanked": wheel is yanked}]
+        for wheel, uploaded in upload.items()
+    }
+    mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.urlopen",
+        return_value=StringIO(json.dumps({"releases": releases})),
+        autospec=True,
+    )
+    time_freeze(_UP_NOW)
+    do_update("pip", "3.9", None, str(app_data), [], True)
+    time_freeze(_UP_NOW + timedelta(minutes=30))
+
+    result: Final = periodic_update("pip", None, "3.9", current, [], app_data, False, {})
+
+    assert result is not None
+    assert result.name == current.name
