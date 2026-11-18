@@ -1,5 +1,11 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # imported by path across the cpython modules
 
+__lazy_modules__ = [
+    "collections",
+    "pathlib",
+    "virtualenv.create.via_global_ref.builtin.ref",
+]
+
 import re
 from abc import ABC
 from collections import OrderedDict

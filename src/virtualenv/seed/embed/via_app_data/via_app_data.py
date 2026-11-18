@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "subprocess",
+    "threading",
+    "traceback",
+    "virtualenv.info",
+    "virtualenv.seed.wheels",
+    f"{__spec__.parent}.pip_install.copy",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.pip_install.symlink",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import sys
 import traceback

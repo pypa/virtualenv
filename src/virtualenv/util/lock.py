@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["pathlib"]
+
 import logging
 import os
 from abc import ABC, abstractmethod

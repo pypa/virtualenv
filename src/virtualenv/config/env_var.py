@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    f"{__spec__.parent}.convert",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from contextlib import suppress
 from typing import TYPE_CHECKING
 

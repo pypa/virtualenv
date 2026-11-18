@@ -27,6 +27,15 @@ r"""A rough layout of the current storage goes as:
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "hashlib",
+    "json",
+    "virtualenv.util.lock",
+    "virtualenv.util.path",
+    "virtualenv.util.zipapp",
+    "virtualenv.version",
+]
+
 import json
 import logging
 from abc import ABC

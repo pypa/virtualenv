@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "email.parser",
+    "operator",
+    "packaging.specifiers",
+    "packaging.version",
+    "zipfile",
+]
+
 import logging
 from email.parser import HeaderParser
 from operator import attrgetter

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["argparse", "collections", "logging"]
+
 import logging
 import os
 import sys

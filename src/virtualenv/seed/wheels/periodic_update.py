@@ -2,6 +2,28 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "contextlib",
+    "hashlib",
+    "itertools",
+    "json",
+    "pathlib",
+    "shutil",
+    "ssl",
+    "subprocess",
+    "textwrap",
+    "threading",
+    "urllib.error",
+    "urllib.request",
+    "virtualenv.app_data",
+    "virtualenv.config.convert",
+    "virtualenv.config.env_var",
+    "virtualenv.info",
+    "virtualenv.util.subprocess",
+    f"{__spec__.parent}.embed",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import hashlib
 import json
 import logging

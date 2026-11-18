@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "virtualenv.util.error",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+]
+
 import os
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from typing import TYPE_CHECKING

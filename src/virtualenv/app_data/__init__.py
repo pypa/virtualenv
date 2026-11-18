@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    f"{__spec__.parent}.cache_migration",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.na",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.read_only",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.via_disk_folder",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.via_tempdir",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
 from argparse import ArgumentTypeError

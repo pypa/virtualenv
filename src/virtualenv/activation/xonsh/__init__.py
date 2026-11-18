@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["logging"]
+
 import logging  # isort: skip # fmt: skip
 import re  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip

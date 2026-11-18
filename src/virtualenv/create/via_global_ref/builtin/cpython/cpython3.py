@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "fnmatch",
+    "operator",
+    "pathlib",
+    "virtualenv.create.via_global_ref.builtin.ref",
+    "virtualenv.create.via_global_ref.store",
+    "virtualenv.util.path",
+]
+
 import abc
 import fnmatch
 from operator import methodcaller as method

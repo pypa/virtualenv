@@ -1,5 +1,25 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "base64",
+    "csv",
+    "hashlib",
+    "importlib.metadata",
+    "io",
+    "logging",
+    "pathlib",
+    "shutil",
+    "subprocess",
+    "tempfile",
+    "virtualenv.seed.wheels",
+    "virtualenv.seed.wheels.acquire",
+    "virtualenv.seed.wheels.util",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+    "zipfile",
+    f"{__spec__.parent}.via_app_data.pip_install.base",  # ty: ignore[missing-union-attribute]  # spec exists
+]
+
 import csv
 import hashlib
 import io

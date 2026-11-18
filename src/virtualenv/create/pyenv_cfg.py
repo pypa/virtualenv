@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["collections", "virtualenv.util.path", "virtualenv.util.text"]
+
 import logging
 import os
 from collections import OrderedDict

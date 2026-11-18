@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["virtualenv.util.lock"]
+
 import os.path
 from typing import TYPE_CHECKING
 

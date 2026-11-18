@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = ["collections"]
+
 import os  # isort: skip # fmt: skip
 from collections import OrderedDict  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING  # isort: skip # fmt: skip
