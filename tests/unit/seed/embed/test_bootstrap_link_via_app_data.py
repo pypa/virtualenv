@@ -252,6 +252,57 @@ def test_seed_metadata_keeps_reseeding_supported(
     )
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    outside: Final = tmp_path / "outside" / "empty"
+    outside.mkdir(parents=True)
+    (session.creator.purelib / "linked").symlink_to(outside.parent, target_is_directory=True)
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record.write_text(f"{record.read_text(encoding='utf-8')}\nlinked/empty/gone.txt,,", encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert outside.is_dir()
+
+
+@pytest.mark.parametrize(
+    "linked",
+    [
+        pytest.param(False, id="copy"),
+        pytest.param(
+            True, id="symlink", marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+        ),
+    ],
+)
+def test_reseed_over_pip_installed_by_pip(tmp_path: Path, linked: bool) -> None:
+    args: Final = [
+        str(tmp_path / "env"),
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+        *{True: ["--symlink-app-data"], False: []}[linked],
+    ]
+    session: Final = cli_run(args, setup_logging=False)
+    version: Final = next(session.creator.purelib.glob("pip-*.dist-info")).stem.split("-")[1]
+    # a wheel pip installs has no top_level.txt and a RECORD of files only
+    check_call([
+        str(session.creator.exe),
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--disable-pip-version-check",
+        "--force-reinstall",
+        "--no-index",
+        "--find-links",
+        str(BUNDLE_FOLDER),
+        f"pip=={version}",
+    ])
+    package: Final = cli_run(args, setup_logging=False).creator.purelib / "pip"
+    assert ((package / "__init__.py").is_file(), package.is_symlink()) == (True, linked)
+
+
 @pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.skipif(os.name != "nt", reason="Windows refuses to delete read-only files")
 def test_reseed_over_read_only_environment(tmp_path: Path) -> None:

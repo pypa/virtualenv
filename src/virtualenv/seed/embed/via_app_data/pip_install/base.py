@@ -133,6 +133,30 @@ class PipInstall(ABC):
                     safe_delete(entry)
                 else:
                     remove_file(entry)
+        # without top_level.txt, as in wheels pip itself installs, RECORD lists files only and their directories stay behind
+        PipInstall._remove_emptied_folders(paths, dist_base)
+
+    @staticmethod
+    def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
+        base: Final = dist_base.resolve()
+        for folder in sorted(
+            {
+                parent
+                for entry in paths
+                for parent in Path(os.path.normpath(entry)).parents
+                if dist_base in parent.parents
+            },
+            key=lambda folder: len(folder.parts),
+            reverse=True,
+        ):
+            # a RECORD row can lead through a link, so only remove what still resolves inside the packages folder
+            if (
+                folder.is_dir()
+                and not folder.is_symlink()
+                and base in folder.resolve().parents
+                and not any(folder.iterdir())
+            ):
+                folder.rmdir()
 
     @abstractmethod
     def _sync(self, src: Path, dst: Path) -> None:
