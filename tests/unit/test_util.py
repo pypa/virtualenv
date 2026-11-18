@@ -11,6 +11,7 @@ import zipfile
 from contextlib import ExitStack
 from errno import EACCES
 from operator import attrgetter
+from pathlib import Path
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
 from typing import TYPE_CHECKING, Final
 
@@ -30,7 +31,6 @@ if os.name == "nt":
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
     from pytest_mock import MockerFixture
 
@@ -431,6 +431,97 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
 
     with busy.open(encoding="utf-8"), pytest.raises(OSError, match="busy"):
         safe_delete(target)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows extended-length paths")
+@pytest.mark.parametrize(
+    ("given", "expected"),
+    [
+        pytest.param(r"C:\cache\image\..\wheel", r"\\?\C:\cache\wheel", id="drive"),
+        pytest.param(r"\\server\share\cache", r"\\?\UNC\server\share\cache", id="share"),
+        pytest.param(r"\\?\C:\cache\wheel", r"\\?\C:\cache\wheel", id="extended"),
+        pytest.param(r"\\.\C:\cache\wheel", r"\\.\C:\cache\wheel", id="device"),
+    ],
+)
+def test_safe_delete_hands_rmtree_the_extended_length_path(mocker: MockerFixture, given: str, expected: str) -> None:
+    rmtree: Final = mocker.patch("shutil.rmtree", autospec=True)
+
+    safe_delete(Path(given))
+
+    assert rmtree.call_args.args[0] == expected
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows MAX_PATH")
+def test_safe_delete_removes_files_past_max_path(tmp_path: Path) -> None:
+    target: Final = tmp_path / "target"
+    # a seed image built through its short path holds files that only its long path reaches, past MAX_PATH
+    deep: Final = Path(f"\\\\?\\{target}", "d" * 120, "e" * 120)
+    deep.mkdir(parents=True)
+    cached: Final = deep / "wheel.py"
+    cached.write_text("cached", encoding="utf-8")
+    cached.chmod(S_IREAD)
+
+    safe_delete(target)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+def _junction(link: Path, target: Path) -> None:
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True)
+
+
+def _directory_symlink(link: Path, target: Path) -> None:
+    link.symlink_to(target, target_is_directory=True)
+
+
+_DIRECTORY_LINKS: Final[list[pytest.ParameterSet]] = [
+    pytest.param(_junction, marks=pytest.mark.skipif(os.name != "nt", reason="Windows junctions"), id="junction"),
+    pytest.param(
+        _directory_symlink,
+        marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
+        id="symlink",
+    ),
+]
+
+
+@pytest.fixture
+def kept(tmp_path: Path) -> Path:
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    kept: Final = outside / "kept.txt"
+    kept.write_text("kept", encoding="utf-8")
+    kept.chmod(S_IREAD)
+    return kept
+
+
+@pytest.mark.parametrize("make_link", _DIRECTORY_LINKS)
+def test_safe_delete_removes_a_directory_link_without_following_it(
+    tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
+) -> None:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    make_link(target / "link", kept.parent)
+
+    safe_delete(target)
+
+    assert (target.exists(), kept.read_text(encoding="utf-8"), kept.stat().st_mode & S_IWUSR) == (False, "kept", 0)
+
+
+@pytest.mark.parametrize("make_link", _DIRECTORY_LINKS)
+def test_safe_delete_refuses_a_directory_link_as_the_root(
+    tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
+) -> None:
+    link: Final = tmp_path / "link"
+    make_link(link, kept.parent)
+
+    with pytest.raises(OSError) as raised:  # ruff: ignore[pytest-raises-too-broad] # str() differs on POSIX
+        safe_delete(link)
+
+    assert (raised.value.args, os.path.lexists(link), kept.read_text(encoding="utf-8")) == (
+        ("Cannot call rmtree on a symbolic link",),
+        True,
+        "kept",
+    )
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
