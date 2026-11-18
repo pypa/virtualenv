@@ -484,18 +484,23 @@ _DIRECTORY_LINKS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-@pytest.mark.parametrize("make_link", _DIRECTORY_LINKS)
-def test_safe_delete_removes_a_directory_link_without_following_it(
-    tmp_path: Path, make_link: Callable[[Path, Path], None]
-) -> None:
+@pytest.fixture
+def kept(tmp_path: Path) -> Path:
     outside: Final = tmp_path / "outside"
     outside.mkdir()
     kept: Final = outside / "kept.txt"
     kept.write_text("kept", encoding="utf-8")
     kept.chmod(S_IREAD)
+    return kept
+
+
+@pytest.mark.parametrize("make_link", _DIRECTORY_LINKS)
+def test_safe_delete_removes_a_directory_link_without_following_it(
+    tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
+) -> None:
     target: Final = tmp_path / "target"
     target.mkdir()
-    make_link(target / "link", outside)
+    make_link(target / "link", kept.parent)
 
     safe_delete(target)
 
@@ -504,14 +509,10 @@ def test_safe_delete_removes_a_directory_link_without_following_it(
 
 @pytest.mark.parametrize("make_link", _DIRECTORY_LINKS)
 def test_safe_delete_refuses_a_directory_link_as_the_root(
-    tmp_path: Path, make_link: Callable[[Path, Path], None]
+    tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
 ) -> None:
-    outside: Final = tmp_path / "outside"
-    outside.mkdir()
-    kept: Final = outside / "kept.txt"
-    kept.write_text("kept", encoding="utf-8")
     link: Final = tmp_path / "link"
-    make_link(link, outside)
+    make_link(link, kept.parent)
 
     with pytest.raises(OSError) as raised:  # ruff: ignore[pytest-raises-too-broad] # str() differs on POSIX
         safe_delete(link)

@@ -148,12 +148,10 @@ def safe_delete(dest: Path) -> None:
 
     target = str(dest)
     if os.name == "nt":
-        # Without long path support Windows refuses paths past MAX_PATH, yet a seed image built through its 8.3 short
-        # path holds files whose long path is longer. The extended-length \\?\ form has no such limit, but it skips
-        # normalization, so the path is made absolute first.
+        # without long path support Windows refuses paths past MAX_PATH, and a seed image built through its 8.3 short
+        # path holds files past it; the \\?\ form lifts the limit but skips normalization, so normalize the path first
         target = os.path.abspath(target)
-        # a path already in the \\?\ form is not prefixed again, nor is a \\.\ device path, which the UNC form would
-        # turn into a server named "."
+        # the UNC form would turn a \\.\ device path into a server named "."
         if not target.startswith(("\\\\?\\", "\\\\.\\")):
             target = f"\\\\?\\UNC\\{target[2:]}" if target.startswith("\\\\") else f"\\\\?\\{target}"
     if sys.version_info >= (3, 12):
