@@ -104,16 +104,7 @@ class PipInstall(ABC):
         )
         paths.add(dist)
 
-        base_dirs: Final = paths.copy()
-        record: Final = dist / "RECORD"
-        for name in (
-            (row[0] for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")) if row)
-            if record.exists()
-            else ()
-        ):
-            path: Final = dist_base / name
-            if not any(p in base_dirs for p in path.parents):
-                paths.add(path)
+        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy()))
 
         root: Final = env_dir.resolve()
         metadata_parents: Final = set(dist.resolve().parents)
@@ -133,6 +124,58 @@ class PipInstall(ABC):
                     safe_delete(entry)
                 else:
                     remove_file(entry)
+        # without top_level.txt, as in wheels pip itself installs, RECORD lists files only and their directories stay behind
+        PipInstall._remove_emptied_folders(paths, dist_base)
+
+    @staticmethod
+    def _record_paths(dist: Path, base_dirs: set[Path]) -> set[Path]:
+        record: Final = dist / "RECORD"
+        if not record.exists():
+            return set()
+        paths: Final[set[Path]] = set()
+        for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")):
+            if not row:
+                continue
+            path = dist.parent / row[0]
+            if not any(p in base_dirs for p in path.parents):
+                paths.add(path)
+                # bytecode written after the install, by a --no-compile install or an -O run, is not in RECORD
+                if path.suffix == ".py":
+                    paths.update(PipInstall._bytecode_of(path))
+        return paths
+
+    @staticmethod
+    def _bytecode_of(source: Path) -> list[Path]:
+        # a cache file is <stem>.<tag>.pyc or <stem>.<tag>.opt-<n>.pyc; foo.bar.<tag>.pyc is the bytecode of another
+        # module, foo.bar.py, which may belong to another distribution
+        cached: Final = re.compile(rf"{re.escape(source.stem)}\.[^.]+(?:\.opt-\d+)?\.pyc")
+        return [
+            source.with_suffix(".pyc"),
+            source.with_suffix(".pyo"),
+            *(path for path in (source.parent / "__pycache__").glob("*.pyc") if cached.fullmatch(path.name)),
+        ]
+
+    @staticmethod
+    def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
+        base: Final = dist_base.resolve()
+        for folder in sorted(
+            {
+                parent
+                for entry in paths
+                for parent in Path(os.path.normpath(entry)).parents
+                if dist_base in parent.parents
+            },
+            key=lambda folder: len(folder.parts),
+            reverse=True,
+        ):
+            # a RECORD row can lead through a link, so only remove what still resolves inside the packages folder
+            if (
+                folder.is_dir()
+                and not folder.is_symlink()
+                and base in folder.resolve().parents
+                and not any(folder.iterdir())
+            ):
+                folder.rmdir()
 
     @abstractmethod
     def _sync(self, src: Path, dst: Path) -> None:
