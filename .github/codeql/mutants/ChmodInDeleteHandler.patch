@@ -10,4 +10,4 @@ index b64fb6d5..ca7571ff 100644
 +        os.chmod(path, 0o200)
          func(path)
 
-     if sys.version_info >= (3, 12):
+     target = str(dest)

@@ -146,10 +146,18 @@ def safe_delete(dest: Path) -> None:
         clear_readonly(path)
         func(path)
 
+    target = str(dest)
+    if os.name == "nt":
+        # without long path support Windows refuses paths past MAX_PATH, and a seed image built through its 8.3 short
+        # path holds files past it; the \\?\ form lifts the limit but skips normalization, so normalize the path first
+        target = os.path.abspath(target)
+        # the UNC form would turn a \\.\ device path into a server named "."
+        if not target.startswith(("\\\\?\\", "\\\\.\\")):
+            target = f"\\\\?\\UNC\\{target[2:]}" if target.startswith("\\\\") else f"\\\\?\\{target}"
     if sys.version_info >= (3, 12):
-        shutil.rmtree(str(dest), onexc=onerror)
+        shutil.rmtree(target, onexc=onerror)
     else:
-        shutil.rmtree(str(dest), onerror=onerror)
+        shutil.rmtree(target, onerror=onerror)
 
 
 class _Debug:

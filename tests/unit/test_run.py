@@ -116,6 +116,19 @@ def test_reset_with_empty_app_data_override_resets_default(
     assert delete.call_args_list == [mocker.call(default_folder)]
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows MAX_PATH")
+def test_reset_app_data_removes_files_past_max_path(tmp_path: Path) -> None:
+    cache: Final = tmp_path / "cache"
+    # a seed image built through its short path holds files that only its long path reaches, past MAX_PATH
+    image: Final = Path(f"\\\\?\\{cache}", "wheel", "i" * 120, "j" * 120)
+    image.mkdir(parents=True)
+    (image / "pip.py").write_text("", encoding="utf-8")
+
+    session_via_cli(["--app-data", str(cache), "--reset-app-data", str(tmp_path / "env")])
+
+    assert not Path(f"\\\\?\\{cache}", "wheel").exists()
+
+
 _TEST_BLANK_APP_DATA_LEAVES_WORKING_DIRECTORY_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"app data folder '.*' must not be empty or whitespace\n\Z"
 )
