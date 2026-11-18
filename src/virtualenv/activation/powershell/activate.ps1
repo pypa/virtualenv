@@ -233,7 +233,10 @@ if ($_OLD_PKG_CONFIG_PATH) {
     $env:PKG_CONFIG_PATH += __PATH_SEP__ + $_OLD_PKG_CONFIG_PATH
 }
 
-$env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__ + __PATH_SEP__ + $env:PATH
+$env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__
+if ($_OLD_VIRTUAL_PATH) {
+    $env:PATH += __PATH_SEP__ + $_OLD_VIRTUAL_PATH
+}
 
 if (!$env:VIRTUAL_ENV_DISABLE_PROMPT) {
     function global:_old_virtual_prompt {
