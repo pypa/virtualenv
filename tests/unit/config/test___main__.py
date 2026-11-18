@@ -37,6 +37,9 @@ def module_entry_version(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
     return run
 
 
+@pytest.mark.skipif(
+    hasattr(sys.flags, "safe_path") and sys.flags.safe_path, reason="CWD is not removed if sys.flags.safe_path is set"
+)
 def test_module_entry_removes_implicit_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
