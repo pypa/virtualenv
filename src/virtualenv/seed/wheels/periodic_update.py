@@ -381,11 +381,7 @@ def _select_version(u_log: UpdateLog, of_version: str | None, wheel: Wheel | Non
             if version.wheel.has_version(of_version):
                 return version
         return None
-    # successive updates append newer downloads of older minors, so the stored log is not guaranteed
-    # sorted; newest-first keeps the per-minor groups whole and the iteration deterministic, or a patch
-    # landing in a later update would shadow the newest usable version behind its own minor's grace
-    entries = sorted(u_log.versions, key=lambda entry: entry.wheel.parsed_version, reverse=True)
-    for _, group in groupby(entries, key=lambda entry: entry.wheel.version_tuple[0:2]):
+    for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
         # use only latest patch version per minor, earlier assumed to be buggy
         all_patches = list(group)
         ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
@@ -459,15 +455,18 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
 
 def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
+    digests = _pypi_release_file(wheel).get("digests")
+    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
+    return sha256 if isinstance(sha256, str) else None
+
+
+def _pypi_release_file(wheel: Wheel) -> _PyPIJson:
     content = _pypi_get_distribution_info_cached(wheel.distribution)
     releases = content.get("releases") if isinstance(content, dict) else None
     entries = releases.get(wheel.version) if isinstance(releases, dict) else None
     if not isinstance(entries, list):
-        return None
-    entry = next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
-    digests = entry.get("digests")
-    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
-    return sha256 if isinstance(sha256, str) else None
+        return {}
+    return next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
 
 
 def _pypi_get_distribution_info_cached(distribution: str) -> _PyPIJson | None:
@@ -642,9 +641,16 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
 
     if wheel_filename is not None and not (wheelhouse / wheel_filename.name).exists():
         copy2(str(wheel_filename), str(wheelhouse))
-    versions = _download_newer_versions(
+    versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
+    if newest is not None:
+        # pip skips yanked releases, so a logged version above the newest wheel it offers may have been yanked
+        update_versions = [
+            version
+            for version in update_versions
+            if version.wheel.parsed_version <= newest or _pypi_release_file(version.wheel).get("yanked") is not True
+        ]
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic
     if not u_log.periodic:
@@ -666,11 +672,11 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
     update_versions: list[NewVersion],
     source: str,
     now: datetime,
-) -> list[NewVersion]:
+) -> tuple[list[NewVersion], PackagingVersion | None]:
     # acquire imports this module, so the import must wait until it is needed
     from . import acquire  # ruff:ignore[import-outside-top-level]
 
-    last, last_version, versions = None, None, []
+    newest, last, last_version, versions = None, None, None, []
     while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now(tz=timezone.utc)
         dest = acquire.download_wheel(
@@ -682,6 +688,8 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
             to_folder=app_data.house,
             env=os.environ,  # ty: ignore[invalid-argument-type]  # os.environ is a Mapping, not a dict
         )
+        if newest is None and dest is not None:
+            newest = dest.parsed_version
         if (
             dest is None
             or (update_versions and update_versions[0].filename == dest.name)
@@ -696,7 +704,7 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
         last_version = last_wheel.version
         if embed_version is not None and embed_version >= last_wheel.parsed_version:
             break  # stop download if we reach the embed version
-    return versions
+    return versions, newest
 
 
 def release_date_for_wheel_path(dest: Path) -> datetime | None:

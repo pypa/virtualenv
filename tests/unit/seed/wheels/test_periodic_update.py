@@ -29,8 +29,6 @@ from virtualenv.seed.wheels.periodic_update import (
     NewVersion,
     UnverifiedWheelError,
     UpdateLog,
-    # ruff:ignore[import-private-name]  # the selection logic is the unit under test
-    _select_version,
     add_wheel_to_update_log,
     do_update,
     dump_datetime,
@@ -626,7 +624,7 @@ def test_do_update_skip_already_done(tmp_path, mocker, time_freeze) -> None:
     extra.mkdir()
 
     def _download_wheel(**_kwargs):
-        return wheel.path
+        return wheel
 
     download_wheel = mocker.patch(
         "virtualenv.seed.wheels.acquire.download_wheel", side_effect=_download_wheel, autospec=True
@@ -1041,33 +1039,82 @@ def test_update_uses_selected_installation_and_environment(
     assert {"99.0.0", "supplied"} <= set(capfd.readouterr().out.splitlines())
 
 
-def _version_entry(name: str, days_ago: int, now: datetime) -> NewVersion:
-    return NewVersion(
-        filename=name,
-        found_date=now - timedelta(days=days_ago),
-        release_date=now - timedelta(days=days_ago),
-        source="periodic",
-    )
-
-
 @pytest.mark.parametrize(
-    "order",
+    ("logged", "yanked", "kept"),
     [
-        pytest.param(["25.1.2", "25.2.0", "25.1.1"], id="split-group"),
-        pytest.param(["25.2.0", "25.1.2", "25.1.1"], id="sorted"),
+        pytest.param([(0, 2), (0, 1, 1)], True, [(0, 1, 2), (0, 1, 1)], id="yanked-on-top"),
+        pytest.param([(0, 1, 2), (0, 2), (0, 1, 1)], True, [(0, 1, 2), (0, 1, 1)], id="replacement-on-top"),
+        pytest.param([(0, 2), (0, 1, 1)], False, [(0, 1, 2), (0, 2), (0, 1, 1)], id="not-yanked"),
     ],
 )
-def test_select_version_picks_newest_usable_regardless_of_log_order(order: list[str], tmp_path: Path) -> None:
-    now = datetime.now(tz=timezone.utc)
-    # successive updates append newer downloads of older minors, so the stored log is not guaranteed
-    # sorted; the newest usable version must win regardless of the order the updates stored
-    u_log = UpdateLog(
-        started=now - timedelta(days=36),
-        completed=None,
-        versions=[_version_entry(f"pip-{v}-py3-none-any.whl", 35, now) for v in order],
-        periodic=True,
+def test_do_update_drops_yanked_versions(  # ruff:ignore[too-many-arguments]  # fixtures plus the three parameters
+    app_data: AppDataDiskFolder,
+    mocker: MockerFixture,
+    time_freeze: Callable[[datetime], None],
+    logged: list[tuple[int, ...]],
+    yanked: bool,
+    kept: list[tuple[int, ...]],
+) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    released: Final = _UP_NOW - timedelta(days=40)
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(
+            released,
+            released,
+            [NewVersion(Path(wheel_path(current, bump)).name, released, released, "periodic") for bump in logged],
+            True,
+        ).to_dict()
     )
+    replacement: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
+    _fake_pypi(mocker, replacement, Wheel(Path(wheel_path(current, (0, 2)))), yanked=yanked)
+    time_freeze(_UP_NOW)
 
-    selected = _select_version(u_log, None, Wheel(tmp_path / "pip-25.1.0-py3-none-any.whl"), now)
+    do_update("pip", "3.9", None, str(app_data), [], True)
 
-    assert selected.filename == "pip-25.2.0-py3-none-any.whl"
+    assert [v.filename for v in UpdateLog.from_app_data(app_data, "pip", "3.9").versions] == [
+        Path(wheel_path(current, bump)).name for bump in kept
+    ]
+
+
+def _fake_pypi(mocker: MockerFixture, replacement: Wheel, logged: Wheel, *, yanked: bool) -> None:
+    released: Final = (_UP_NOW - timedelta(days=40)).strftime("%Y-%m-%dT%H:%M:%S")
+    releases: Final = {
+        replacement.version: [{"filename": replacement.name, "upload_time": released, "yanked": False}],
+        logged.version: [{"filename": logged.name, "upload_time": released, "yanked": yanked}],
+    }
+    body: Final = json.dumps({"releases": releases})
+    mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body), autospec=True)
+
+
+def test_periodic_update_seeds_replacement_of_yanked(
+    app_data: AppDataDiskFolder, mocker: MockerFixture, time_freeze: Callable[[datetime], None]
+) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    released: Final = _UP_NOW - timedelta(days=40)
+    replacement: Final = Wheel(Path(wheel_path(current, (0, 1, 2))))
+    yanked: Final = Wheel(Path(wheel_path(current, (0, 2))))
+    # a day old, the replacement is usable only once no yanked entry splits it from its minor's older patch
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(
+            released,
+            released,
+            [
+                NewVersion(replacement.name, released, _UP_NOW - timedelta(days=1), "periodic"),
+                NewVersion(yanked.name, released, released, "periodic"),
+                NewVersion(Path(wheel_path(current, (0, 1, 1))).name, released, released, "periodic"),
+            ],
+            True,
+        ).to_dict()
+    )
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", autospec=True, return_value=replacement)
+    _fake_pypi(mocker, replacement, yanked, yanked=True)
+    time_freeze(_UP_NOW)
+    do_update("pip", "3.9", None, str(app_data), [], True)
+
+    result: Final = periodic_update("pip", None, "3.9", current, [], app_data, False, {})
+
+    assert result is not None
+    assert result.name == replacement.name
