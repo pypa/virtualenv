@@ -41,15 +41,6 @@ if TYPE_CHECKING:
 
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
-# the REST release listing of RustPython/RustPython comes back empty, so query GraphQL, which sees its releases
-_QUERY: Final[str] = """
-query($owner: String!, $name: String!) {
-  repository(owner: $owner, name: $name) {
-    latestRelease { tagName }
-    releases(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { tagName } }
-  }
-}
-"""
 # the docs load Mermaid from jsDelivr into every reader's browser, so give npm a week to pull a hijacked release
 _NPM_COOLDOWN: Final[timedelta] = timedelta(days=7)
 
@@ -94,10 +85,19 @@ def _main() -> None:
 
 def _newest_tag(token: str, repository: str, *, prerelease: bool) -> str:
     owner, name = repository.split("/")
+    # the REST release listing of RustPython/RustPython comes back empty, so query GraphQL, which sees its releases
+    query: Final = """
+query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    latestRelease { tagName }
+    releases(first: 1, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { tagName } }
+  }
+}
+"""
     with urlopen(
         Request(
             "https://api.github.com/graphql",
-            data=json.dumps({"query": _QUERY, "variables": {"owner": owner, "name": name}}).encode(),
+            data=json.dumps({"query": query, "variables": {"owner": owner, "name": name}}).encode(),
             headers={"Authorization": f"Bearer {token}"},
         ),
         timeout=30,

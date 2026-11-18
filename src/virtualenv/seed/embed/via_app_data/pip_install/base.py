@@ -20,7 +20,7 @@ from distlib.scripts import ScriptMaker, enquote_executable
 
 from virtualenv.util.path import remove_file, safe_delete
 
-from ._safe_extract_zip import extract_zip as _safe_extract_zip
+from ._safe_extract_zip import extract_zip
 
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
@@ -211,7 +211,7 @@ class PipInstall(ABC):
 
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
         LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
-        _safe_extract_zip(zip_ref, folder)
+        extract_zip(zip_ref, folder)
         dist_info: Final = self._find_dist_info(folder)
         self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))
 

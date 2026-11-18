@@ -617,10 +617,10 @@ def _fail_during_extraction(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
 @pytest.mark.parametrize(
     ("target", "failure", "linked"),
     [
-        pytest.param("base._safe_extract_zip", _fail_during_extraction, False, id="copy-extract"),
+        pytest.param("base.extract_zip", _fail_during_extraction, False, id="copy-extract"),
         pytest.param("base.PipInstall._generate_new_files", _DISK_FULL, False, id="copy-finish"),
         pytest.param(
-            "base._safe_extract_zip",
+            "base.extract_zip",
             _fail_during_extraction,
             True,
             id="symlink-extract",
