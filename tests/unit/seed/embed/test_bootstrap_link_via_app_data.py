@@ -252,6 +252,86 @@ def test_seed_metadata_keeps_reseeding_supported(
     )
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    outside: Final = tmp_path / "outside" / "empty"
+    outside.mkdir(parents=True)
+    (session.creator.purelib / "linked").symlink_to(outside.parent, target_is_directory=True)
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record.write_text(f"{record.read_text(encoding='utf-8')}\nlinked/empty/gone.txt,,", encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert outside.is_dir()
+
+
+def test_seed_metadata_keeps_bytecode_of_dotted_module(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    cache: Final = session.creator.purelib / "__pycache__"
+    cache.mkdir(exist_ok=True)
+    (session.creator.purelib / "foo.py").write_text("", encoding="utf-8")
+    own: Final = [cache / "foo.cpython-314.pyc", cache / "foo.cpython-314.opt-1.pyc"]
+    other: Final = cache / "foo.bar.cpython-314.pyc"
+    for path in [*own, other]:
+        path.write_bytes(b"")
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record.write_text(f"{record.read_text(encoding='utf-8')}\nfoo.py,,", encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert (other.exists(), [path.exists() for path in own]) == (True, [False, False])
+
+
+@pytest.mark.parametrize(
+    ("install_args", "run_args"),
+    [
+        pytest.param([], [], id="compiled"),
+        pytest.param(["--no-compile"], [], id="no-compile-then-run"),
+        pytest.param([], ["-O"], id="optimized-run"),
+    ],
+)
+@pytest.mark.parametrize(
+    "linked",
+    [
+        pytest.param(False, id="copy"),
+        pytest.param(
+            True, id="symlink", marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+        ),
+    ],
+)
+def test_reseed_over_pip_installed_by_pip(
+    tmp_path: Path, linked: bool, install_args: list[str], run_args: list[str]
+) -> None:
+    args: Final = [
+        str(tmp_path / "env"),
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+        *{True: ["--symlink-app-data"], False: []}[linked],
+    ]
+    session: Final = cli_run(args, setup_logging=False)
+    version: Final = next(session.creator.purelib.glob("pip-*.dist-info")).stem.split("-")[1]
+    # a wheel pip installs has no top_level.txt and a RECORD of files only
+    check_call([
+        str(session.creator.exe),
+        "-m",
+        "pip",
+        "install",
+        "-q",
+        "--disable-pip-version-check",
+        "--force-reinstall",
+        *install_args,
+        "--no-index",
+        "--find-links",
+        str(BUNDLE_FOLDER),
+        f"pip=={version}",
+    ])
+    # running pip writes bytecode RECORD does not list
+    check_call([str(session.creator.exe), *run_args, "-m", "pip", "--version"])
+    package: Final = cli_run(args, setup_logging=False).creator.purelib / "pip"
+    assert ((package / "__init__.py").is_file(), package.is_symlink()) == (True, linked)
+
+
 @pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.skipif(os.name != "nt", reason="Windows refuses to delete read-only files")
 def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
@@ -414,9 +494,29 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert pip in files_post_first_uninstall
     assert setuptools not in files_post_first_uninstall
 
-    # install a different setuptools to test that virtualenv removes this before installing new
-    version = f"setuptools<{bundle_ver['setuptools'].split('-')[1]}"
-    process = Popen([str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version])
+    # install a different setuptools to test that virtualenv removes this before installing new; a local stub keeps
+    # the test off the network, where an index outage would fail it
+    (stub_dir := tmp_path / "stub").mkdir()
+    stub_files: Final = {
+        "setuptools/__init__.py": "",
+        "setuptools-0.1.dist-info/METADATA": "Metadata-Version: 2.1\nName: setuptools\nVersion: 0.1\n",
+        "setuptools-0.1.dist-info/WHEEL": "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+        "setuptools-0.1.dist-info/top_level.txt": "setuptools\n",
+    }
+    with zipfile.ZipFile(stub_dir / "setuptools-0.1-py3-none-any.whl", "w") as stub:
+        for name, content in stub_files.items():
+            stub.writestr(name, content)
+        stub.writestr("setuptools-0.1.dist-info/RECORD", "".join(f"{name},,\n" for name in stub_files))
+    process = Popen([
+        str(result.creator.script("pip")),
+        "--verbose",
+        "--disable-pip-version-check",
+        "install",
+        "--no-index",
+        "--find-links",
+        str(stub_dir),
+        "setuptools==0.1",
+    ])
     process.communicate()
     assert not process.returncode
     assert site_package.exists()
@@ -617,10 +717,10 @@ def _fail_during_extraction(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
 @pytest.mark.parametrize(
     ("target", "failure", "linked"),
     [
-        pytest.param("base._safe_extract_zip", _fail_during_extraction, False, id="copy-extract"),
+        pytest.param("base.extract_zip", _fail_during_extraction, False, id="copy-extract"),
         pytest.param("base.PipInstall._generate_new_files", _DISK_FULL, False, id="copy-finish"),
         pytest.param(
-            "base._safe_extract_zip",
+            "base.extract_zip",
             _fail_during_extraction,
             True,
             id="symlink-extract",

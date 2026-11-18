@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import os
 import shutil
@@ -10,6 +11,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+import packaging
 import pytest
 from python_discovery import PythonInfo
 
@@ -17,9 +19,13 @@ from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.periodic_update import trigger_update
+from virtualenv.version import __version__
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from types import ModuleType
+
+    from pytest_mock import MockerFixture, MockType
 
 _HERE: Final[Path] = Path(__file__).parent
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
@@ -38,7 +44,8 @@ def zipapp_build_env(tmp_path_factory):
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
             for threaded in ["", "t"]:
-                for version in range(11, 6, -1):
+                # 3.11 brings tomllib, so the build script needs only packaging
+                for version in range(15, 10, -1):
                     with suppress(Exception):
                         # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                         session = cli_run(
@@ -54,6 +61,7 @@ def zipapp_build_env(tmp_path_factory):
                             ],
                         )
                         exe = str(session.creator.exe)
+                        purelib = session.creator.purelib
                         found = True
                         break
                 if found:
@@ -63,14 +71,8 @@ def zipapp_build_env(tmp_path_factory):
         else:
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
-        cmd = [
-            str(Path(exe).parent / "pip"),
-            "install",
-            "pip>=23",
-            "packaging>=23",
-            "tomli>=2.0.1; python_version<'3.11'",
-        ]
-        subprocess.run(cmd, check=True, timeout=300)
+        # packaging is pure Python, so the copy the tests run with works in the builder without reaching an index
+        shutil.copytree(Path(packaging.__file__).parent, purelib / "packaging")
     yield exe
     if create_env_path is not None:
         shutil.rmtree(str(create_env_path))
@@ -81,9 +83,29 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     into = tmp_path_factory.mktemp("zipapp")
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
-    subprocess.run(cmd, check=True, timeout=300, cwd=_HERE.parent.parent)
+    # bundle the wheel tox built and installed, as building from source downloads the build backend
+    if (wheel := _tox_built_wheel(os.environ.get("ZIPAPP_WHEEL_DIR"))) is not None:
+        shutil.copy2(wheel, into)
+        cmd.extend(["--wheel-dir", str(into)])
+    subprocess.run([*cmd, *_wheel_cache()], check=True, timeout=300, cwd=_HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))
+
+
+def _tox_built_wheel(dist: str | None) -> Path | None:
+    if dist is None or not (wheel := Path(dist) / f"virtualenv-{__version__}-py3-none-any.whl").is_file():
+        return None
+    # an editable install, as tox's dev environment makes, writes a wheel of the same name that holds only a .pth file
+    try:
+        with zipfile.ZipFile(wheel) as archive:
+            return wheel if "virtualenv/__init__.py" in archive.namelist() else None
+    except zipfile.BadZipFile:
+        return None
+
+
+def _wheel_cache() -> list[str]:
+    # tox turns on the cache CI restores into .tox/zipapp-wheels, so the build bundles the locked wheels offline
+    return ["--wheel-cache"] if os.environ.get("ZIPAPP_WHEEL_CACHE") else []
 
 
 @pytest.fixture(scope="session")
@@ -214,6 +236,7 @@ def test_zipapp_bundles_prebuilt_wheel(zipapp_build_env: str, tmp_path: Path) ->
             str(pyz := tmp_path / "virtualenv.pyz"),
             "--wheel-dir",
             str(wheel_dir),
+            *_wheel_cache(),
         ],
         check=True,
         timeout=300,
@@ -252,3 +275,151 @@ def test_zipapp_lock_covers_supported_python() -> None:
 
     assert "3.15" in versions
     assert "3.8" not in versions
+
+
+_LOCKED_CONTENT: Final[bytes] = b"wheel"
+_LOCKED_NAME: Final[str] = "demo-1.0-py3-none-any.whl"
+
+
+@pytest.fixture
+def make_zipapp() -> ModuleType:
+    return pytest.importorskip("tasks.make_zipapp")
+
+
+@pytest.fixture
+def fetch(mocker: MockerFixture, make_zipapp: ModuleType) -> MockType:
+    return mocker.patch.object(make_zipapp, "fetch", autospec=True, return_value=_LOCKED_CONTENT)
+
+
+@pytest.fixture
+def download(make_zipapp: ModuleType) -> Callable[[Path], Path]:
+    package: Final = {
+        "name": "demo",
+        "version": "1.0",
+        "wheels": [
+            {
+                "url": f"https://files.example/{_LOCKED_NAME}",
+                "hashes": {"sha256": hashlib.sha256(_LOCKED_CONTENT).hexdigest()},
+            }
+        ],
+    }
+    # only a full zipapp build reaches the download otherwise
+    function: Final = make_zipapp._download_locked_wheel  # ruff:ignore[private-member-access]
+    return lambda into: function(package, into)
+
+
+def test_locked_wheel_reused_from_cache_when_hash_matches(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    (tmp_path / _LOCKED_NAME).write_bytes(_LOCKED_CONTENT)
+
+    assert download(tmp_path).read_bytes() == _LOCKED_CONTENT
+    fetch.assert_not_called()
+
+
+def test_locked_wheel_fetched_into_new_cache(download: Callable[[Path], Path], fetch: MockType, tmp_path: Path) -> None:
+    cache: Final = tmp_path / "cache"
+
+    assert download(cache).read_bytes() == _LOCKED_CONTENT
+    assert [path.name for path in cache.iterdir()] == [_LOCKED_NAME]
+    fetch.assert_called_once_with(f"https://files.example/{_LOCKED_NAME}")
+
+
+def test_locked_wheel_refetched_over_cached_file_with_other_hash(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    (tmp_path / _LOCKED_NAME).write_bytes(b"stale")
+
+    assert download(tmp_path).read_bytes() == _LOCKED_CONTENT
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+    fetch.assert_called_once_with(f"https://files.example/{_LOCKED_NAME}")
+
+
+def test_locked_wheel_not_matching_lock_is_rejected(
+    download: Callable[[Path], Path], fetch: MockType, tmp_path: Path
+) -> None:
+    fetch.return_value = b"tampered"
+
+    with pytest.raises(RuntimeError, match="records"):
+        download(tmp_path)
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="only Windows reads a backslash as a separator")
+def test_locked_wheel_outside_the_folder_rejected(make_zipapp: ModuleType, fetch: MockType, tmp_path: Path) -> None:
+    package: Final = {
+        "name": "demo",
+        "version": "1.0",
+        "wheels": [{"url": "https://files.example/..\\demo-1.0-py3-none-any.whl", "hashes": {"sha256": "0"}}],
+    }
+
+    with pytest.raises(RuntimeError, match="outside"):
+        make_zipapp._download_locked_wheel(package, tmp_path / "cache")  # ruff:ignore[private-member-access]  # no public entry point reaches it
+    fetch.assert_not_called()
+
+
+@pytest.fixture
+def peer_holds_wheel_open(fetch: MockType, mocker: MockerFixture, tmp_path: Path) -> Callable[[bytes], None]:
+    def written_by_peer(content: bytes) -> None:
+        # another build stores its copy while this one downloads, and Windows then refuses to replace the open file
+        fetch.side_effect = lambda _url: (tmp_path / _LOCKED_NAME).write_bytes(content) and _LOCKED_CONTENT
+        mocker.patch.object(Path, "replace", autospec=True, side_effect=PermissionError("in use"))
+
+    return written_by_peer
+
+
+def test_locked_wheel_kept_when_another_build_stored_the_same(
+    download: Callable[[Path], Path], peer_holds_wheel_open: Callable[[bytes], None], tmp_path: Path
+) -> None:
+    peer_holds_wheel_open(_LOCKED_CONTENT)
+
+    assert download(tmp_path) == tmp_path / _LOCKED_NAME
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+
+
+def test_locked_wheel_replace_refused_over_other_file_raises(
+    download: Callable[[Path], Path], peer_holds_wheel_open: Callable[[bytes], None], tmp_path: Path
+) -> None:
+    peer_holds_wheel_open(b"other")
+
+    with pytest.raises(PermissionError, match="in use"):
+        download(tmp_path)
+    assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
+
+
+def test_locked_wheel_replace_refused_without_cached_copy_raises(
+    download: Callable[[Path], Path], fetch: MockType, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    fetch.return_value = _LOCKED_CONTENT
+    # a scanner holding the staged file also makes Windows refuse the replace, with no other build involved
+    mocker.patch.object(Path, "replace", autospec=True, side_effect=PermissionError("in use"))
+
+    with pytest.raises(PermissionError, match="in use"):
+        download(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("files", "found"),
+    [
+        pytest.param({"virtualenv/__init__.py": ""}, True, id="built"),
+        pytest.param({"_virtualenv_editable.pth": "/src"}, False, id="editable"),
+    ],
+)
+def test_tox_built_wheel_needs_the_package(tmp_path: Path, files: dict[str, str], found: bool) -> None:
+    wheel: Final = tmp_path / f"virtualenv-{__version__}-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        for name, content in files.items():
+            archive.writestr(name, content)
+
+    assert (_tox_built_wheel(str(tmp_path)) == wheel) is found
+
+
+@pytest.mark.parametrize("dist", [pytest.param(None, id="no-tox"), pytest.param("missing", id="not-built")])
+def test_tox_built_wheel_absent(tmp_path: Path, dist: str | None) -> None:
+    assert _tox_built_wheel(dist and str(tmp_path / dist)) is None
+
+
+def test_tox_built_wheel_corrupt(tmp_path: Path) -> None:
+    (tmp_path / f"virtualenv-{__version__}-py3-none-any.whl").write_bytes(b"truncated")
+
+    assert _tox_built_wheel(str(tmp_path)) is None

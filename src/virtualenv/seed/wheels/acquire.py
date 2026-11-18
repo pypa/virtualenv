@@ -39,16 +39,6 @@ PIP_RUN: Final[str] = (
     "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
 )
 
-# A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
-# filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
-# for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
-# exactly the source it was configured to come from, not a compromised one.
-#
-# This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
-# invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either way:
-# it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
-_CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
-
 
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
 # somebody is smuggling pip options or extras, so reject it before we build the command line.
@@ -173,7 +163,15 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
-    verify_against_pypi: Final = not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
+    # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and filename PyPI
+    # also uses - an internal mirror re-signing or re-packaging a release for policy reasons, for example. Verifying
+    # that file against PyPI's own digest would then reject a wheel that came from exactly the source it was configured
+    # to come from, not a compromised one.
+    #
+    # This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
+    # invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either
+    # way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
+    verify_against_pypi: Final = not any(env.get(var) for var in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX"))
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:

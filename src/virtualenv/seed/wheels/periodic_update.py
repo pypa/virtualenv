@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "configparser",
     "contextlib",
     "hashlib",
+    "http.client",
     "itertools",
     "json",
     "pathlib",
@@ -21,9 +23,11 @@ __lazy_modules__ = [
     "virtualenv.info",
     "virtualenv.util.subprocess",
     f"{__spec__.parent}.embed",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.index",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
+import configparser
 import hashlib
 import json
 import logging
@@ -32,6 +36,7 @@ import ssl
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPException
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
@@ -50,6 +55,7 @@ from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 from .embed import BUNDLE_SUPPORT
+from .index import yanked_files
 from .util import Wheel
 
 if TYPE_CHECKING:
@@ -441,11 +447,6 @@ DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-va
 _PyPIJson = dict[str, object]
 
 
-#: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON
-#: API that has not caught up with a fresh upload.
-_DIGEST_RETRY_DELAYS: Final[tuple[float, ...]] = (1.0, 2.0, 4.0)
-
-
 def verify_wheel_digest(wheel: Wheel) -> None:
     """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
 
@@ -461,7 +462,8 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
     """
     expected = _pypi_sha256_for_wheel(wheel)
-    for delay in _DIGEST_RETRY_DELAYS:
+    # ride out a brief PyPI outage or a JSON API that has not caught up with a fresh upload before refusing the wheel
+    for delay in (1.0, 2.0, 4.0):
         if expected is not None:
             break
         LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
@@ -660,9 +662,10 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
 
     if wheel_filename is not None and not (wheelhouse / wheel_filename.name).exists():
         copy2(str(wheel_filename), str(wheelhouse))
-    versions = _download_newer_versions(
+    versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
+    update_versions = _drop_yanked(distribution, update_versions, versions, newest, embed_version)
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic
     if not u_log.periodic:
@@ -684,11 +687,11 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
     update_versions: list[NewVersion],
     source: str,
     now: datetime,
-) -> list[NewVersion]:
+) -> tuple[list[NewVersion], PackagingVersion | None]:
     # acquire imports this module, so the import must wait until it is needed
     from . import acquire  # ruff:ignore[import-outside-top-level]
 
-    last, last_version, versions = None, None, []
+    newest, last, last_version, versions = None, None, None, []
     while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now(tz=timezone.utc)
         dest = acquire.download_wheel(
@@ -700,6 +703,8 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
             to_folder=app_data.house,
             env=os.environ,  # ty: ignore[invalid-argument-type]  # os.environ is a Mapping, not a dict
         )
+        if newest is None and dest is not None:
+            newest = dest.parsed_version
         if (
             dest is None
             or (update_versions and update_versions[0].filename == dest.name)
@@ -714,7 +719,7 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
         last_version = last_wheel.version
         if embed_version is not None and embed_version >= last_wheel.parsed_version:
             break  # stop download if we reach the embed version
-    return versions
+    return versions, newest
 
 
 def release_date_for_wheel_path(dest: Path) -> datetime | None:
@@ -738,6 +743,34 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
             # the log line carries the exception repr, a traceback adds nothing
             LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
+
+
+def _drop_yanked(
+    distribution: str,
+    update_versions: list[NewVersion],
+    versions: list[NewVersion],
+    newest: PackagingVersion | None,
+    embed_version: PackagingVersion | None,
+) -> list[NewVersion]:
+    # pip skips yanked releases, so a logged one above its newest offer or below a new find may be yanked; the
+    # bundled wheel beats any release at or below it
+    above_bundle: Final = {
+        version.filename
+        for version in update_versions
+        if embed_version is None or version.wheel.parsed_version > embed_version
+    }
+    if above_bundle and (
+        versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions))
+    ):
+        try:
+            yanked = yanked_files(distribution, os.environ)
+        # an error yanked_files does not turn into None must not lose the update log
+        except (OSError, ValueError, LookupError, RuntimeError, HTTPException, configparser.Error) as exception:
+            LOGGER.warning("could not check %s for yanked releases, keeping them: %r", distribution, exception)
+            return update_versions
+        dropped = above_bundle & (yanked or frozenset())
+        return [version for version in update_versions if version.filename not in dropped]
+    return update_versions
 
 
 __all__ = [

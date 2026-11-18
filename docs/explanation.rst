@@ -469,6 +469,12 @@ The 28-day waiting period protects users from automatically adopting newly relea
 The 1-hour delay after download ensures continuous integration systems don't start using different package versions
 mid-run, which could cause confusing test failures.
 
+virtualenv stops using a logged release once the package index yanks it, at the next update that finds a newer release
+or no longer sees a logged one. It reads the yank flags from the simple API of the index ``pip`` is configured with
+(``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL`` or ``pip.conf``, with credentials from the URL or ``.netrc``, ``cert`` and
+``proxy``) without running ``pip``. If an index cannot be read, for example because it needs keyring credentials or a
+client certificate, the logged releases stay.
+
 You can disable the periodic update mechanism with the ``--no-periodic-update`` flag.
 
 .. _distribution_wheels:
