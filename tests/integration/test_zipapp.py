@@ -81,6 +81,9 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     into = tmp_path_factory.mktemp("zipapp")
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
+    # bundle the wheel tox built and installed, as building from source downloads the build backend
+    if package := os.environ.get("TOX_PACKAGE"):
+        cmd.extend(["--wheel-dir", str(Path(package).parent)])
     subprocess.run(cmd, check=True, timeout=300, cwd=_HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))

@@ -414,9 +414,29 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert pip in files_post_first_uninstall
     assert setuptools not in files_post_first_uninstall
 
-    # install a different setuptools to test that virtualenv removes this before installing new
-    version = f"setuptools<{bundle_ver['setuptools'].split('-')[1]}"
-    process = Popen([str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version])
+    # install a different setuptools to test that virtualenv removes this before installing new; a local stub keeps
+    # the test off the network, where an index outage would fail it
+    (stub_dir := tmp_path / "stub").mkdir()
+    stub_files: Final = {
+        "setuptools/__init__.py": "",
+        "setuptools-0.1.dist-info/METADATA": "Metadata-Version: 2.1\nName: setuptools\nVersion: 0.1\n",
+        "setuptools-0.1.dist-info/WHEEL": "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+        "setuptools-0.1.dist-info/top_level.txt": "setuptools\n",
+    }
+    with zipfile.ZipFile(stub_dir / "setuptools-0.1-py3-none-any.whl", "w") as stub:
+        for name, content in stub_files.items():
+            stub.writestr(name, content)
+        stub.writestr("setuptools-0.1.dist-info/RECORD", "".join(f"{name},,\n" for name in stub_files))
+    process = Popen([
+        str(result.creator.script("pip")),
+        "--verbose",
+        "--disable-pip-version-check",
+        "install",
+        "--no-index",
+        "--find-links",
+        str(stub_dir),
+        "setuptools==0.1",
+    ])
     process.communicate()
     assert not process.returncode
     assert site_package.exists()
