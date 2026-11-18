@@ -185,16 +185,13 @@ jobs:
         env:
           GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
-          # --reruns lets a single test recover from a transient worker crash (see
-          # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
-          # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
           # graalpy skips xdist: tasks/run_graalpy_tests.py runs one serial pytest process per
           # CPU instead, each on its own --shard slice of the tests. graalpy also dropped its
           # --timeout-method=thread override: that method spawns a watcher thread per test,
           # and GraalVM's Context.close() treats any Python-visible thread still alive as
           # fatal, crashing the job even after every test passed (see #3240). The default
           # signal-based method needs no such thread. --timeout=300 stays as a safety net.
-          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
+          PYTEST_ADDOPTS: "-vv --durations=20${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.
           PYTHONFAULTHANDLER: "1"

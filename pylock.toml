@@ -2681,35 +2681,6 @@ size = 8969
 sha256 = "fb9004e6821422291087d0294fd62f45ff304094db11fbdff8f2fe1ed20764d8"
 
 [[packages]]
-name = "pytest-rerunfailures"
-version = "16.7"
-marker = "\"dev\" in dependency_groups or \"property\" in dependency_groups or \"tasks\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups"
-requires-python = ">=3.10"
-dependencies = [
-    { name = "packaging" },
-    { name = "pytest" },
-]
-index = "https://pypi.org/simple/"
-
-[packages.sdist]
-name = "pytest_rerunfailures-16.7.tar.gz"
-upload-time = 2026-09-17T07:08:48.871724+00:00
-url = "https://files.pythonhosted.org/packages/d1/b0/6b5337f9d59b26b0069ea3d5e863c31dc04b69e51bbfb1cf2ea6328fba87/pytest_rerunfailures-16.7.tar.gz"
-size = 59666
-
-[packages.sdist.hashes]
-sha256 = "6956ddfb65ca1d07e7e3d99e2c5359d82300f4cb062e6049563bd2c106f72d5c"
-
-[[packages.wheels]]
-name = "pytest_rerunfailures-16.7-py3-none-any.whl"
-upload-time = 2026-09-17T07:08:47.635167+00:00
-url = "https://files.pythonhosted.org/packages/c1/d3/07ea35102cf2020ddaaac368d2a6f0bcc63d6523fb8918805bac3eb8b98f/pytest_rerunfailures-16.7-py3-none-any.whl"
-size = 23952
-
-[packages.wheels.hashes]
-sha256 = "edf1886209c2b7dafe35b5bf1708d6ec40ccf6c6b357f0f02807efcec0204c99"
-
-[[packages]]
 name = "pytest-timeout"
 version = "2.4.0"
 marker = "\"dev\" in dependency_groups or \"property\" in dependency_groups or \"tasks\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups"
