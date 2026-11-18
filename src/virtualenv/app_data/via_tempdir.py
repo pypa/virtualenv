@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["tempfile", "virtualenv.util.path"]
+__lazy_modules__ = [
+    "tempfile",
+    "virtualenv.util.path",
+]
 
 import logging
 from tempfile import mkdtemp

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib", "virtualenv.util.path"]
+__lazy_modules__ = [
+    "pathlib",
+    "virtualenv.util.path",
+]
 
 import os
 from pathlib import Path

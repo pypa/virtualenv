@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["importlib.resources", "re", "shlex", "virtualenv.util.path"]
+__lazy_modules__ = [
+    "importlib.resources",
+    "re",
+    "shlex",
+    "virtualenv.util.path",
+]
 
 import os
 import re

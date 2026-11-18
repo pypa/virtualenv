@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["python_discovery", "virtualenv.config.cli.parser"]
+__lazy_modules__ = [
+    "python_discovery",
+    "virtualenv.config.cli.parser",
+]
 
 import sys
 from typing import TYPE_CHECKING

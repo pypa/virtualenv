@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["contextlib", "pathlib", "platformdirs", "shutil", "typing"]
+__lazy_modules__ = [
+    "contextlib",
+    "pathlib",
+    "platformdirs",
+    "shutil",
+    "typing",
+]
 
 import logging
 import os

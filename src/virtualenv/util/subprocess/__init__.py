@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["shlex", "subprocess"]
+__lazy_modules__ = [
+    "shlex",
+    "subprocess",
+]
 
 import subprocess
 from shlex import quote

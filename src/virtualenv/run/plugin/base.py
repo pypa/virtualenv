@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["collections", "importlib.metadata"]
+__lazy_modules__ = [
+    "collections",
+    "importlib.metadata",
+]
 
 import sys
 from collections import OrderedDict

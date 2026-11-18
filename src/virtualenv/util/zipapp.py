@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib", "typing", "virtualenv.info", "zipfile"]
+__lazy_modules__ = [
+    "pathlib",
+    "typing",
+    "virtualenv.info",
+    "zipfile",
+]
 
 import logging
 import zipfile

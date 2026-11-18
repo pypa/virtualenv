@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["shlex", "virtualenv.util.text"]
+__lazy_modules__ = [
+    "shlex",
+    "virtualenv.util.text",
+]
 
 import logging  # isort: skip # fmt: skip
 import shlex  # isort: skip # fmt: skip
