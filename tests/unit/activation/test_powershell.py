@@ -24,6 +24,13 @@ _INTERPRETER_INDEPENDENT: Final[pytest.MarkDecorator] = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(autouse=True)
+def _private_pwsh_cache(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    # pwsh reads and rewrites a startup profile in its cache folder on every start, so parallel workers shared one file;
+    # while they did, every pwsh on a macOS runner crashed with FileLoadException for two minutes (CI run 44217352067)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path_factory.mktemp("pwsh-cache")))
+
+
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
     ("define", "expected"),
