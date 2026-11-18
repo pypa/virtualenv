@@ -23,7 +23,7 @@ from python_discovery import PythonInfo
 from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # disk cache  # fmt: skip
 
 from virtualenv.app_data import ReadOnlyAppData
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
@@ -264,17 +264,34 @@ def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
     assert (session.creator.purelib / "pip" / "__init__.py").is_file()
 
 
-@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
+_QUOTING_ONLY: Final[pytest.MarkDecorator] = pytest.mark.skipif(
+    IS_PYPY or IS_GRAALPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix"
+)
+
+
 @pytest.mark.parametrize(
     "name",
     [
-        pytest.param("plain", id="plain"),
-        pytest.param("two words", id="space"),
-        pytest.param("owner's env", id="apostrophe"),
-        pytest.param("$(echo a) `echo b`", id="command-substitution"),
-        pytest.param("a" * 120, id="long", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX shebang limit")),
-        pytest.param("env \\path", id="backslash", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
-        pytest.param("env\tname", id="tab", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
+        # GraalPy skips the slow launcher tests, so the plain case is its only check that a console script runs
+        pytest.param(
+            "plain", id="plain", marks=pytest.mark.skipif(IS_PYPY, reason="the slow app-data seed test runs a launcher")
+        ),
+        pytest.param("two words", id="space", marks=_QUOTING_ONLY),
+        pytest.param("owner's env", id="apostrophe", marks=_QUOTING_ONLY),
+        pytest.param("$(echo a) `echo b`", id="command-substitution", marks=_QUOTING_ONLY),
+        pytest.param(
+            "a" * 120,
+            id="long",
+            marks=[_QUOTING_ONLY, pytest.mark.skipif(os.name == "nt", reason="POSIX shebang limit")],
+        ),
+        pytest.param(
+            "env \\path",
+            id="backslash",
+            marks=[_QUOTING_ONLY, pytest.mark.skipif(os.name == "nt", reason="POSIX filename")],
+        ),
+        pytest.param(
+            "env\tname", id="tab", marks=[_QUOTING_ONLY, pytest.mark.skipif(os.name == "nt", reason="POSIX filename")]
+        ),
     ],
 )
 @pytest.mark.parametrize(
