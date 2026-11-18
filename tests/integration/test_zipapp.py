@@ -96,8 +96,11 @@ def _tox_built_wheel(dist: str | None) -> Path | None:
     if dist is None or not (wheel := Path(dist) / f"virtualenv-{__version__}-py3-none-any.whl").is_file():
         return None
     # an editable install, as tox's dev environment makes, writes a wheel of the same name that holds only a .pth file
-    with zipfile.ZipFile(wheel) as archive:
-        return wheel if "virtualenv/__init__.py" in archive.namelist() else None
+    try:
+        with zipfile.ZipFile(wheel) as archive:
+            return wheel if "virtualenv/__init__.py" in archive.namelist() else None
+    except zipfile.BadZipFile:
+        return None
 
 
 def _wheel_cache() -> list[str]:
@@ -371,6 +374,17 @@ def test_locked_wheel_replace_refused_over_other_file_raises(
     assert [path.name for path in tmp_path.iterdir()] == [_LOCKED_NAME]
 
 
+def test_locked_wheel_replace_refused_without_cached_copy_raises(
+    download: Callable[[Path], Path], fetch: MockType, mocker: MockerFixture, tmp_path: Path
+) -> None:
+    fetch.return_value = _LOCKED_CONTENT
+    # a scanner holding the staged file also makes Windows refuse the replace, with no other build involved
+    mocker.patch.object(Path, "replace", autospec=True, side_effect=PermissionError("in use"))
+
+    with pytest.raises(PermissionError, match="in use"):
+        download(tmp_path)
+
+
 @pytest.mark.parametrize(
     ("files", "found"),
     [
@@ -390,3 +404,9 @@ def test_tox_built_wheel_needs_the_package(tmp_path: Path, files: dict[str, str]
 @pytest.mark.parametrize("dist", [pytest.param(None, id="no-tox"), pytest.param("missing", id="not-built")])
 def test_tox_built_wheel_absent(tmp_path: Path, dist: str | None) -> None:
     assert _tox_built_wheel(dist and str(tmp_path / dist)) is None
+
+
+def test_tox_built_wheel_corrupt(tmp_path: Path) -> None:
+    (tmp_path / f"virtualenv-{__version__}-py3-none-any.whl").write_bytes(b"truncated")
+
+    assert _tox_built_wheel(str(tmp_path)) is None

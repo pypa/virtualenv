@@ -174,7 +174,8 @@ jobs:
         id: zipapp-tests
         shell: bash
         run: |
-          if tox config -e "$TOXENV" -k commands | grep -q -- --int; then
+          commands=$(tox config -e "$TOXENV" -k commands)
+          if grep -q -- --int <<<"$commands"; then
             echo "run=true" >>"$GITHUB_OUTPUT"
           fi
       - name: 📦 Restore zipapp wheel cache

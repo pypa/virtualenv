@@ -116,8 +116,9 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
     except PermissionError:
         # Windows refuses to replace a file another build has open, which a build sharing the cache only does after
         # writing the same verified wheel
-        Path(staged.name).unlink()
-        if hashlib.sha256(dest.read_bytes()).hexdigest() != expected:
+        with suppress(OSError):
+            Path(staged.name).unlink()
+        if not dest.is_file() or hashlib.sha256(dest.read_bytes()).hexdigest() != expected:
             raise
     return dest
 
