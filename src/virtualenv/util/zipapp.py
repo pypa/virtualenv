@@ -2,8 +2,9 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "pathlib",
-    "tempfile",
+    "shutil",
     "typing",
+    "uuid",
     "virtualenv.info",
     "virtualenv.util.path",
     "zipfile",
@@ -11,10 +12,11 @@ __lazy_modules__ = [
 
 import logging
 import os
+import shutil
 import zipfile
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Final
+from uuid import uuid4
 
 from virtualenv.info import ROOT
 from virtualenv.util.path import windows_extended_path
@@ -62,12 +64,17 @@ def extract(full_path: str | Path, dest: Path) -> None:
     sub_file = _get_path_within_zip(full_path)
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
-        info.filename = dest.name
         if os.name == "nt":
             dest = Path(windows_extended_path(str(dest)))
         dest.parent.mkdir(parents=True, exist_ok=True)
-        with TemporaryDirectory(dir=dest.parent) as temp_dir:
-            os.replace(zip_file.extract(info, temp_dir), dest)
+        temp = dest.with_name(f".{dest.name}.{uuid4().hex}.tmp")
+        output = temp.open("xb")
+        try:
+            with output, zip_file.open(info) as source:
+                shutil.copyfileobj(source, output)
+            os.replace(temp, dest)
+        finally:
+            temp.unlink(missing_ok=True)
 
 
 __all__ = [
