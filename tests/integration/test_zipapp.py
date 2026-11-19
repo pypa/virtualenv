@@ -215,6 +215,23 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     assert not err
 
 
+@pytest.mark.skipif(os.name != "posix" or not fs_supports_symlink(), reason="requires POSIX symlink resolution")
+def test_zipapp_path_with_parent_after_symlink(zipapp: Path, tmp_path: Path) -> None:
+    directory: Final = zipapp.parent / "subdir"
+    directory.mkdir(exist_ok=True)
+    (tmp_path / "linked").symlink_to(directory, target_is_directory=True)
+
+    result: Final = subprocess.run(
+        [sys.executable, str(tmp_path / "linked" / ".." / zipapp.name), "--version"],
+        capture_output=True,
+        check=True,
+        encoding="utf-8",
+        timeout=60,
+    )
+
+    assert result.stdout.startswith(f"virtualenv {__version__} ")
+
+
 @pytest.mark.timeout(600)
 @pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])

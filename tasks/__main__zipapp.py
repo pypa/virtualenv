@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from types import ModuleType, TracebackType
     from typing import Self
 
-ABS_HERE: Final[str] = os.path.abspath(os.path.dirname(__file__))
+ABS_HERE: Final[str] = os.path.realpath(os.path.dirname(__file__))
 
 
 def _run() -> None:
