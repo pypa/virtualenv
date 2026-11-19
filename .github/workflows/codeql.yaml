@@ -14,7 +14,7 @@ jobs:
   # The custom pack holds Python queries only, so the Python analysis loads it and the actions analysis does not.
   python:
     name: 🛡️ Python
-    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
+    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@b34c57a8a06e7b043c2ddd0b6b7a8a778d7aa8f7 # 6.8.5
     permissions:
       contents: read
       security-events: write
@@ -24,7 +24,7 @@ jobs:
       queries: +./.github/codeql/queries
   actions:
     name: 🛡️ Actions
-    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
+    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@b34c57a8a06e7b043c2ddd0b6b7a8a778d7aa8f7 # 6.8.5
     permissions:
       contents: read
       security-events: write

@@ -13,14 +13,14 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/setup-uv@v10.3.3'
         - 'github/codeql-action@v4.39.3'
-        - 'tox-dev/github-workflows@6.8.3'
+        - 'tox-dev/github-workflows@6.8.5'
     '.github/workflows/codeql.yaml': []
     '.github/workflows/dependency-review.yaml':
         - 'actions/dependency-review-action@v5.0.0'
     '.github/workflows/news.yaml':
         - 'actions/checkout@v7.0.1'
         - 'astral-sh/setup-uv@v10.3.3'
-        - 'tox-dev/github-workflows@6.8.3'
+        - 'tox-dev/github-workflows@6.8.5'
     '.github/workflows/pre-release.yaml': []
     '.github/workflows/release.yaml':
         - 'actions/attest-build-provenance@v4.2.2'
@@ -32,7 +32,7 @@ workflows:
         - 'astral-sh/setup-uv@v10.3.3'
         - 'pypa/gh-action-pypi-publish@v1.14.3'
         - 'step-security/harden-runner@v2.22.4'
-        - 'tox-dev/github-workflows@6.8.3'
+        - 'tox-dev/github-workflows@6.8.5'
     '.github/workflows/scorecard.yaml': []
     '.github/workflows/upgrade-release-tools.yaml': []
     '.github/workflows/upgrade.yaml':
@@ -115,8 +115,8 @@ dependencies:
         commit: 'sha1-1d88384fd173af6ecb012dfd0264a306b711241a'
         owner_id: 88700172
         repo_id: 422287306
-    'tox-dev/github-workflows@6.8.3':
-        ref: '6.8.3'
-        commit: 'sha1-ef0cd88bef592260a48345753b8b509b209ab189'
+    'tox-dev/github-workflows@6.8.5':
+        ref: '6.8.5'
+        commit: 'sha1-b34c57a8a06e7b043c2ddd0b6b7a8a778d7aa8f7'
         owner_id: 20345659
         repo_id: 1426182029
