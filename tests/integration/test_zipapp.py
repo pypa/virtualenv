@@ -223,11 +223,11 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     reason="requires CPython to preserve the archive path before running __main__",
 )
 def test_zipapp_path_with_parent_after_symlink(zipapp: Path, tmp_path: Path) -> None:
-    directory: Final = zipapp.parent / "subdir"
+    directory: Final[Path] = zipapp.parent / "subdir"
     directory.mkdir(exist_ok=True)
     (tmp_path / "linked").symlink_to(directory, target_is_directory=True)
 
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [sys.executable, str(tmp_path / "linked" / ".." / zipapp.name), "--version"],
         capture_output=True,
         check=True,
