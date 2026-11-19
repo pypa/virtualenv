@@ -2,17 +2,22 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "pathlib",
+    "tempfile",
     "typing",
     "virtualenv.info",
+    "virtualenv.util.path",
     "zipfile",
 ]
 
 import logging
+import os
 import zipfile
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Final
 
 from virtualenv.info import ROOT
+from virtualenv.util.path import windows_extended_path
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
@@ -58,7 +63,11 @@ def extract(full_path: str | Path, dest: Path) -> None:
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
         info.filename = dest.name
-        zip_file.extract(info, str(dest.parent))
+        if os.name == "nt":
+            dest = Path(windows_extended_path(str(dest)))
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=dest.parent) as temp_dir:
+            os.replace(zip_file.extract(info, temp_dir), dest)
 
 
 __all__ = [

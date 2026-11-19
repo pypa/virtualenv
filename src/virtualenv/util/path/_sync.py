@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Final
 if os.name == "nt":
     from stat import IO_REPARSE_TAG_MOUNT_POINT
 
-    from ._win import clear_readonly
+    from ._win import clear_readonly, windows_extended_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -152,14 +152,7 @@ def safe_delete(dest: Path) -> None:
         clear_readonly(path)
         func(path)
 
-    target = str(dest)
-    if os.name == "nt":
-        # without long path support Windows refuses paths past MAX_PATH, and a seed image built through its 8.3 short
-        # path holds files past it; the \\?\ form lifts the limit but skips normalization, so normalize the path first
-        target = os.path.abspath(target)
-        # the UNC form would turn a \\.\ device path into a server named "."
-        if not target.startswith(("\\\\?\\", "\\\\.\\")):
-            target = f"\\\\?\\UNC\\{target[2:]}" if target.startswith("\\\\") else f"\\\\?\\{target}"
+    target = windows_extended_path(str(dest)) if os.name == "nt" else str(dest)
     if sys.version_info >= (3, 12):
         shutil.rmtree(target, onexc=onerror)
     else:

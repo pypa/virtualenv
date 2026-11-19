@@ -31,6 +31,19 @@ def get_short_path_name(long_name: str) -> str:
         output_buf_size = needed
 
 
+def windows_extended_path(path: str) -> str:
+    """Get an absolute Windows path for operations beyond MAX_PATH.
+
+    :param path: the Windows path to normalize
+    :returns: the path with an extended-length prefix
+
+    """
+    path = os.path.abspath(path)
+    if path.startswith(("\\\\?\\", "\\\\.\\")):
+        return path
+    return f"\\\\?\\UNC\\{path[2:]}" if path.startswith("\\\\") else f"\\\\?\\{path}"
+
+
 if os.name == "nt":
 
     def clear_readonly(path: str) -> None:
@@ -82,4 +95,8 @@ if os.name == "nt":
         ]
 
 
-__all__ = ["clear_readonly", "get_short_path_name"] if os.name == "nt" else ["get_short_path_name"]  # ruff:ignore[invalid-all-format]  # platform dependent
+__all__ = (  # ruff:ignore[invalid-all-format]  # platform dependent
+    ["clear_readonly", "get_short_path_name", "windows_extended_path"]
+    if os.name == "nt"
+    else ["get_short_path_name", "windows_extended_path"]
+)
