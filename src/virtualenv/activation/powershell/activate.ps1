@@ -184,6 +184,10 @@ if ($VenvDir) {
     Write-Verbose "VenvDir=$VenvDir"
 }
 
+if ($VenvDir.Contains([string][IO.Path]::PathSeparator)) {
+    throw "Environment directory '$VenvDir' contains the PATH separator."
+}
+
 $pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
 
 if ($Prompt) {
