@@ -106,7 +106,7 @@ class Creator(ABC):
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
     def _args(self) -> list[tuple[str, str | bool]]:
-        dest: Final = str(self.dest)
+        dest: Final[str] = str(self.dest)
         return [
             ("dest", dest if dest.isprintable() else repr(dest)),
             ("clear", self.clear),
