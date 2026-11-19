@@ -1037,6 +1037,17 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch) -> None:
     assert package_folder.exists(), list_files(str(tmp_path))
 
 
+def list_files(path):
+    result = ""
+    for root, _, files in os.walk(path):
+        level = root.replace(path, "").count(os.sep)
+        result += f"{(' ' * 4 * level)}{os.path.basename(root)}/\n"
+        sub = " " * 4 * (level + 1)
+        for name in files:
+            result += f"{sub}{name}\n"
+    return result
+
+
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
 def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
@@ -1064,17 +1075,6 @@ def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
         env={**os.environ, "PYTHONUTF8": "1"},
     )
     assert result.strip() == "[]"
-
-
-def list_files(path):
-    result = ""
-    for root, _, files in os.walk(path):
-        level = root.replace(path, "").count(os.sep)
-        result += f"{(' ' * 4 * level)}{os.path.basename(root)}/\n"
-        sub = " " * 4 * (level + 1)
-        for name in files:
-            result += f"{sub}{name}\n"
-    return result
 
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
