@@ -114,7 +114,11 @@ class PyEnvCfg:
             text += "\n"
         encoded: Final = text.encode("utf-8")
         cpython_config_limit: Final = 32_768
-        if len(encoded) >= cpython_config_limit and self.content.get("implementation") == "CPython":
+        if (
+            len(encoded) >= cpython_config_limit
+            and self.content.get("implementation") == "CPython"
+            and tuple(map(int, self.content.get("python-version", "3.11").split("."))) >= (3, 11)
+        ):
             msg: Final = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
             raise ValueError(msg)
         write_file(self.path, encoded)
