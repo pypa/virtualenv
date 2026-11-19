@@ -107,11 +107,19 @@ class _Finder:
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass
+        elif (load := getattr(spec.loader, "load_module", None)) is not None:
+            # Python 3.9 zipimport only exposes load_module.
+            with contextlib.suppress(AttributeError):
+                spec.loader.load_module = partial(self.load_module, load)
         return spec
 
     @staticmethod
     def exec_module(old: Callable[[types.ModuleType], object], module: types.ModuleType) -> None:
         old(module)
+        _Finder._patch_module(module)
+
+    @staticmethod
+    def _patch_module(module: types.ModuleType) -> None:
         try:
             distutils_patch = _DISTUTILS_PATCH
         except NameError:
@@ -119,6 +127,12 @@ class _Finder:
         if module.__name__ in distutils_patch:
             with contextlib.suppress(NameError):
                 patch_dist(module)
+
+    @staticmethod
+    def load_module(old: Callable[[str], types.ModuleType], name: str) -> types.ModuleType:
+        module = old(name)
+        _Finder._patch_module(module)
+        return module
 
 
 sys.meta_path.insert(0, _Finder())

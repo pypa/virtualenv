@@ -11,6 +11,7 @@ import site
 import stat
 import subprocess
 import sys
+import sysconfig
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
@@ -1082,6 +1083,38 @@ def list_files(path):
         for name in files:
             result += f"{sub}{name}\n"
     return result
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_from_zipped_stdlib(tmp_path: Path) -> None:
+    stdlib: Final = Path(sysconfig.get_path("stdlib"))
+    source: Final = stdlib / "distutils"
+    archive: Final = tmp_path / "stdlib.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for module in source.rglob("*.py"):
+            zip_file.write(module, module.relative_to(stdlib))
+    settings: Final = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+
+    result: Final = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils import dist
+                distribution = dist.Distribution()
+                distribution.parse_config_files(sys.argv[1:])
+                print(dist.__file__)
+                print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONPATH": str(archive)},
+    )
+    assert result.splitlines() == [str(archive / "distutils" / "dist.py"), "[]"]
 
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
