@@ -49,7 +49,7 @@ repos:
         priority: 4
         files: ^src/virtualenv/
   - repo: https://github.com/gaborbernat/simplint-pre-commit
-    rev: "e2621cf3defe33dccfd9de2eece83652267bb73b" # frozen: v0.13.0
+    rev: "6f12a88d7d6ebf3dd09ebddb1e6541e533d4efe0" # frozen: v0.14.2
     hooks:
       - id: simplint
         priority: 6
