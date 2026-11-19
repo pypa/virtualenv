@@ -92,7 +92,11 @@ class PyEnvCfg:
         return f"{self.__class__.__name__}(path={self.path})"
 
     def write(self) -> None:
-        """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths."""
+        """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths.
+
+        :raises ValueError: when a CPython configuration would be too large to read
+
+        """
         _validate_path(self.path)
         LOGGER.debug("write %s", self.path)
         text = ""
@@ -108,7 +112,12 @@ class PyEnvCfg:
             LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
-        write_file(self.path, text.encode("utf-8"))
+        encoded: Final = text.encode("utf-8")
+        cpython_config_limit: Final = 32_768
+        if len(encoded) >= cpython_config_limit and self.content.get("implementation") == "CPython":
+            msg: Final = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
+            raise ValueError(msg)
+        write_file(self.path, encoded)
 
     def refresh(self) -> OrderedDict[str, str]:
         """Re-read the key-value pairs from the file, discarding in-memory changes.
