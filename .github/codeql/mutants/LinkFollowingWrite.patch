@@ -1,8 +1,8 @@
 diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cfg.py
 --- a/src/virtualenv/create/pyenv_cfg.py
 +++ b/src/virtualenv/create/pyenv_cfg.py
-@@ -117,7 +117,7 @@
-         if len(encoded) >= cpython_config_limit and self.content.get("implementation") == "CPython":
+@@ -121,7 +121,7 @@
+         ):
              msg: Final = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
              raise ValueError(msg)
 -        write_file(self.path, encoded)
