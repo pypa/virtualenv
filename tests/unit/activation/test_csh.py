@@ -19,6 +19,9 @@ from virtualenv.run import cli_run
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from subprocess import CompletedProcess
+
+    from virtualenv.run.session import Session
 
 _TCSH: Final[str | None] = which("tcsh")
 
@@ -57,9 +60,9 @@ def test_cshell_prompt_collapses_line_boundaries(
     boundary: str,
 ) -> None:
     dest, content = csh_venv("ordinary", prompt=f"first{boundary}second")
-    script: Final = tmp_path / "activate.csh"
+    script: Final[Path] = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
-    result: Final = run(
+    result: Final[CompletedProcess[str]] = run(
         [shell, "-f"],
         input=f'set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
         capture_output=True,
@@ -238,9 +241,9 @@ def test_cshell_activates_path_with_special_characters(
 )
 def test_cshell_prompt_preserves_quoting_mode(csh_venv: _CshVenv, tmp_path: Path, value: str, option: str) -> None:
     dest, content = csh_venv("ordinary", prompt=value)
-    script: Final = tmp_path / "activate.csh"
+    script: Final[Path] = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
-    result: Final = run(
+    result: Final[CompletedProcess[str]] = run(
         [_TCSH, "-f"],
         input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
         capture_output=True,
@@ -249,7 +252,7 @@ def test_cshell_prompt_preserves_quoting_mode(csh_venv: _CshVenv, tmp_path: Path
         timeout=30,
         check=True,
     )
-    display: Final = value.replace("\\", "\\\\").replace("!", "\\!")
+    display: Final[str] = value.replace("\\", "\\\\").replace("!", "\\!")
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
@@ -441,7 +444,7 @@ def test_csh(activation_tester_class, activation_tester) -> None:
 @pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
 def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: _CshVenv) -> None:
     dest, _ = csh_venv("plain", prompt="owner's prompt")
-    result: Final = run(
+    result: Final[CompletedProcess[str]] = run(
         ["csh", "-f"],
         input=f"set prompt = original\nsetenv VIRTUAL_ENV_DISABLE_PROMPT 1\nsource {dest / 'bin' / 'activate.csh'}\necho $prompt\n",
         capture_output=True,
@@ -454,9 +457,9 @@ def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: _CshVenv) -> 
 
 @pytest.mark.skipif(IS_WIN or not _is_bsd_csh(), reason="requires bsd-csh")
 def test_bsd_cshell_displays_one_backslash(csh_venv: _CshVenv) -> None:
-    shell: Final = which("bsd-csh") or which("csh")
+    shell: Final[str | None] = which("bsd-csh") or which("csh")
     dest, _ = csh_venv("plain", prompt="a\\b")
-    result: Final = run(
+    result: Final[CompletedProcess[str]] = run(
         [shell, "-f", "-i"],
         input=f"source {dest / 'bin' / 'activate.csh'}\nexit\n",
         capture_output=True,
@@ -473,7 +476,7 @@ def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
     scripts = destination / "bin"
     scripts.mkdir(parents=True)
     (scripts / "activate.csh").write_text("old", encoding="utf-8")
-    session: Final = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
+    session: Final[Session] = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
     assert (list(scripts.glob("*.csh")), session.activators) == ([], [])
 
 
@@ -509,7 +512,7 @@ _TEST_CSHELL_HISTCHARS_REPLACES_HASH_IN_PROMPT_PATTERN: Final[re.Pattern[str]] =
 @pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize("state", list(SHELLS["cshell"].states))
 def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) -> None:
-    result: Final = run_prompt(
+    result: Final[CompletedProcess[str]] = run_prompt(
         "cshell", generate_script("cshell", tmp_path / "env", "a%#b"), state, "histchars", tmp_path
     )
 

@@ -142,7 +142,7 @@ def test_graalpy_compiles_shared_trees(
     run_shards: Callable[[Sequence[Outcome]], MockType], compileall: MockType
 ) -> None:
     run_shards([_PASS, _PASS])
-    trees: Final = dict.fromkeys(sysconfig.get_path(name) for name in ("stdlib", "purelib", "platlib"))
+    trees: Final[dict[str, None]] = dict.fromkeys(sysconfig.get_path(name) for name in ("stdlib", "purelib", "platlib"))
     compileall.assert_called_once_with([sys.executable, "-m", "compileall", "-q", "-j0", *trees], check=True)
 
 

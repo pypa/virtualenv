@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from pathlib import Path
 
+    from virtualenv.run.session import Session
+
     class _Run(Protocol):
         def __call__(self, *args: str) -> Namespace: ...
 
@@ -31,7 +33,7 @@ def gen_parser_no_conf_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> _
 
     @contextmanager
     def build() -> Generator[tuple[VirtualEnvConfigParser, _Run]]:
-        parser: Final = VirtualEnvConfigParser()
+        parser: Final[VirtualEnvConfigParser] = VirtualEnvConfigParser()
 
         def run(*args: str) -> Namespace:
             return parser.parse_args(args=args)
@@ -111,8 +113,8 @@ def test_accumulating_actions_reset_between_parses(
 
 @pytest.mark.usefixtures("gen_parser_no_conf_env")
 def test_session_counts_cli_options_once(tmp_path: Path) -> None:
-    options: Final = VirtualEnvOptions()
-    session: Final = session_via_cli(
+    options: Final[VirtualEnvOptions] = VirtualEnvOptions()
+    session: Final[Session] = session_via_cli(
         ["-v", "--try-first-with", "missing", "-p", sys.executable, str(tmp_path / "venv")],
         options=options,
         setup_logging=False,

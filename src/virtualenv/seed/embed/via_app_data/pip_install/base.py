@@ -6,6 +6,7 @@ __lazy_modules__ = [
     "io",
     "itertools",
     "pathlib",
+    "posixpath",
     "shlex",
     "tempfile",
     "virtualenv.util.path",
@@ -75,7 +76,7 @@ class PipInstall(ABC):
         :param version_info: the version of the Python interpreter the package is installed for
 
         """
-        dist_info: Final = self._find_dist_info(self._image_dir)
+        dist_info: Final[Path] = self._find_dist_info(self._image_dir)
         self._uninstall_previous_version(dist_info)
         # sync image
         for filename in self._image_dir.iterdir():
@@ -106,11 +107,11 @@ class PipInstall(ABC):
 
     @staticmethod
     def _uninstall_dist(dist: Path, env_dir: Path) -> None:
-        dist_base: Final = dist.parent
+        dist_base: Final[Path] = dist.parent
         LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
-        top_txt: Final = dist / "top_level.txt"
-        paths: Final = (
+        top_txt: Final[Path] = dist / "top_level.txt"
+        paths: Final[set[Path]] = (
             {dist.parent / i.strip() for i in top_txt.read_text(encoding="utf-8").splitlines()}
             if top_txt.exists()
             else set()
@@ -119,13 +120,13 @@ class PipInstall(ABC):
 
         paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy()))
 
-        root: Final = env_dir.resolve()
-        metadata_parents: Final = set(dist.resolve().parents)
+        root: Final[Path] = env_dir.resolve()
+        metadata_parents: Final[set[Path]] = set(dist.resolve().parents)
         for entry in sorted(paths):
             if entry.exists() or entry.is_symlink():
-                linked: Final = entry.is_symlink()
+                linked: Final[bool] = entry.is_symlink()
                 # Unlinking the final link leaves its target intact; parent links still affect containment.
-                resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
+                resolved: Final[Path] = entry.parent.resolve() / entry.name if linked else entry.resolve()
                 if root not in resolved.parents or resolved in metadata_parents:
                     LOGGER.warning(
                         "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
@@ -142,7 +143,7 @@ class PipInstall(ABC):
 
     @staticmethod
     def _record_paths(dist: Path, base_dirs: set[Path]) -> set[Path]:
-        record: Final = dist / "RECORD"
+        record: Final[Path] = dist / "RECORD"
         if not record.exists():
             return set()
         paths: Final[set[Path]] = set()
@@ -161,7 +162,7 @@ class PipInstall(ABC):
     def _bytecode_of(source: Path) -> list[Path]:
         # a cache file is <stem>.<tag>.pyc or <stem>.<tag>.opt-<n>.pyc; foo.bar.<tag>.pyc is the bytecode of another
         # module, foo.bar.py, which may belong to another distribution
-        cached: Final = re.compile(rf"{re.escape(source.stem)}\.[^.]+(?:\.opt-\d+)?\.pyc")
+        cached: Final[re.Pattern[str]] = re.compile(rf"{re.escape(source.stem)}\.[^.]+(?:\.opt-\d+)?\.pyc")
         return [
             source.with_suffix(".pyc"),
             source.with_suffix(".pyo"),
@@ -170,7 +171,7 @@ class PipInstall(ABC):
 
     @staticmethod
     def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
-        base: Final = dist_base.resolve()
+        base: Final[Path] = dist_base.resolve()
         for folder in sorted(
             {
                 parent
@@ -230,17 +231,17 @@ class PipInstall(ABC):
         """
         # beside the installer folder the staging path is exactly as long as the image path, so the Windows path length
         # limits hit the build the same way they would hit the image
-        staging: Final = self._image_dir.parent.with_name(f"{self._image_dir.parent.name}-{self._image_dir.name}")
+        staging: Final[Path] = self._image_dir.parent.with_name(f"{self._image_dir.parent.name}-{self._image_dir.name}")
         if staging.exists():
             safe_delete(staging)
         self._image_dir.parent.mkdir(parents=True, exist_ok=True)
         staging.mkdir()
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-            folder: Final = self._short_path_if_needed(zip_ref, staging)
+            folder: Final[Path] = self._short_path_if_needed(zip_ref, staging)
             try:
                 self._populate_image(zip_ref, folder)
                 # keep the short path Windows may have switched to, the install reads through it
-                built: Final = folder.parent / self._image_dir.parent.name / self._image_dir.name
+                built: Final[Path] = folder.parent / self._image_dir.parent.name / self._image_dir.name
                 with suppress(FileNotFoundError):
                     built.rmdir()  # an empty image directory counts as missing, but blocks the rename on Windows
                 os.replace(folder, built)
@@ -254,10 +255,10 @@ class PipInstall(ABC):
     def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
         if os.name != "nt":
             return folder
-        names: Final = zip_ref.namelist()
-        prefix: Final = len(str(folder)) + 1  # the separator before each entry
-        longest_file: Final = prefix + max(len(i) for i in names)
-        longest_dir: Final = prefix + max(len(posixpath.dirname(i)) for i in names)
+        names: Final[list[str]] = zip_ref.namelist()
+        prefix: Final[int] = len(str(folder)) + 1  # the separator before each entry
+        longest_file: Final[int] = prefix + max(len(i) for i in names)
+        longest_dir: Final[int] = prefix + max(len(posixpath.dirname(i)) for i in names)
         if longest_file < _MAX_PATH and longest_dir < _MAX_DIR_PATH:
             return folder
         # deferred, only the path-length fallback needs the short-path helper
@@ -268,7 +269,7 @@ class PipInstall(ABC):
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
         LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
         extract_zip(zip_ref, folder)
-        dist_info: Final = self._find_dist_info(folder)
+        dist_info: Final[Path] = self._find_dist_info(folder)
         self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))
 
     @abstractmethod
@@ -284,7 +285,7 @@ class PipInstall(ABC):
         marker = folder / f"{dist_info.stem}.virtualenv"
         marker.write_text("", encoding="utf-8")
         new_files.add(marker)
-        to_folder: Final = Path(mkdtemp())
+        to_folder: Final[Path] = Path(mkdtemp())
         try:
             rel = os.path.relpath(str(self._creator.script_dir), str(self._creator.purelib))
             version_info = self._creator.interpreter.version_info
@@ -367,7 +368,7 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
         self._raw_executable = str(executable)
 
     def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
-        shebang: Final = super()._build_shebang(executable, post_interp)
+        shebang: Final[bytes] = super()._build_shebang(executable, post_interp)
         if os.name != "posix" or len(shebang.split()) == 1:
             return shebang
         return shell_shebang(self._raw_executable, post_interp)
@@ -377,7 +378,7 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
     ) -> None:
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         for name in names:
-            path: Final = Path(self.target_dir) / (f"{name}.exe" if os.name == "nt" else name)
+            path: Final[Path] = Path(self.target_dir) / (f"{name}.exe" if os.name == "nt" else name)
             if path.is_symlink():
                 path.unlink()
         super()._write_script(names, shebang, script_bytes, filenames, ext)
@@ -393,7 +394,7 @@ def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     :returns: the shebang and the wrapper lines, as bytes
 
     """
-    quoted: Final = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
+    quoted: Final[str] = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
     return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
 
 

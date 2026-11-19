@@ -41,7 +41,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     :raises ArgumentTypeError: when the folder is empty or whitespace
 
     """
-    private: Final = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
+    private: Final[bool] = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
         # A blank override must not resolve to the working directory, which --reset-app-data could delete.
         folder = env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")
@@ -72,12 +72,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
 
 
 def _prepare_permissions(folder: str) -> bool:
-    info: Final = os.stat(folder)
+    info: Final[os.stat_result] = os.stat(folder)
     if info.st_uid != os.geteuid():
         _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
         return True
     # setgid marks a deliberately group-shared cache, so only other-write is dropped there
-    loose: Final = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
+    loose: Final[int] = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
     if loose:
         try:
             os.chmod(folder, S_IMODE(info.st_mode) & ~loose)

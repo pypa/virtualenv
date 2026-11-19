@@ -56,10 +56,10 @@ class ViaTemplateActivator(Activator, ABC):
     ) -> list[Path]:
         generated: Final[list[Path]] = []
         for template in templates:
-            text: Final = self.instantiate_template(replacements, template, creator)
-            dest: Final = to_folder / self.as_name(template)
+            text: Final[str] = self.instantiate_template(replacements, template, creator)
+            dest: Final[Path] = to_folder / self.as_name(template)
             # PowerShell assumes Windows 1252 when the UTF-8 BOM is absent.
-            encoding: Final = "utf-8-sig" if str(template).endswith(".ps1") else "utf-8"
+            encoding: Final[str] = "utf-8-sig" if str(template).endswith(".ps1") else "utf-8"
             write_file(dest, text.encode(encoding))
             generated.append(dest)
         return generated
@@ -76,7 +76,7 @@ class ViaTemplateActivator(Activator, ABC):
         """
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
         # templates ship beside the activator's package, which is the class's own module when it is a package
-        package: Final = (
+        package: Final[str] = (
             self.__module__ if hasattr(sys.modules[self.__module__], "__path__") else self.__module__.rpartition(".")[0]
         )
         text = read_binary(package, template).decode("utf-8", errors="strict")
