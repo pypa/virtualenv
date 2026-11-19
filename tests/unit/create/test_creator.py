@@ -942,6 +942,18 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(IS_WIN, reason="POSIX interpreter aliases")
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path) -> None:
+    dest: Final = tmp_path / "env"
+    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    (dest / "bin/python").write_bytes(b"stale")
+
+    session: Final = cli_run(command)
+
+    assert subprocess.check_output([str(session.creator.exe), "-c", "print(1)"], text=True).strip() == "1"
+
+
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
 def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
     args: Final[list[str]] = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
