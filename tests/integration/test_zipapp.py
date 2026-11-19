@@ -218,7 +218,10 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     assert not err
 
 
-@pytest.mark.skipif(os.name != "posix" or not fs_supports_symlink(), reason="requires POSIX symlink resolution")
+@pytest.mark.skipif(
+    os.name != "posix" or not fs_supports_symlink() or _CURRENT.implementation != "CPython",
+    reason="requires CPython to preserve the archive path before running __main__",
+)
 def test_zipapp_path_with_parent_after_symlink(zipapp: Path, tmp_path: Path) -> None:
     directory: Final = zipapp.parent / "subdir"
     directory.mkdir(exist_ok=True)
