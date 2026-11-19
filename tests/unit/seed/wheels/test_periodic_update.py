@@ -44,6 +44,7 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from ssl import SSLContext
 
     from pytest_mock import MockerFixture, MockType
 
@@ -580,9 +581,8 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     pypi_release = json.dumps({"releases": releases})
 
     @contextmanager
-    def _release(of, context):
-        assert of == "https://pypi.org/pypi/pip/json"
-        assert context is None
+    def _release(url: str, *, timeout: int, context: None) -> Generator[StringIO, None, None]:
+        assert (url, timeout, context) == ("https://pypi.org/pypi/pip/json", 15, None)
         yield StringIO(pypi_release)
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release, autospec=True)
@@ -688,8 +688,8 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", "1")
 
     @contextmanager
-    def _release(of, context):
-        assert of == "https://pypi.org/pypi/pip/json"
+    def _release(url: str, *, timeout: int, context: SSLContext | None) -> Generator[StringIO, None, None]:
+        assert (url, timeout) == ("https://pypi.org/pypi/pip/json", 15)
         if context is None:
             msg = "insecure"
             raise URLError(msg)
@@ -731,7 +731,7 @@ def _assert_release_lookup_verifies_certificate(mocker: MockerFixture) -> None:
         "virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=URLError("certificate failure")
     )
     assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
-    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", context=None)]
+    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", timeout=15, context=None)]
 
 
 def test_unset_update_option_keeps_certificate_verification(

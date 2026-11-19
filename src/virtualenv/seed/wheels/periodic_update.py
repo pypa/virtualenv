@@ -522,7 +522,7 @@ def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
 def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | None:
     try:
         # url is a fixed https://pypi.org address, not user input
-        with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
+        with urlopen(url, timeout=15, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
             return json.load(file_handler)
     except URLError as exception:
         # the log line carries the exception repr, a traceback adds nothing
