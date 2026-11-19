@@ -1,12 +1,13 @@
 diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cfg.py
 --- a/src/virtualenv/create/pyenv_cfg.py
 +++ b/src/virtualenv/create/pyenv_cfg.py
-@@ -103,7 +103,7 @@
-             LOGGER.debug("\t%r", line)
-             text += line
-             text += "\n"
--        write_file(self.path, text.encode("utf-8"))
+@@ -117,7 +117,7 @@
+         if len(encoded) >= cpython_config_limit and self.content.get("implementation") == "CPython":
+             msg: Final = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
+             raise ValueError(msg)
+-        write_file(self.path, encoded)
+-
 +        self.path.write_text(text, encoding="utf-8")
-
++
      def refresh(self) -> OrderedDict[str, str]:
          """Re-read the key-value pairs from the file, discarding in-memory changes.
