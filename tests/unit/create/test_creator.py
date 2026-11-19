@@ -1092,6 +1092,7 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch) -> None:
         f"""
             [install]
             prefix={tmp_path}{os.sep}prefix
+            install_lib={tmp_path}{os.sep}lib
             install_purelib={tmp_path}{os.sep}purelib
             install_platlib={tmp_path}{os.sep}platlib
             install_headers={tmp_path}{os.sep}headers

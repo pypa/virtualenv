@@ -32,7 +32,7 @@ def patch_dist(dist: types.ModuleType) -> None:
             install = self.get_option_dict("install")
             if "prefix" in install:
                 install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-            for base in ("purelib", "platlib", "headers", "scripts", "data"):
+            for base in ("lib", "purelib", "platlib", "headers", "scripts", "data"):
                 install.pop(f"install_{base}", None)
 
     dist.Distribution.parse_config_files = parse_config_files
