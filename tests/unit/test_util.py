@@ -815,6 +815,55 @@ def test_cache_dir_nested_migration_keeps_parent(nested_cache_dirs: tuple[Path, 
 
 
 @pytest.mark.parametrize(
+    "cache_path",
+    [pytest.param("cache", id="sibling"), pytest.param("data/Cache", id="nested")],
+)
+def test_cache_migration_preserves_config(tmp_path: Path, mocker: MockerFixture, cache_path: str) -> None:
+    old_dir: Final = tmp_path / "data"
+    old_dir.mkdir()
+    (old_dir / "virtualenv.ini").write_text("[virtualenv]\nno_periodic_update = true\n", encoding="utf-8")
+    (old_dir / "wheel.txt").write_text("cached", encoding="utf-8")
+    new_dir: Final = tmp_path / cache_path
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+
+    assert (
+        str(make_app_data(None, read_only=False, env={})),
+        sorted(entry.name for entry in new_dir.iterdir()),
+        (old_dir / "virtualenv.ini").read_text(encoding="utf-8"),
+    ) == (str(new_dir), ["wheel.txt"], "[virtualenv]\nno_periodic_update = true\n")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
+def test_sibling_cache_migration_preserves_shared_mode(tmp_path: Path, mocker: MockerFixture) -> None:
+    old_dir: Final = tmp_path / "data"
+    old_dir.mkdir()
+    old_dir.chmod(0o2775)
+    (old_dir / "virtualenv.ini").touch()
+    new_dir: Final = tmp_path / "cache"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+
+    make_app_data(None, read_only=False, env={})
+
+    assert (new_dir.stat().st_mode & 0o7777, new_dir.stat().st_gid) == (0o2775, old_dir.stat().st_gid)
+
+
+def test_failed_config_cache_migration_reset_keeps_config(
+    nested_cache_dirs: tuple[Path, Path], mocker: MockerFixture
+) -> None:
+    old_dir, new_dir = nested_cache_dirs
+    config: Final = old_dir / "virtualenv.ini"
+    config.write_text("[virtualenv]\n", encoding="utf-8")
+    mocker.patch("virtualenv.app_data.cache_migration.shutil.move", autospec=True, side_effect=PermissionError)
+
+    app_data: Final = make_app_data(None, read_only=False, env={})
+    app_data.reset()
+
+    assert (str(app_data), config.read_text(encoding="utf-8")) == (str(new_dir), "[virtualenv]\n")
+
+
+@pytest.mark.parametrize(
     ("rollback_error", "cleanup_error", "retry_index"),
     [
         pytest.param(None, None, 1, id="rollback-succeeds"),
