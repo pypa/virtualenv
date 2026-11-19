@@ -1037,6 +1037,35 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch) -> None:
     assert package_folder.exists(), list_files(str(tmp_path))
 
 
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    malformed: Final = tmp_path / "malformed.cfg"
+    malformed.write_text("[metadata]\nname = café\n", encoding="latin-1")
+    result: Final = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                try:
+                    distribution.parse_config_files(sys.argv[1:])
+                except UnicodeDecodeError:
+                    print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+            str(malformed),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONUTF8": "1"},
+    )
+    assert result.strip() == "[]"
+
+
 def list_files(path):
     result = ""
     for root, _, files in os.walk(path):
