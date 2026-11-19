@@ -83,8 +83,9 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version) -> Non
     do_update_mock = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.do_update", side_effect=_do_update, autospec=True
     )
-    manual_upgrade(session_app_data, os.environ)
+    result = manual_upgrade(session_app_data, os.environ)
 
+    assert result == 0
     assert "upgrade pip" in caplog.text
     assert "upgraded pip" in caplog.text
     assert " no new versions found" in caplog.text
@@ -97,6 +98,22 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version) -> Non
     versions = sorted(BUNDLE_SUPPORT.keys())
     expected = {"setuptools": versions, "pip": versions}
     assert packages == expected
+
+
+def test_manual_upgrade_reports_failure(session_app_data, caplog, mocker) -> None:
+    def _do_update(distribution, **_kwargs):
+        if distribution == "pip":
+            raise subprocess.CalledProcessError(1, ["pip", "download"], stderr="no index")
+        return []
+
+    mocker.patch("virtualenv.seed.wheels.periodic_update.do_update", side_effect=_do_update, autospec=True)
+
+    result = manual_upgrade(session_app_data, os.environ)
+
+    assert result == 1
+    assert "could not upgrade pip for python" in caplog.text
+    assert "no index" in caplog.text
+    assert "upgraded setuptools" in caplog.text
 
 
 @pytest.mark.usefixtures("session_app_data")
