@@ -33,11 +33,14 @@ if TYPE_CHECKING:
         for option in ("--prompt", "--activators", "--pip", "--setuptools")
     ],
 )
-def test_missing_option_value_does_not_create_app_data(tmp_path: Path, option: str) -> None:
+def test_missing_option_value_does_not_create_app_data(
+    tmp_path: Path, option: str, capsys: pytest.CaptureFixture[str]
+) -> None:
     with pytest.raises(SystemExit) as error:
         session_via_cli([option, "--app-data", str(tmp_path / "cache"), str(tmp_path / "env")])
     assert error.value.code == 2
     assert not (tmp_path / "cache").exists()
+    assert capsys.readouterr().err == f"virtualenv: error: argument {option}: expected one argument\n"
 
 
 def test_read_only_app_data_ignores_missing_default(
