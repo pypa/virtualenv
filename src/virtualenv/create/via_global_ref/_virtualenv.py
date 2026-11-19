@@ -110,7 +110,7 @@ class _Finder:
         elif (load := getattr(spec.loader, "load_module", None)) is not None:
             # Python 3.9 zipimport only exposes load_module.
             with contextlib.suppress(AttributeError):
-                spec.loader.load_module = partial(self.load_module, load)
+                spec.loader.load_module = partial(self.load_module, load)  # ty: ignore[invalid-assignment]  # zipimport loader permits rebinding
         return spec
 
     @staticmethod
