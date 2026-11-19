@@ -35,6 +35,7 @@ def windows_extended_path(path: str) -> str:
     """Get an absolute Windows path for operations beyond MAX_PATH.
 
     :param path: the Windows path to normalize
+
     :returns: the path with an extended-length prefix
 
     """
