@@ -16,6 +16,7 @@ from python_discovery import PythonInfo
 from virtualenv.activation import XonshActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.create.creator import Creator
+from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
@@ -102,6 +103,13 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
             None,
             ["self.embedded_tcl_library = ''", "self.embedded_tk_library = ''"],
             id="missing",
+        ),
+        pytest.param(
+            "C:/andré/tcl",
+            "C:/andré/tk",
+            ["self.embedded_tcl_library = 'C:/andr\\xe9/tcl'", "self.embedded_tk_library = 'C:/andr\\xe9/tk'"],
+            id="windows-unicode",
+            marks=pytest.mark.skipif(not IS_WIN, reason="requires Windows path encoding"),
         ),
     ],
 )

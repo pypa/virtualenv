@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = ["logging"]
 
 import logging  # isort: skip # fmt: skip
+import os  # isort: skip # fmt: skip
 import re  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
@@ -83,7 +84,7 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
         """
         data = super().substitutions(replacements, creator)
         for name in ("__TCL_LIBRARY__", "__TK_LIBRARY__"):
-            if not replacements[name].isascii():
+            if os.name != "nt" and not replacements[name].isascii():
                 data[name] = f"__import__('os').fsdecode({replacements[name].encode('utf-8')!r})"
         return data
 
