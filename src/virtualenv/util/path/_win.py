@@ -17,6 +17,8 @@ def get_short_path_name(long_name: str) -> str:
 
     :returns: the short path name
 
+    :raises WinError: an OSError when Windows cannot shorten the path
+
     """
     # ctypes.windll exists only on Windows, which is the only platform this runs on
     GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # ruff:ignore[non-lowercase-variable-in-function]  # ty: ignore[missing-attribute]
@@ -26,6 +28,8 @@ def get_short_path_name(long_name: str) -> str:
     while True:
         output_buf = ctypes.create_unicode_buffer(output_buf_size)
         needed = GetShortPathNameW(long_name, output_buf, output_buf_size)
+        if needed == 0:
+            raise ctypes.WinError()
         if output_buf_size >= needed:
             return output_buf.value
         output_buf_size = needed

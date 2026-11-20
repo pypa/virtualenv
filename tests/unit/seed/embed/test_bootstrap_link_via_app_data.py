@@ -982,6 +982,50 @@ def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
 @pytest.mark.parametrize(
+    "error", [pytest.param(FileNotFoundError, id="lookup-failed"), pytest.param(KeyboardInterrupt, id="interrupted")]
+)
+def test_seed_image_failed_short_path_cleans_staging(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    no_seed_session: Session,
+    error: type[BaseException],
+) -> None:
+    image: Final[Path] = tmp_path / "image" / "CopyPipInstall" / "pkg"
+    staging: Final[Path] = image.parent.with_name(f"{image.parent.name}-{image.name}")
+    wheel: Final[Path] = tmp_path / "pkg.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("f" * (260 - len(str(staging))), "payload")
+    working: Final[Path] = tmp_path / "working"
+    working.mkdir()
+    (working / "keep.txt").write_text("keep", encoding="utf-8")
+    monkeypatch.chdir(working)
+    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, side_effect=error("short path"))
+
+    with pytest.raises(error, match="short path"):
+        CopyPipInstall(wheel, no_seed_session.creator, image).build_image()
+
+    assert (staging.exists(), (working / "keep.txt").read_text(encoding="utf-8")) == (False, "keep")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+def test_seed_image_failed_short_path_on_reuse(tmp_path: Path, mocker: MockerFixture, no_seed_session: Session) -> None:
+    image: Final[Path] = tmp_path / "image"
+    image.mkdir()
+    (image / "content").touch()
+    wheel: Final[Path] = tmp_path / "pkg.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("f" * (260 - len(str(image))), "payload")
+    mocker.patch("ctypes.windll.kernel32.GetShortPathNameW", autospec=True, return_value=0)
+
+    with pytest.raises(OSError, match=r"\[WinError \d+\]"):
+        CopyPipInstall(wheel, no_seed_session.creator, image).has_image()
+
+    assert (image / "content").is_file()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+@pytest.mark.parametrize(
     ("entry", "shortened"),
     [
         pytest.param("{file}", 0, id="file-fits"),

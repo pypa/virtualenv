@@ -235,7 +235,11 @@ class PipInstall(ABC):
         self._image_dir.parent.mkdir(parents=True, exist_ok=True)
         staging.mkdir()
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-            folder: Final[Path] = self._short_path_if_needed(zip_ref, staging)
+            try:
+                folder: Final[Path] = self._short_path_if_needed(zip_ref, staging)
+            except BaseException:
+                safe_delete(staging)
+                raise
             try:
                 self._populate_image(zip_ref, folder)
                 # keep the short path Windows may have switched to, the install reads through it
