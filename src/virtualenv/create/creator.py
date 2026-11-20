@@ -454,6 +454,8 @@ def get_env_debug_info(
     """  # simplint: ignore[function-docstring]  # existing docs
     env = env.copy()
     env.pop("PYTHONPATH", None)
+    # safe-path mode would leave out the script directory, which is dropped from the path below
+    env.pop("PYTHONSAFEPATH", None)
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
