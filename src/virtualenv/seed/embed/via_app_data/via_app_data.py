@@ -212,7 +212,7 @@ def _run_workers(work: Iterable[Callable[[], None]]) -> None:
             for task in work:
                 worker = _SeedWorker(task)
                 workers.append(worker)
-                executor.submit(worker)
+                _submit_or_run(executor, worker)
         except KeyboardInterrupt:
             interrupted = True
         finally:
@@ -243,10 +243,17 @@ class _SeedWorker:
         self.done.wait()
 
 
+def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
+    try:
+        executor.submit(worker)
+    except RuntimeError:
+        worker()
+
+
 def _finish_workers(executor: ThreadPoolExecutor, workers: list[_SeedWorker], index: int) -> tuple[int | None, bool]:
     try:
         if index < len(workers):
-            executor.submit(workers[index])
+            _submit_or_run(executor, workers[index])
             return index + 1, False
         for worker in workers:
             worker.wait()

@@ -17,7 +17,7 @@ from pathlib import Path
 from shutil import copy2
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import PIPE, STDOUT, Popen, check_call, run
-from threading import Event, Thread
+from threading import Event, Thread, current_thread, main_thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -30,7 +30,6 @@ from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
-from virtualenv.seed.embed.via_app_data.via_app_data import _SeedWorker  # ruff:ignore[import-private-name]  # inject interrupts
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
@@ -155,27 +154,33 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
         finished.set()
 
     mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
+    original_submit, original_wait = ThreadPoolExecutor.submit, Event.wait
+    submit_calls = 0
     wait_calls = 0
 
-    def interrupt_wait(worker: _SeedWorker) -> None:
-        nonlocal wait_calls
-        wait_calls += 1
-        if wait_calls == 1:
-            worker.done.wait()
-            return
-        assert started.wait(timeout=5)
-        if wait_calls < 4:
-            raise KeyboardInterrupt
-        release.set()
-        worker.done.wait()
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls
+        future = original_submit(executor, fn, *args, **kwargs)
+        submit_calls += 1
+        return future
 
-    mocker.patch.object(_SeedWorker, "wait", side_effect=interrupt_wait, autospec=True)
+    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
+        nonlocal wait_calls
+        if submit_calls >= 2 and current_thread() is main_thread() and event is not started:
+            wait_calls += 1
+            if wait_calls < 3:
+                raise KeyboardInterrupt
+            release.set()
+        return original_wait(event, timeout)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
     with pytest.raises(KeyboardInterrupt):
         cli_run(
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
             env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
         )
-    assert (wait_calls, finished.is_set()) == (4, True)
+    assert (wait_calls, finished.is_set()) == (3, True)
 
 
 def test_interrupt_during_worker_submission_waits_for_seed(
@@ -192,34 +197,67 @@ def test_interrupt_during_worker_submission_waits_for_seed(
 
     mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
     original_submit = ThreadPoolExecutor.submit
+    submit_calls = 0
     interrupted = False
     wait_interrupted = False
 
-    def submit(executor: ThreadPoolExecutor, fn: _SeedWorker, *args: object, **kwargs: object) -> Future[None]:
-        nonlocal interrupted
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls, interrupted
         future = original_submit(executor, fn, *args, **kwargs)
-        if fn.work.func.__name__ == "_install" and not interrupted:
+        submit_calls += 1
+        if submit_calls == 2 and not interrupted:
             assert started.wait(timeout=5)
             interrupted = True
             raise KeyboardInterrupt
         return future
 
-    def interrupt_wait(worker: _SeedWorker) -> None:
+    original_wait = Event.wait
+
+    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
         nonlocal wait_interrupted
-        if interrupted and not wait_interrupted:
+        if interrupted and submit_calls >= 3 and current_thread() is main_thread() and not wait_interrupted:
             wait_interrupted = True
             release.set()
             raise KeyboardInterrupt
-        worker.done.wait()
+        return original_wait(event, timeout)
 
     mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
-    mocker.patch.object(_SeedWorker, "wait", autospec=True, side_effect=interrupt_wait)
+    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
     with pytest.raises(KeyboardInterrupt):
         cli_run(
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
             env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
         )
     assert (wait_interrupted, finished.is_set()) == (True, True)
+
+
+def test_seed_worker_runs_when_executor_rejects_submission(
+    tmp_path: Path, unusable_cache: Path, mocker: MockerFixture
+) -> None:
+    original_submit = ThreadPoolExecutor.submit
+    rejected = False
+
+    submit_calls = 0
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls, rejected
+        submit_calls += 1
+        if submit_calls == 2 and not rejected:
+            rejected = True
+            msg = "cannot start worker"
+            raise RuntimeError(msg)
+        return original_submit(executor, fn, *args, **kwargs)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    session = cli_run(
+        [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+        env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+    )
+    assert (
+        rejected,
+        (session.creator.purelib / "pip" / "__init__.py").is_file(),
+        Path(str(session.creator.app_data)).exists(),
+    ) == (True, True, False)
 
 
 @pytest.mark.parametrize(
