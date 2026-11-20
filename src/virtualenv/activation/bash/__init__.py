@@ -72,7 +72,7 @@ class BashActivator(ViaTemplateActivator):  # fmt: skip
                 parts.append(shlex.quote(chunk))
             else:
                 octal = "".join(f"\\0{byte:03o}" for byte in chunk.encode())
-                parts.append(f"\"$(printf '%b' '{octal}')\"")
+                parts.append(f"\"$(command -p printf '%b' '{octal}')\"")
         return "".join(parts)
 
 
