@@ -379,6 +379,54 @@ def _interrupt_pip_seed_at_cleanup_entry(tmp_path: Path, mocker: MockerFixture) 
             child.wait()
 
 
+def test_pip_sigint_after_child_exit_is_reported(tmp_path: Path, mocker: MockerFixture) -> None:
+    assert _interrupt_pip_seed_after_child_exit(tmp_path, mocker) == {
+        "signal_sent": True,
+        "child_exited": True,
+        "folder_exists": False,
+    }
+
+
+def _interrupt_pip_seed_after_child_exit(tmp_path: Path, mocker: MockerFixture) -> dict[str, bool]:
+    class InterruptedResult:
+        def __init__(self, cmd: list[str], env: dict[str, str]) -> None:
+            self.child = subprocess.Popen(cmd, env=env)
+            self.folder = Path(cmd[cmd.index("--find-links") + 1])
+            self.signal_sent = False
+
+        @property
+        def returncode(self) -> int | None:
+            if not self.signal_sent:
+                self.signal_sent = True
+                signal.raise_signal(signal.SIGINT)
+            return self.child.returncode
+
+        def communicate(self, timeout: float | None = None) -> tuple[bytes | None, bytes | None]:
+            return self.child.communicate(timeout=timeout)
+
+    process: InterruptedResult | None = None
+
+    def start_pip(cmd: list[str], env: dict[str, str]) -> InterruptedResult:
+        nonlocal process
+        process = InterruptedResult(cmd, env)
+        return process
+
+    mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True, side_effect=start_pip)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+        assert process is not None
+        return {
+            "signal_sent": process.signal_sent,
+            "child_exited": process.child.poll() is not None,
+            "folder_exists": process.folder.exists(),
+        }
+    finally:
+        if process is not None and process.child.poll() is None:
+            process.child.kill()
+            process.child.wait()
+
+
 def test_pip_reseed_reports_missing_wheel(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="could not get wheel for distribution pip"):
         cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "99.1234", "--no-download", "--no-periodic-update"])

@@ -261,6 +261,8 @@ class PipInvoke(BaseEmbed):
         finally:
             if signal.getsignal(signal.SIGINT) is on_sigint:
                 signal.signal(signal.SIGINT, handler)
+            if interrupts:
+                raise interrupts[0]
 
     @staticmethod
     def _wait_for_pip(process: Popen[bytes], interrupts: list[BaseException] | None) -> None:
