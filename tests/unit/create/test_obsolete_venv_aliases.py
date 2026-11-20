@@ -54,8 +54,11 @@ def test_recreate_preserves_old_alias(
 
 
 @pytest.mark.skipif(
-    sys.platform != "linux" or not shutil.which("python3.12") or not shutil.which("python3.14"),
-    reason="requires Linux with CPython 3.12 and 3.14",
+    sys.platform != "linux"
+    or sys.implementation.name != "cpython"
+    or sys.version_info[:2] == (3, 12)
+    or not shutil.which("python3.12"),
+    reason="requires Linux with Python 3.12 alongside a different CPython version",
 )
 def test_switch_copied_python(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     destination: Final[Path] = tmp_path / "env"
@@ -63,5 +66,5 @@ def test_switch_copied_python(tmp_path: Path, caplog: pytest.LogCaptureFixture) 
     cli_run([*args, "python3.12"], setup_logging=False)
     alias: Final[Path] = destination / "bin" / "python3.12"
     contents = alias.read_bytes()
-    cli_run([*args, "python3.14"], setup_logging=False)
+    cli_run([*args, sys.executable], setup_logging=False)
     assert (alias.read_bytes(), "'python3.12'. Use a fresh destination" in caplog.text) == (contents, True)
