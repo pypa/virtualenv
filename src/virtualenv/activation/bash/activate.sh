@@ -152,34 +152,29 @@ else
         if [ -n "${BASH_VERSION-}" ]; then
             # Escape both prompt passes even if promptvars changes after activation.
             # A nonprinting marker separates a high byte from the next escape under legacy multibyte locales.
-            _VIRTUAL_REST=$VIRTUAL_ENV_PROMPT
+            _virtualenv_escape_prompt () {
+                # A read-only LC_ALL pins the shell to its current locale.
+                local LC_ALL=C || :
+                local _VIRTUAL_INDEX=0 _VIRTUAL_MARK= _VIRTUAL_CHARACTER
+                while [ "$_VIRTUAL_INDEX" -lt "${#1}" ]; do
+                    _VIRTUAL_CHARACTER=${1:_VIRTUAL_INDEX:1}
+                    _VIRTUAL_INDEX=$((_VIRTUAL_INDEX + 1))
+                    case $_VIRTUAL_CHARACTER in
+                        \\) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\\\\\\\" ;;
+                        \$ | \`) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\$_VIRTUAL_CHARACTER" ;;
+                        *) _VIRTUAL_PROMPT+=$_VIRTUAL_CHARACTER ;;
+                    esac
+                    # $'...' inside a double-quoted ${...} stays literal in posix mode and without extquote
+                    case $_VIRTUAL_CHARACTER in
+                        [\ -~]) _VIRTUAL_MARK= ;;
+                        *) _VIRTUAL_MARK=$'\001\002' ;;
+                    esac
+                done
+            }
             _VIRTUAL_PROMPT=
-            _VIRTUAL_MARK=
-            _VIRTUAL_LC_ALL=${LC_ALL-}
-            _VIRTUAL_LC_ALL_SET=${LC_ALL+x}
-            # A readonly LC_ALL pins the shell to its current locale.
-            command builtin printf -v LC_ALL %s C 2>/dev/null || :
-            _VIRTUAL_INDEX=0
-            while [ "$_VIRTUAL_INDEX" -lt "${#_VIRTUAL_REST}" ]; do
-                _VIRTUAL_CHAR=${_VIRTUAL_REST:_VIRTUAL_INDEX:1}
-                _VIRTUAL_INDEX=$((_VIRTUAL_INDEX + 1))
-                case $_VIRTUAL_CHAR in
-                    \\) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\\\\\\\" ;;
-                    \$ | \`) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\$_VIRTUAL_CHAR" ;;
-                    *) _VIRTUAL_PROMPT+=$_VIRTUAL_CHAR ;;
-                esac
-                # $'...' inside a double-quoted ${...} stays literal in posix mode and without extquote
-                case $_VIRTUAL_CHAR in
-                    [\ -~]) _VIRTUAL_MARK= ;;
-                    *) _VIRTUAL_MARK=$'\001\002' ;;
-                esac
-            done
-            if [ -n "$_VIRTUAL_LC_ALL_SET" ]; then
-                command builtin printf -v LC_ALL %s "$_VIRTUAL_LC_ALL" 2>/dev/null || :
-            else
-                unset LC_ALL 2>/dev/null || :
-            fi
-            unset _VIRTUAL_REST _VIRTUAL_CHAR _VIRTUAL_MARK _VIRTUAL_INDEX _VIRTUAL_LC_ALL _VIRTUAL_LC_ALL_SET
+            # Bash can warn when restoring an unavailable locale on return.
+            _virtualenv_escape_prompt "$VIRTUAL_ENV_PROMPT" 2>/dev/null
+            unset -f _virtualenv_escape_prompt
         else
             # zsh inserts a psvar entry into the prompt as data under every prompt option, so the value needs no
             # escaping, and the %9v reference holds nothing for another shell to expand when PS1 is exported. The guard
