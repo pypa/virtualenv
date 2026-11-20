@@ -4,7 +4,7 @@ __lazy_modules__ = [
     "argparse",
     "pathlib",
     "python_discovery",
-    "subprocess",
+    "tempfile",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -18,10 +18,10 @@ __lazy_modules__ = [
 
 import logging
 import os
-import subprocess
 from argparse import ArgumentTypeError
 from pathlib import Path
 from stat import S_IMODE
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
@@ -112,7 +112,7 @@ class Venv(ViaGlobalRefApi):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
         if os.name == "posix":
-            self._create_with_umask()
+            self._create_with_copy_mode()
         elif self.can_be_inline:
             self.create_inline()
         else:
@@ -121,9 +121,14 @@ class Venv(ViaGlobalRefApi):
             self.describe.install_venv_shared_libs(self)
         super().create()
 
-    def _create_with_umask(self) -> None:
-        # A mode probe can inherit a default ACL that overrides the umask.
-        allowed = (0o777 & ~int(subprocess.check_output(["/bin/sh", "-c", "umask"], env={}), 8)) | 0o7000
+    def _create_with_copy_mode(self) -> None:
+        # A private child inherits bin's default ACL without exposing the probe.
+        with TemporaryDirectory(dir=self.bin_dir) as private:
+            probe = os.open(Path(private) / "mode", os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o755)
+            try:
+                allowed = S_IMODE(os.fstat(probe).st_mode) | 0o7000
+            finally:
+                os.close(probe)
         mode = S_IMODE(self.bin_dir.stat().st_mode)
         kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
         # Hide copied bytes while stdlib venv temporarily sets their mode to 0755.

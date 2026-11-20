@@ -838,11 +838,12 @@ def test_venv_reused_interpreter_copy_keeps_umask(tmp_path: Path, mask: int, exp
     or shutil.which("setfacl") is None,
     reason="requires POSIX CPython venv copies and setfacl",
 )
-def test_venv_copy_respects_umask_with_default_acl(tmp_path: Path) -> None:
+def test_venv_copy_respects_default_acl(tmp_path: Path) -> None:
     destination = tmp_path / "env"
     cli_run([str(destination), "--creator", "venv", "--symlinks", "--no-seed"])
-    (destination / "bin").chmod(0o755)
-    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::rwx", str(destination)], check=True)
+    bin_dir = destination / "bin"
+    bin_dir.chmod(0o755)
+    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::r-x", str(bin_dir)], check=True)
 
     previous = os.umask(0o077)
     try:
@@ -854,7 +855,7 @@ def test_venv_copy_respects_umask_with_default_acl(tmp_path: Path) -> None:
         stat.S_IMODE(session.creator.bin_dir.stat().st_mode),
         stat.S_IMODE(session.creator.exe.stat().st_mode),
         subprocess.run([str(session.creator.exe), "-c", "print(1)"], capture_output=True, check=True).stdout,
-    ) == (0o755, 0o700, b"1\n")
+    ) == (0o755, 0o755, b"1\n")
 
 
 @pytest.mark.skipif(
@@ -904,7 +905,7 @@ def test_venv_concurrent_copy_preserves_restored_bin_mode(tmp_path: Path, monkey
     monkeypatch.setattr(session.creator, "create_inline", lambda: bin_dir.chmod(0o755))
     previous = os.umask(0o077)
     try:
-        session.creator._create_with_umask()  # ruff:ignore[private-member-access]  # simulate interleaved creators
+        session.creator._create_with_copy_mode()  # ruff:ignore[private-member-access]  # simulate interleaved creators
     finally:
         os.umask(previous)
 
