@@ -404,7 +404,7 @@ def test_bash_relocation_resolves_under_git_bash(git_bash: Path, moved_bash_acti
         check=False,
     )
 
-    assert (result.returncode, result.stdout.strip()) == (0, str(moved_bash_activate.parents[1]))
+    assert (result.returncode, result.stdout.strip()) == (0, str(moved_bash_activate.parents[1])), result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
