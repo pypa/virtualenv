@@ -398,7 +398,9 @@ def _interrupt_pip_seed_after_child_exit(tmp_path: Path, mocker: MockerFixture) 
         def returncode(self) -> int | None:
             if not self.signal_sent:
                 self.signal_sent = True
-                signal.raise_signal(signal.SIGINT)
+                handler = signal.getsignal(signal.SIGINT)
+                assert callable(handler)
+                handler(signal.SIGINT, None)
             return self.child.returncode
 
         def communicate(self, timeout: float | None = None) -> tuple[bytes | None, bytes | None]:
