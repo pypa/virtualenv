@@ -253,7 +253,6 @@ def _interrupt_pip_seed(tmp_path: Path) -> dict[str, int | bool]:
         stderr=subprocess.DEVNULL,
     )
     parent_fd = os.pidfd_open(parent.pid)
-    child_pid = None
     child_fd = None
     try:
         deadline = monotonic() + 20
@@ -262,8 +261,7 @@ def _interrupt_pip_seed(tmp_path: Path) -> dict[str, int | bool]:
             for child in Path(f"/proc/{parent.pid}/task/{parent.pid}/children").read_text(encoding="ascii").split():
                 args = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
                 if b"--find-links" in args:
-                    child_pid = int(child)
-                    child_fd = os.pidfd_open(child_pid)
+                    child_fd = os.pidfd_open(int(child))
                     folder = Path(os.fsdecode(args[args.index(b"--find-links") + 1]))
                     break
             if child_fd is not None:
