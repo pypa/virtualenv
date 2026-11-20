@@ -252,7 +252,7 @@ def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: b
     skipped_entries.add(f"{_CONFIG_MIGRATION_LOCK}.lock")
     moved: Final[list[str]] = []
     try:
-        if not nested and os.name == "posix":
+        if os.name == "posix":
             _preserve_cache_permissions(old_dir, new_dir)
         for entry in os.listdir(old_dir):
             if (
@@ -306,12 +306,15 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
 
 def _move_cache(old_dir: str, new_dir: str) -> None:
     old_info = _prepare_cache_parent(old_dir, new_dir)
-    if os.name != "posix" or os.path.islink(old_dir):
+    if os.name != "posix":
         shutil.move(old_dir, new_dir)
         return
     mode = _migrated_cache_mode(old_info)
     if mode != stat.S_IMODE(old_info.st_mode):
         os.chmod(old_dir, mode)
+    if os.path.islink(old_dir):
+        shutil.move(old_dir, new_dir)
+        return
     try:
         os.rename(old_dir, new_dir)
     except OSError:
