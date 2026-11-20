@@ -25,15 +25,20 @@ def patch_dist(dist: types.ModuleType) -> None:
 
     # matches the untyped distutils parse_config_files override it replaces
     def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[imprecise-annotation]  # distutils signature
-        result = old_parse_config_files(self, *args, **kwargs)
-        install = self.get_option_dict("install")
-
-        if "prefix" in install:  # the prefix governs where to install the libraries
-            install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-        for base in ("purelib", "platlib", "headers", "scripts", "data"):
-            if (key := f"install_{base}") in install:  # do not allow global configs to hijack venv paths
+        try:
+            return old_parse_config_files(self, *args, **kwargs)
+        finally:
+            # Distutils can leave options from earlier files in place when parsing fails.
+            install = self.get_option_dict("install")
+            if "prefix" in install:
+                install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
+            for key in ("exec_prefix", "install_base", "install_platbase"):
                 install.pop(key, None)
-        return result
+            for base in ("lib", "purelib", "platlib", "headers", "scripts", "data"):
+                install.pop(f"install_{base}", None)
+                # A subcommand's install_dir overrides the install command's destination.
+                if (options := self.command_options.get(f"install_{base}")) is not None:
+                    options.pop("install_dir", None)
 
     dist.Distribution.parse_config_files = parse_config_files
 

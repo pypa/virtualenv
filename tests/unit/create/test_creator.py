@@ -1084,6 +1084,73 @@ def list_files(path):
     return result
 
 
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    malformed: Final[Path] = tmp_path / "malformed.cfg"
+    malformed.write_text("[metadata]\nname = café\n", encoding="latin-1")
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                try:
+                    distribution.parse_config_files(sys.argv[1:])
+                except UnicodeDecodeError:
+                    print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+            str(malformed),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONUTF8": "1"},
+    )
+    assert result.strip() == "[]"
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+@pytest.mark.parametrize(
+    ("command", "option"),
+    [
+        pytest.param("install", "install_lib", id="install_lib"),
+        pytest.param("install", "exec_prefix", id="exec_prefix"),
+        pytest.param("install", "install_base", id="install_base"),
+        pytest.param("install", "install_platbase", id="install_platbase"),
+        pytest.param("install_lib", "install_dir", id="install_lib_dir"),
+        pytest.param("install_scripts", "install_dir", id="install_scripts_dir"),
+        pytest.param("install_headers", "install_dir", id="install_headers_dir"),
+        pytest.param("install_data", "install_dir", id="install_data_dir"),
+    ],
+)
+def test_distutils_filters_install_destination(tmp_path: Path, command: str, option: str) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text(f"[{command}]\n{option} = elsewhere\n", encoding="utf-8")
+
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                distribution.parse_config_files(sys.argv[2:])
+                print(sorted(distribution.get_option_dict(sys.argv[1])))
+                """),
+            command,
+            str(settings),
+        ],
+        encoding="utf-8",
+    )
+    assert result.strip() == "[]"
+
+
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
     interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
     creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
