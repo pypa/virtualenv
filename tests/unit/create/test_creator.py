@@ -1593,6 +1593,32 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     assert config.path.read_bytes() == b"home = original\n"
 
 
+@pytest.mark.parametrize("version", ["3.11", "3.14"])
+def test_pyenv_cfg_rejects_oversized_cpython_config(tmp_path: Path, version: str) -> None:
+    config: Final = PyEnvCfg(
+        OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
+        tmp_path / "pyvenv.cfg",
+    )
+    config.path.write_bytes(b"home = original\n")
+
+    with pytest.raises(ValueError, match=r"pyvenv\.cfg must be smaller than 32 KiB"):
+        config.write()
+
+    assert config.path.read_bytes() == b"home = original\n"
+
+
+@pytest.mark.parametrize("version", ["3.9", "3.10"])
+def test_pyenv_cfg_allows_large_older_cpython_config(tmp_path: Path, version: str) -> None:
+    config: Final = PyEnvCfg(
+        OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
+        tmp_path / "pyvenv.cfg",
+    )
+
+    config.write()
+
+    assert len(config.path.read_bytes()) >= 32_768
+
+
 def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
     PyEnvCfg(OrderedDict({"prompt": "a\x1bb"}), tmp_path / "pyvenv.cfg").write()
