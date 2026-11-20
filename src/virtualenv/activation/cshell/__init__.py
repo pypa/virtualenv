@@ -97,12 +97,8 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
             creator.env_name if self.flag_prompt is None else self.flag_prompt
         )
         literals = super().substitutions(values, creator)
-        bmp_max: Final[int] = 0xFFFF
-        # Stateful legacy encoders can consume the shell quote after these UTF-8 suffixes or non-BMP text.
-        needs_command = (
-            any(ord(char) > bmp_max for char in display)
-            or _STATEFUL_UTF8.search(display.encode("utf-8", "surrogateescape")) is not None
-        )
+        # Stateful legacy encoders can consume the shell quote after these UTF-8 suffixes.
+        needs_command = _STATEFUL_UTF8.search(display.encode("utf-8", "surrogateescape")) is not None
         return {
             **{key: _NON_ASCII.sub(self._bytes_apart, literal) for key, literal in literals.items()},
             "__VIRTUAL_PROMPT_DISPLAY_TCSH__": "''" if needs_command else _prompt_literal(display, tcsh=True),
@@ -146,9 +142,9 @@ def _prompt_command(value: str, *, tcsh: bool) -> str:
     if tcsh:
         escaped = escaped.replace("%", "%%").replace("^", "\\^")
     return (
-        "`$_virtualenv_printf '%b' '"
+        "\"`$_virtualenv_printf '%b' '"
         + "".join(f"\\0{byte:03o}" for byte in f"({escaped})".encode("utf-8", "surrogateescape"))
-        + "'`' '"
+        + "'`\"' '"
     )
 
 

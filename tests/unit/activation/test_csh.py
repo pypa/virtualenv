@@ -297,6 +297,42 @@ def test_cshell_renders_utf8_prompt(csh_venv: _CshVenv, tmp_path: Path, prompt: 
     _assert_prompt_drawn(csh_venv, tmp_path, prompt, {**os.environ, "LC_ALL": "C.UTF-8"})
 
 
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param(shell, id=shell, marks=pytest.mark.skipif(which(shell) is None, reason=f"{shell} is unavailable"))
+        for shell in ("tcsh", "csh")
+    ],
+)
+@pytest.mark.parametrize(
+    "prompt", [pytest.param("別 [nomatch]", id="stateful"), pytest.param("🚒 [nomatch]", id="non-bmp")]
+)
+def test_cshell_unicode_prompt_keeps_glob_literal(csh_venv: _CshVenv, shell: str, prompt: str) -> None:
+    dest, _ = csh_venv("plain", prompt=prompt)
+    expected = run(
+        [shell, "-f"],
+        input=f'set prompt = "({prompt}) > "\necho "$#prompt"\nprintf "%s\\n" "$prompt:q"\n'.encode(),
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    result = run(
+        [shell, "-f"],
+        input=(
+            f'set prompt = "> "\nsource {dest / "bin" / "activate.csh"}\necho "$#prompt"\nprintf "%s\\n" "$prompt:q"\n'
+        ).encode(),
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert (expected.returncode, expected.stdout[:2], expected.stderr) == (0, b"1\n", b"")
+    assert (result.returncode, result.stdout, result.stderr) == (0, expected.stdout, b"")
+
+
 @pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 def test_cshell_prompt_ignores_printf_alias(csh_venv: _CshVenv) -> None:
     dest, _ = csh_venv("plain", prompt="別")
