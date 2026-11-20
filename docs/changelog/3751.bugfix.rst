@@ -1,0 +1,1 @@
+Warn when recreating a POSIX environment with the :mod:`venv` creator leaves files named for the previous interpreter.

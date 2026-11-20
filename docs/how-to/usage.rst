@@ -20,6 +20,11 @@ Specify a Python version by name or version number:
     $ virtualenv -p pypy3 venv
     $ virtualenv -p rustpython venv
 
+When switching Python versions or implementations, use a fresh destination to avoid leftover executables. On POSIX, the
+``venv`` creator warns when files named for the previous interpreter remain in the environment. For example, changing
+from Python 3.12 to 3.14 can leave a broken ``bin/python3.12``. Virtualenv preserves the file because it cannot tell who
+installed it. Use ``--clear`` if you intend to delete everything in the old environment.
+
 Using PEP 440 specifiers
 ========================
 
