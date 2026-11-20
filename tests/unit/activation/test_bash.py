@@ -256,6 +256,27 @@ def test_bash_prompt_unicode_survives_posix_shells(tmp_path: Path, shell: str) -
     assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
 
 
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+def test_bash_prompt_unicode_survives_custom_ifs(tmp_path: Path) -> None:
+    script = generate_script("bash", tmp_path / "env", "a你0")
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            'IFS=你; . "$1"; printf %s "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(script),
+        ],
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "expected_snippets"),
