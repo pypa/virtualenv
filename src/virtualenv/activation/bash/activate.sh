@@ -150,22 +150,31 @@ else
         { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
         if [ -n "${BASH_VERSION-}" ]; then
-            # bash decodes its prompt escapes on every draw and expands the result when promptvars is on or in posix
-            # mode; both can change after activation and an exported PS1 reaches child shells, so the value gets escaped
-            # for both passes whatever the state is now. The escapes are built by concatenation because the replacement
-            # in ${var//pat/rep} loses backslashes depending on the bash version, BASH_COMPAT and patsub_replacement
+            # Escape both prompt passes even if promptvars changes after activation.
+            # A nonprinting marker separates a high byte from the next escape under legacy multibyte locales.
             _VIRTUAL_REST=$VIRTUAL_ENV_PROMPT
-            _VIRTUAL_PROMPT=
-            while [ -n "$_VIRTUAL_REST" ]; do
-                _VIRTUAL_CHAR=${_VIRTUAL_REST%"${_VIRTUAL_REST#?}"}
-                _VIRTUAL_REST=${_VIRTUAL_REST#?}
-                case $_VIRTUAL_CHAR in
-                    \\) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\\\\\\\" ;;
-                    \$ | \`) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\$_VIRTUAL_CHAR" ;;
-                    *) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT$_VIRTUAL_CHAR" ;;
-                esac
-            done
-            unset _VIRTUAL_REST _VIRTUAL_CHAR
+            if ! _VIRTUAL_PROMPT=$(
+                builtin printf '%s.\n' "$_VIRTUAL_REST" |
+                    LC_ALL=C command -p awk '{
+                        for (position = 1; position <= length($0); position++) {
+                            character = substr($0, position, 1)
+                            if (character == "\\" || character == "$" || character == "`") {
+                                if (previous ~ /[^ -~]/) printf "%c%c", 1, 2
+                                if (character == "\\") printf "%c%c%c%c", 92, 92, 92, 92
+                                else printf "%c%s", 92, character
+                            } else printf "%s", character
+                            previous = character
+                        }
+                        printf "\n"
+                        previous = "\n"
+                    }'
+            ); then
+                # PATH has changed already, so keep the original prompt if awk is unavailable.
+                echo "awk is unavailable, leaving the prompt unchanged." >&2
+                _VIRTUAL_PROMPT=
+            fi
+            unset _VIRTUAL_REST
+            _VIRTUAL_PROMPT=${_VIRTUAL_PROMPT%.}
         else
             # zsh inserts a psvar entry into the prompt as data under every prompt option, so the value needs no
             # escaping, and the %9v reference holds nothing for another shell to expand when PS1 is exported. The guard
@@ -179,7 +188,7 @@ else
                 _VIRTUAL_PROMPT='%9v'
             fi
         fi
-        PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        PS1="${_VIRTUAL_PROMPT:+(${_VIRTUAL_PROMPT}) }${PS1-}"
         unset _VIRTUAL_PROMPT
     fi
 
