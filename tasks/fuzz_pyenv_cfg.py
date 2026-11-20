@@ -31,7 +31,10 @@ def test_one_input(data: bytes) -> None:
     )
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / "pyvenv.cfg"
-        PyEnvCfg(content, path).write()
+        try:
+            PyEnvCfg(content, path).write()
+        except ValueError:
+            return
         read_back = PyEnvCfg.from_file(path).content
     extra = set(read_back) - set(content)
     assert not extra, (extra, dict(content))  # ruff:ignore[assert] atheris treats AssertionError as the crash signal

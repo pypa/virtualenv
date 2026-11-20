@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 import difflib
 import gc
 import json
@@ -2010,6 +2011,79 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     with pytest.raises(UnicodeEncodeError):
         config.write()
     assert config.path.read_bytes() == b"home = original\n"
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "home",
+        "executable",
+        "base-prefix",
+        "base-exec-prefix",
+        "base-executable",
+        "venvlauncher_command",
+    ],
+)
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("base\u2028alias", id="line-separator"),
+        pytest.param("base\nother", id="newline", marks=pytest.mark.skipif(IS_WIN, reason="Windows forbids newlines")),
+        pytest.param(
+            "base ", id="trailing-space", marks=pytest.mark.skipif(IS_WIN, reason="Windows trims trailing spaces")
+        ),
+    ],
+)
+def test_pyenv_cfg_rejects_unrecordable_path(tmp_path: Path, key: str, name: str) -> None:
+    path = tmp_path / name
+    path.mkdir()
+    config = PyEnvCfg(OrderedDict({key: str(path)}), tmp_path / "pyvenv.cfg")
+    config.path.write_bytes(b"home = original\n")
+
+    with pytest.raises(ValueError, match="cannot record"):
+        config.write()
+
+    assert config.path.read_bytes() == b"home = original\n"
+
+
+def test_pyenv_cfg_preserves_unicode_path(tmp_path: Path) -> None:
+    home = tmp_path / "répertoire"
+    home.mkdir()
+    config = PyEnvCfg(OrderedDict({"home": str(home)}), tmp_path / "pyvenv.cfg")
+
+    config.write()
+
+    assert config.path.read_text(encoding="utf-8") == f"home = {home}\n"
+
+
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.parametrize("clear_args", [pytest.param([], id="reuse"), pytest.param(["--clear"], id="clear")])
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        pytest.param("\u2028", id="line-separator"),
+        pytest.param("\n", id="newline", marks=pytest.mark.skipif(IS_WIN, reason="Windows forbids newlines")),
+    ],
+)
+def test_unrecordable_interpreter_preserves_existing_environment(
+    tmp_path: Path, creator: str, clear_args: list[str], boundary: str
+) -> None:
+    destination = tmp_path / "env"
+    cli_run([str(destination), "--no-seed"])
+    config = (destination / "pyvenv.cfg").read_bytes()
+    marker = destination / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    session = session_via_cli([str(destination), "--creator", creator, "--no-seed", *clear_args])
+    session.creator.interpreter = copy.copy(session.creator.interpreter)
+    interpreter = tmp_path / f"base{boundary}alias" / "bin" / "python"
+    interpreter.parent.mkdir(parents=True)
+    interpreter.touch()
+    session.creator.interpreter.system_executable = str(interpreter)
+
+    with pytest.raises(ValueError, match="cannot record home"), session:
+        session.run()
+
+    assert (marker.read_text(encoding="utf-8"), (destination / "pyvenv.cfg").read_bytes()) == ("keep", config)
 
 
 @pytest.mark.parametrize("version", ["3.11", "3.14"])
