@@ -27,17 +27,17 @@ def make_exe(filename: Path) -> None:
             continue
 
 
-def set_tree(folder: Path, mode: int) -> None:
+def set_tree(folder: Path, stat: int) -> None:
     """Limit the mode of every file below a folder.
 
     :param folder: the folder to walk
-    :param mode: the permission bits to keep on each file
+    :param stat: the permission bits to keep on each file
 
     """
     for root, _, files in os.walk(str(folder)):
         for filename in files:
             path = os.path.join(root, filename)
-            os.chmod(path, os.stat(path).st_mode & mode)
+            os.chmod(path, os.stat(path).st_mode & stat)
 
 
 __all__ = [

@@ -374,7 +374,7 @@ def test_set_tree_keeps_existing_read_restrictions(tmp_path: Path, original: int
     image.write_text("private image", encoding="utf-8")
     image.chmod(original)
 
-    set_tree(tmp_path, 0o444)
+    set_tree(tmp_path, stat=0o444)
 
     assert (image.stat().st_mode & 0o777, image.read_text(encoding="utf-8")) == (expected, "private image")
 
