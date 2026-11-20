@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from python_discovery import PythonInfo
@@ -10,7 +12,7 @@ from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.config.convert import ListType
 from virtualenv.config.ini import IniConfig
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
-from virtualenv.run import session_via_cli
+from virtualenv.run import cli_run, session_via_cli
 
 
 @pytest.fixture
@@ -42,6 +44,15 @@ def test_python_multi_value_prefer_newline_via_env_var(monkeypatch) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2,python27")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3", "python2,python27"]
+
+
+def test_python_multi_value_skips_empty_path_separator_via_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    options = VirtualEnvOptions()
+    monkeypatch.setenv("VIRTUALENV_PYTHON", f"{os.pathsep}{sys.executable}{os.pathsep}{os.pathsep}missing")
+
+    session_via_cli(["venv"], options=options)
+
+    assert options.python == [sys.executable, "missing"]
 
 
 @pytest.mark.parametrize(
@@ -76,6 +87,52 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
     (tmp_path / "c").mkdir()
     result = session_via_cli(["venv"])
     assert result.seeder.extra_search_dir == [Path("a").resolve(), Path("b").resolve(), Path("c").resolve()]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows cannot create a space-named directory")
+def test_extra_search_dir_via_env_var_keeps_space_named_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name in ("trusted", " ", "other"):
+        (tmp_path / name).mkdir()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", f"trusted{os.pathsep} {os.pathsep}other")
+
+    session = session_via_cli(["venv"])
+
+    assert session.seeder.extra_search_dir == [tmp_path / name for name in ("trusted", " ", "other")]
+
+
+@pytest.mark.parametrize(
+    ("value", "directory_names"),
+    [
+        pytest.param(f"{os.pathsep}trusted", ("trusted",), id="leading"),
+        pytest.param(f"trusted{os.pathsep}", ("trusted",), id="trailing"),
+        pytest.param(f"trusted{os.pathsep}{os.pathsep}other", ("trusted", "other"), id="adjacent"),
+    ],
+)
+def test_extra_search_dir_empty_item_does_not_select_cwd_wheel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value: str, directory_names: tuple[str, ...]
+) -> None:
+    (tmp_path / "trusted").mkdir()
+    (tmp_path / "other").mkdir()
+    with ZipFile(tmp_path / "pip-99.0-py3-none-any.whl", "w") as wheel:
+        wheel.writestr("pip/__init__.py", "")
+        wheel.writestr("pip-99.0.dist-info/METADATA", "Metadata-Version: 2.1\nName: pip\nVersion: 99.0\n")
+        wheel.writestr("pip-99.0.dist-info/WHEEL", "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n")
+        wheel.writestr("pip-99.0.dist-info/RECORD", "")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", value)
+
+    session = cli_run([
+        str(tmp_path / "env"),
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--no-periodic-update",
+    ])
+
+    assert next(session.creator.purelib.glob("pip-*.dist-info")).name != "pip-99.0.dist-info"
+    assert session.seeder.extra_search_dir == [tmp_path / name for name in directory_names]
 
 
 @pytest.mark.usefixtures("_empty_conf")

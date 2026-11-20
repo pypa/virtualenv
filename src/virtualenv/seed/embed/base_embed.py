@@ -56,7 +56,7 @@ class BaseEmbed(Seeder, ABC):
         super().__init__(options, enabled=options.no_seed is False)
 
         self.download = options.download is True  # unset means no download
-        self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
+        self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.is_dir()]
 
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
@@ -176,10 +176,10 @@ class BaseEmbed(Seeder, ABC):
         parser.add_argument(
             "--extra-search-dir",
             metavar="d",
-            type=Path,
+            type=cls._search_dir,
             nargs="+",
             action=ExtendAction,
-            help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
+            help="a directory containing wheels to extend the internal wheel list (can be set 1+ times)",
             default=[],
         )
         for distribution, default in cls.distributions().items():
@@ -217,6 +217,13 @@ class BaseEmbed(Seeder, ABC):
             help="disable the periodic (once every 14 days) update of the embedded wheels",
             default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
         )
+
+    @staticmethod
+    def _search_dir(value: str) -> Path:
+        if not value:
+            msg = "extra search directory cannot be empty"
+            raise ArgumentTypeError(msg)
+        return Path(value)
 
 
 def _seed_version(value: str) -> str:
