@@ -67,6 +67,43 @@ def test_ini_empty_env_var_uses_default(
     )
 
 
+@pytest.mark.parametrize(
+    "no_home",
+    [
+        pytest.param("~/.config/virtualenv", id="unexpanded"),
+        pytest.param("./~/.config/virtualenv", id="relative"),
+        pytest.param(RuntimeError("no home directory"), id="unavailable"),
+    ],
+)
+def test_ini_without_home_ignores_working_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, no_home: str | RuntimeError
+) -> None:
+    config_file = tmp_path / "~/.config/virtualenv/virtualenv.ini"
+    config_file.parent.mkdir(parents=True)
+    config_file.write_text("[virtualenv]\nclear = True\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, side_effect=[no_home])
+
+    config = IniConfig(env={})
+
+    assert (config.config_file, config.has_config_file, bool(config), config.epilog) == (
+        None,
+        False,
+        False,
+        "\nconfig file unavailable without a home directory (change via env var VIRTUALENV_CONFIG_FILE)",
+    )
+
+
+def test_ini_explicit_path_without_home(tmp_path: Path, mocker: MockerFixture) -> None:
+    config_file = tmp_path / "virtualenv.ini"
+    config_file.write_text("[virtualenv]\nclear = True\n", encoding="utf-8")
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, side_effect=RuntimeError("no home directory"))
+
+    config = IniConfig(env={"VIRTUALENV_CONFIG_FILE": str(config_file)})
+
+    assert (config.config_file, config.has_config_file, bool(config)) == (config_file, True, True)
+
+
 def test_ini_that_fails_to_parse_does_not_break_the_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # configparser reads clear = True before it hits the bad line, and the CLI must not apply that partial result
     (invalid_ini := tmp_path / "conf.ini").write_bytes(b"[virtualenv]\nclear = True\ninvalid\n")

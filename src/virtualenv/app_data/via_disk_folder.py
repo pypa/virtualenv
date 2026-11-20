@@ -34,13 +34,16 @@ __lazy_modules__ = [
     "virtualenv.util.path",
     "virtualenv.util.zipapp",
     "virtualenv.version",
+    f"{__spec__.parent}.cache_migration",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
 import json
 import logging
+import os
 from abc import ABC
 from contextlib import contextmanager, suppress
 from hashlib import sha256
+from stat import S_IMODE, S_ISGID
 from typing import TYPE_CHECKING, Any, Final
 
 from virtualenv.util.lock import ReentrantFileLock
@@ -49,6 +52,7 @@ from virtualenv.util.zipapp import extract
 from virtualenv.version import __version__
 
 from .base import AppData, ContentStore
+from .cache_migration import make_private_dirs
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -61,6 +65,7 @@ class AppDataDiskFolder(AppData):
     """Store the application data on the disk within a folder layout.
 
     :param folder: the folder to store the application data in
+    :param private: whether reset must restore the default cache's access policy
 
     :var transient: always ``False``, the data persists across runs
     :var can_update: always ``True``, the data can be updated
@@ -71,8 +76,9 @@ class AppDataDiskFolder(AppData):
     transient = False
     can_update = True
 
-    def __init__(self, folder: str) -> None:
+    def __init__(self, folder: str, *, private: bool = False) -> None:
         self.lock = ReentrantFileLock(folder)
+        self._private = private
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.lock.path})"
@@ -88,9 +94,21 @@ class AppDataDiskFolder(AppData):
         return path
 
     def reset(self) -> None:
-        """Delete the whole app data folder."""
+        """Discard stored data and restore default cache permissions when needed."""
         LOGGER.debug("reset app data folder %s", self.lock.path)
+        info: os.stat_result | None = None
+        if self._private and os.name == "posix":
+            with suppress(FileNotFoundError):
+                info = os.stat(self.lock.path)
         safe_delete(self.lock.path)
+        if self._private:
+            make_private_dirs(str(self.lock.path))
+            if info is not None and info.st_mode & S_ISGID:
+                try:
+                    os.chown(self.lock.path, -1, info.st_gid)
+                    os.chmod(self.lock.path, S_IMODE(info.st_mode))
+                except OSError as exception:
+                    LOGGER.warning("keeping reset app data folder %s private: %r", self.lock.path, exception)
 
     def close(self) -> None:
         """Do nothing."""
