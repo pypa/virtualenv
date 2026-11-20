@@ -6,6 +6,7 @@ set newline='\
 '
 
 # History substitution precedes quote parsing, and the generated literals escape only its default character.
+unset _virtualenv_histchars
 if ($?histchars) then
     set _virtualenv_histchars="$histchars:q"
     unset histchars
