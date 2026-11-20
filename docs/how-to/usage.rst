@@ -240,8 +240,8 @@ The configuration file is named ``virtualenv.ini`` and located in the platformdi
 
 Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
 
-If the process has neither ``HOME`` nor a passwd entry, there is no default configuration file. Set
-``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
+If the process has neither ``HOME`` nor a passwd entry, and ``XDG_CONFIG_HOME`` is unset or empty, there is no default
+configuration file. Set ``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
 
 Configuration format
 ====================
