@@ -59,6 +59,8 @@ def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
 
 
 class PathMockABC(FakeDataABC, Path):
+    _flavour = getattr(Path(), "_flavour", None)
+
     def exists(self):
         return self.is_file() or self.is_dir()
 
