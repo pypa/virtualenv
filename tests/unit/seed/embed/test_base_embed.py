@@ -120,9 +120,8 @@ def test_extra_search_dir_skips_files(tmp_path: Path) -> None:
     assert session.seeder.extra_search_dir == [wheel_dir]
 
 
-@pytest.mark.parametrize("value", [pytest.param("", id="empty"), pytest.param(" ", id="whitespace")])
 def test_extra_search_dir_cli_rejects_empty_value(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], value: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.chdir(tmp_path)
     with ZipFile(tmp_path / "pip-99.0-py3-none-any.whl", "w") as wheel:
@@ -132,7 +131,7 @@ def test_extra_search_dir_cli_rejects_empty_value(
         wheel.writestr("pip-99.0.dist-info/RECORD", "")
 
     with pytest.raises(SystemExit) as error:
-        session_via_cli([str(tmp_path / "env"), "--extra-search-dir", value])
+        session_via_cli([str(tmp_path / "env"), "--extra-search-dir", ""])
 
     assert error.value.code == 2
     assert "extra search directory cannot be empty" in capsys.readouterr().err
@@ -144,6 +143,16 @@ def test_extra_search_dir_cli_accepts_explicit_cwd(tmp_path: Path, monkeypatch: 
     session = session_via_cli([str(tmp_path / "env"), "--extra-search-dir", "."])
 
     assert session.seeder.extra_search_dir == [tmp_path]
+
+
+@pytest.mark.skipif(os.name != "posix", reason="space-only directory name on POSIX")
+def test_extra_search_dir_cli_accepts_space_named_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / " ").mkdir()
+    monkeypatch.chdir(tmp_path)
+
+    session = session_via_cli([str(tmp_path / "env"), "--extra-search-dir", " "])
+
+    assert session.seeder.extra_search_dir == [tmp_path / " "]
 
 
 _CLI_SEARCH_DIRS: Final[list[pytest.ParameterSet]] = [

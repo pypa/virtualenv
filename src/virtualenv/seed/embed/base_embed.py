@@ -220,7 +220,7 @@ class BaseEmbed(Seeder, ABC):
 
     @staticmethod
     def _search_dir(value: str) -> Path:
-        if not value.strip():
+        if not value:
             msg = "extra search directory cannot be empty"
             raise ArgumentTypeError(msg)
         return Path(value)
