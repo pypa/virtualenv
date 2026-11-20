@@ -8,6 +8,7 @@ __lazy_modules__ = [
     "virtualenv.util.subprocess",
     "virtualenv.util.text",
     f"{__spec__.parent}.builtin.cpython.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.builtin.cpython.cpython3",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.mac_os",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.store",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
@@ -25,6 +26,7 @@ from virtualenv.util.text import collapse_line_boundaries
 
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
+from .builtin.cpython.cpython3 import CPython3Posix
 from .builtin.cpython.mac_os import CPython3macOsBrew
 from .store import handle_store_python
 
@@ -150,6 +152,12 @@ class Venv(ViaGlobalRefApi):
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
         # system_executable is optional in PythonInfo, so the command list is list[str | None]
         return cmd  # ty: ignore[invalid-explicit-return]
+
+    def run(self) -> None:
+        """Check copied interpreter search paths before clearing the destination."""
+        if isinstance(self.describe, CPython3Posix) and not self.symlinks:
+            CPython3Posix._check_shared_libpython_search(self)  # ruff:ignore[private-member-access]  # shared preflight
+        super().run()
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
