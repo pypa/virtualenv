@@ -380,6 +380,35 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
+def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            (
+                f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))} -VenvDir 'Env:/x'; "
+                "Write-Output $env:VIRTUAL_ENV"
+            ),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+    assert (result.returncode, result.stdout, "Cannot resolve environment directory 'Env:/x'" in result.stderr) == (
+        1,
+        "",
+        True,
+    ), result.stderr
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
 @pytest.mark.parametrize(
     ("alias_name", "returncode"),
@@ -412,35 +441,6 @@ def test_powershell_handles_shell_path_option_in_activation_path(
     )
 
     assert (result.returncode, "shell PATH option" in result.stderr) == (returncode, returncode == 1)
-
-
-@pytest.mark.parametrize("powershell", _POWERSHELLS)
-def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str) -> None:
-    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
-    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
-        [
-            powershell,
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            (
-                f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))} -VenvDir 'Env:/x'; "
-                "Write-Output $env:VIRTUAL_ENV"
-            ),
-        ],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=120,
-        check=False,
-    )
-    assert (result.returncode, result.stdout, "Cannot resolve environment directory 'Env:/x'" in result.stderr) == (
-        1,
-        "",
-        True,
-    ), result.stderr
 
 
 @pytest.mark.skipif(not IS_WIN, reason="Windows registry provider")

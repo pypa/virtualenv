@@ -184,6 +184,8 @@ if ($VenvDir) {
     Write-Verbose "VenvDir=$VenvDir"
 }
 
+$pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
+
 if ([IO.Path]::PathSeparator -eq ':' -and $VenvDir.Contains('%')) {
     $PathOption = $VenvDir.Substring($VenvDir.IndexOf('%') + 1)
     if (
@@ -193,8 +195,6 @@ if ([IO.Path]::PathSeparator -eq ':' -and $VenvDir.Contains('%')) {
         throw "Environment directory '$VenvDir' contains a shell PATH option."
     }
 }
-
-$pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
 
 if ($Prompt) {
     Write-Verbose "Prompt specified as argument, using '$Prompt'"
