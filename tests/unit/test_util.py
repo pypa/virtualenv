@@ -10,10 +10,11 @@ import traceback
 import zipfile
 from contextlib import ExitStack
 from errno import EACCES, EXDEV
+from functools import partial
 from operator import attrgetter
 from pathlib import Path
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
@@ -35,6 +36,9 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture, MockType
 
     from virtualenv.app_data import AppData
+
+    class _Chmod(Protocol):
+        def __call__(self, path: str, mode: int, **kwargs: bool) -> None: ...
 
 
 _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
@@ -1358,7 +1362,11 @@ def test_linked_cache_migration_keeps_safe_shared_target(tmp_path: Path, mocker:
     (new_dir / ".virtualenv-migration-incomplete").touch()
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
-    chmod = mocker.patch("virtualenv.app_data.cache_migration.os.chmod", autospec=True, wraps=os.chmod)
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.os.chmod",
+        autospec=True,
+        side_effect=partial(_reject_chmod_on, new_dir, os.chmod),
+    )
 
     make_app_data(None, read_only=False, env={})
 
@@ -1366,7 +1374,12 @@ def test_linked_cache_migration_keeps_safe_shared_target(tmp_path: Path, mocker:
         0o2770,
         "cached",
     )
-    assert all(call.args[0] != str(new_dir) for call in chmod.call_args_list)
+
+
+def _reject_chmod_on(target: Path, chmod: _Chmod, path: str, mode: int, **kwargs: bool) -> None:
+    if path == str(target):
+        raise PermissionError
+    chmod(path, mode, **kwargs)
 
 
 @pytest.mark.parametrize(
