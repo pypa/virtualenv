@@ -135,6 +135,46 @@ def prepared_pip_session(tmp_path: Path) -> Session:
     return session
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+def test_pip_reseed_detaches_junction(junction_seed: Path, prepared_pip_session: Session, tmp_path: Path) -> None:
+    prepared_pip_session.seeder.run(prepared_pip_session.creator)
+
+    outside: Final[Path] = tmp_path / "outside"
+    assert (
+        (outside / "REQUESTED").read_bytes(),
+        (outside / "other").read_bytes(),
+        junction_seed.resolve() == outside,
+    ) == (
+        b"original",
+        b"original",
+        False,
+    )
+
+
+@pytest.fixture(params=[pytest.param("root", id="root"), pytest.param("nested", id="nested")])
+def junction_seed(request: pytest.FixtureRequest, prepared_pip_session: Session, tmp_path: Path) -> Path:
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "REQUESTED").write_bytes(b"original")
+    os.link(outside / "REQUESTED", outside / "other")
+    if request.param == "root":
+        version: Final[str] = prepared_pip_session.creator.interpreter.version_release_str
+        junction: Final[Path] = (
+            prepared_pip_session.creator.purelib / f"pip-{get_embed_wheel('pip', version).version}.dist-info"
+        )
+    else:
+        junction = prepared_pip_session.creator.purelib / "pip" / "_internal"
+    junction.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(junction), str(outside)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    return junction
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
     launcher: Final[Path] = linked_seed.creator.script_dir / _LAUNCHER_NAME

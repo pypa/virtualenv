@@ -30,7 +30,7 @@ from contextlib import contextmanager
 from importlib.metadata import distributions
 from pathlib import Path
 from shutil import copyfile
-from stat import S_IMODE, S_ISLNK, S_ISREG
+from stat import FILE_ATTRIBUTE_REPARSE_POINT, S_IMODE, S_ISDIR, S_ISLNK, S_ISREG
 from subprocess import Popen
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
@@ -148,18 +148,33 @@ class PipInvoke(BaseEmbed):
         if path.is_symlink():
             path.unlink()
         elif path.is_dir():
+            if PipInvoke._is_reparse_directory(path.lstat()):
+                path.rmdir()
+                return
             for root, dirs, files in os.walk(path, onerror=PipInvoke._raise_walk_error, followlinks=False):
                 for name in [*dirs, *files]:
-                    entry: Final[Path] = Path(root) / name
-                    info: Final[os.stat_result] = entry.lstat()
-                    if S_ISLNK(info.st_mode) or (S_ISREG(info.st_mode) and info.st_nlink > 1):
-                        entry.unlink()
-                        if name in dirs:
-                            dirs.remove(name)
+                    PipInvoke._detach_entry(Path(root) / name, dirs)
+
+    @staticmethod
+    def _is_reparse_directory(info: os.stat_result) -> bool:
+        return (
+            os.name == "nt" and S_ISDIR(info.st_mode) and bool(info.st_file_attributes & FILE_ATTRIBUTE_REPARSE_POINT)
+        )
 
     @staticmethod
     def _raise_walk_error(error: OSError) -> None:
         raise error
+
+    @staticmethod
+    def _detach_entry(entry: Path, dirs: list[str]) -> None:
+        info: Final[os.stat_result] = entry.lstat()
+        if PipInvoke._is_reparse_directory(info):
+            entry.rmdir()
+            dirs.remove(entry.name)
+        elif S_ISLNK(info.st_mode) or (S_ISREG(info.st_mode) and info.st_nlink > 1):
+            entry.unlink()
+            if entry.name in dirs:
+                dirs.remove(entry.name)
 
     def _detach_entry_points(self, creator: Creator, content: str) -> None:
         entries: Final[EntryPointConfig] = EntryPointConfig(interpolation=None, strict=False)
