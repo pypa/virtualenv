@@ -67,25 +67,23 @@ class IniConfig:
         self.has_virtualenv_section = False
         # no interpolation: values are literal, as env vars and flags are, so a % in a prompt or path survives
         self.config_parser: Final[ConfigParser] = ConfigParser(interpolation=None)
-        if config_file is None:
+        if self.config_file is None:
             self.has_config_file = False
             return
         exception = None
         try:
-            self.has_config_file = config_file.exists()
+            self.has_config_file = self.config_file.exists()
             if self.has_config_file:
-                self.config_file = resolved = config_file.resolve()
-                self._load(resolved)
-                self.has_virtualenv_section = self.config_parser.has_section(self.section)
+                self.config_file = self.config_file.resolve()
+                with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
+                    self.config_parser.read_file(file_handler)
         except (OSError, UnicodeError, Error) as exc:
             self.has_config_file = None
             exception = exc
+        if self.has_config_file:
+            self.has_virtualenv_section = self.config_parser.has_section(self.section)
         if exception is not None:
             _LOGGER.error("failed to read config file %s because %r", config_file, exception)
-
-    def _load(self, config_file: Path) -> None:
-        with config_file.open("rt", encoding="utf-8-sig") as file_handler:
-            return self.config_parser.read_file(file_handler)
 
     def __bool__(self) -> bool:
         return bool(self.has_config_file) and bool(self.has_virtualenv_section)
