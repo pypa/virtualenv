@@ -1326,6 +1326,11 @@ def test_seed_entry_points_still_fold_version_suffixed_names(
             marks=pytest.mark.skipif(os.name == "nt", reason="drive colon is an entry delimiter"),
         ),
         pytest.param("../../outside", id="parent"),
+        pytest.param(
+            "{root_link}",
+            id="windows-root",
+            marks=pytest.mark.skipif(os.name != "nt", reason="requires a Windows drive-rooted path"),
+        ),
     ],
 )
 def test_seed_entry_points_leave_outside_symlink_on_invalid_name(
@@ -1338,7 +1343,9 @@ def test_seed_entry_points_leave_outside_symlink_on_invalid_name(
     link: Final[Path] = tmp_path / ("outside.exe" if os.name == "nt" else "outside")
     link.symlink_to(target)
     with pytest.raises(DistlibException, match="Attempt to escape script directory"):
-        install_console_scripts(f"{script_name.format(link=link)} = example:main\n")
+        install_console_scripts(
+            f"{script_name.format(link=link, root_link=os.path.splitdrive(str(link.with_suffix('')))[1])} = example:main\n"
+        )
     assert (link.is_symlink(), target.read_text(encoding="utf-8")) == (True, "keep")
 
 
@@ -1351,7 +1358,7 @@ def test_seed_entry_points_replace_in_directory_symlink(
     link: Final[Path] = no_seed_session.creator.script("example")
     link.symlink_to(target)
     install_console_scripts("example = example:main\n")
-    assert (link.is_symlink(), target.read_text(encoding="utf-8")) == (False, "keep")
+    assert (link.is_symlink(), link.is_file(), target.read_text(encoding="utf-8")) == (False, True, "keep")
 
 
 @pytest.fixture
