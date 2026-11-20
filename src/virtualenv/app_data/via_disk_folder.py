@@ -38,9 +38,11 @@ __lazy_modules__ = [
 
 import json
 import logging
+import os
 from abc import ABC
 from contextlib import contextmanager, suppress
 from hashlib import sha256
+from stat import S_IMODE, S_ISGID
 from typing import TYPE_CHECKING, Any, Final
 
 from virtualenv.util.lock import ReentrantFileLock
@@ -61,6 +63,7 @@ class AppDataDiskFolder(AppData):
     """Store the application data on the disk within a folder layout.
 
     :param folder: the folder to store the application data in
+    :param private: whether reset must restore the default cache's access policy
 
     :var transient: always ``False``, the data persists across runs
     :var can_update: always ``True``, the data can be updated
@@ -71,8 +74,9 @@ class AppDataDiskFolder(AppData):
     transient = False
     can_update = True
 
-    def __init__(self, folder: str) -> None:
+    def __init__(self, folder: str, *, private: bool = False) -> None:
         self.lock = ReentrantFileLock(folder)
+        self._private = private
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.lock.path})"
@@ -88,9 +92,15 @@ class AppDataDiskFolder(AppData):
         return path
 
     def reset(self) -> None:
-        """Delete the whole app data folder."""
+        """Discard stored data and restore default cache permissions when needed."""
         LOGGER.debug("reset app data folder %s", self.lock.path)
+        info: Final[os.stat_result | None] = os.stat(self.lock.path) if self._private and os.name == "posix" else None
         safe_delete(self.lock.path)
+        if self._private:
+            os.makedirs(self.lock.path, mode=0o700, exist_ok=True)
+            if info is not None and info.st_mode & S_ISGID:
+                os.chown(self.lock.path, -1, info.st_gid)
+                os.chmod(self.lock.path, S_IMODE(info.st_mode))
 
     def close(self) -> None:
         """Do nothing."""

@@ -170,11 +170,63 @@ def test_app_data_explicit_missing_parent_keeps_umask(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize("env", _DEFAULT_APP_DATA_ENVS)
-def test_app_data_default_permissions_existing(app_data_default: Path, env: dict[str, str]) -> None:
+@pytest.mark.parametrize("mode", [0o777, 0o775, 0o755, 0o750, 0o711])
+def test_app_data_default_permissions_existing(app_data_default: Path, env: dict[str, str], mode: int) -> None:
     app_data_default.mkdir()
-    app_data_default.chmod(0o777)
+    app_data_default.chmod(mode)
     data: Final[AppDataDiskFolder] = _make_app_data_with_zero_umask(env)
-    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o755)
+    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o700)
+
+
+@pytest.mark.parametrize("env", _DEFAULT_APP_DATA_ENVS)
+def test_app_data_default_reset_recreates_root(app_data_default: Path, env: dict[str, str]) -> None:
+    data: Final[AppDataDiskFolder] = make_app_data(None, read_only=False, env=env)
+    (app_data_default / "old").touch()
+    data.reset()
+    assert (app_data_default.is_dir(), (app_data_default / "old").exists()) == (True, False)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize("env", _DEFAULT_APP_DATA_ENVS)
+def test_app_data_default_reset_keeps_private_root(app_data_default: Path, env: dict[str, str]) -> None:
+    data: Final[AppDataDiskFolder] = _make_app_data_with_zero_umask(env)
+    (app_data_default / "old").touch()
+    previous: Final[int] = os.umask(0)
+    try:
+        data.reset()
+        with data.lock.lock_for_key("new"):
+            assert (app_data_default.stat().st_mode & 0o777, (app_data_default / "old").exists()) == (0o700, False)
+    finally:
+        os.umask(previous)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
+def test_app_data_default_reset_preserves_setgid_group(app_data_default: Path) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o2775)
+    data: Final[AppDataDiskFolder] = make_app_data(None, read_only=False, env={})
+    group: Final[int] = app_data_default.stat().st_gid
+    data.reset()
+    assert (app_data_default.stat().st_mode & 0o7777, app_data_default.stat().st_gid) == (0o2770, group)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
+def test_app_data_default_reset_group_restore_failure_keeps_private_root(
+    app_data_default: Path, mocker: MockerFixture
+) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o2775)
+    data: Final[AppDataDiskFolder] = make_app_data(None, read_only=False, env={})
+    mocker.patch("virtualenv.app_data.via_disk_folder.os.chown", autospec=True, side_effect=PermissionError)
+    with pytest.raises(PermissionError):
+        data.reset()
+    assert app_data_default.stat().st_mode & 0o7777 == 0o700
+
+
+def test_app_data_explicit_reset_leaves_folder_absent(tmp_path: Path) -> None:
+    data: Final[AppData] = make_app_data(str(tmp_path / "cache"), read_only=False, env={})
+    data.reset()
+    assert not (tmp_path / "cache").exists()
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -1206,7 +1258,7 @@ def test_cross_device_cache_copy_keeps_target_private_during_copy(tmp_path: Path
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
-def test_sibling_cache_migration_preserves_shared_mode(tmp_path: Path, mocker: MockerFixture) -> None:
+def test_sibling_cache_migration_preserves_group_access(tmp_path: Path, mocker: MockerFixture) -> None:
     old_dir: Final[Path] = tmp_path / "data"
     old_dir.mkdir()
     old_dir.chmod(0o2775)
@@ -1577,7 +1629,11 @@ def test_zipapp_read_rejects_path_outside_root(fake_zipapp_root: Path, parts: tu
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize(
     ("mode", "expected"),
-    [pytest.param(0o2775, 0o2775, id="group-write"), pytest.param(0o2777, 0o2775, id="other-write")],
+    [
+        pytest.param(0o2775, 0o2770, id="group-write"),
+        pytest.param(0o2777, 0o2770, id="other-write"),
+        pytest.param(0o2755, 0o2750, id="group-read"),
+    ],
 )
 def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, expected: int) -> None:
     app_data_default.mkdir()
