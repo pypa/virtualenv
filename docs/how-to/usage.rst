@@ -240,8 +240,9 @@ The configuration file is named ``virtualenv.ini`` and located in the platformdi
 
 Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
 
-If the process has neither ``HOME`` nor a passwd entry, and ``XDG_CONFIG_HOME`` is unset or empty, there is no default
-configuration file. Set ``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
+If the user configuration path is unresolved or relative, virtualenv does not read a default configuration file. This
+can happen when the process has neither ``HOME`` nor a passwd entry, or when an XDG path resolves relative to the
+working directory. Set ``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
 
 Configuration format
 ====================
@@ -301,6 +302,9 @@ cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DAT
 When no default cache path is available, virtualenv uses temporary app-data and removes it after the run. Set
 ``VIRTUALENV_OVERRIDE_APP_DATA`` or ``--app-data`` to use a persistent cache. ``--read-only-app-data`` needs an explicit
 cache path in this case.
+
+An unresolved or relative home or XDG-derived cache path is not used as a default. If the path provider falls back to
+an absolute home-based location, that location remains usable.
 
 On POSIX, a writable default cache owned by the current user is restricted to owner access. When its mode changes,
 virtualenv warns. Set the cache directory's setgid bit to retain group sharing, or select an explicit ``--app-data``
