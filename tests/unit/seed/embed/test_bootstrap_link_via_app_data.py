@@ -21,6 +21,7 @@ from threading import Event, Thread, current_thread, main_thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from distlib import DistlibException
 from python_discovery import PythonInfo
 from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # disk cache  # fmt: skip
 
@@ -1313,6 +1314,44 @@ def test_seed_entry_points_still_fold_version_suffixed_names(
     # a single base regenerates these, an extra one per declared name would add names like `pip33`
     expected: Final[tuple[str, str, str, str]] = ("pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}")
     assert [name for name in expected if not no_seed_session.creator.script(name).exists()] == []
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize(
+    "script_name",
+    [
+        pytest.param(
+            "{link}",
+            id="absolute",
+            marks=pytest.mark.skipif(os.name == "nt", reason="drive colon is an entry delimiter"),
+        ),
+        pytest.param("../../outside", id="parent"),
+    ],
+)
+def test_seed_entry_points_leave_outside_symlink_on_invalid_name(
+    tmp_path: Path,
+    install_console_scripts: Callable[[str], None],
+    script_name: str,
+) -> None:
+    target: Final[Path] = tmp_path / "target"
+    target.write_text("keep", encoding="utf-8")
+    link: Final[Path] = tmp_path / ("outside.exe" if os.name == "nt" else "outside")
+    link.symlink_to(target)
+    with pytest.raises(DistlibException, match="Attempt to escape script directory"):
+        install_console_scripts(f"{script_name.format(link=link)} = example:main\n")
+    assert (link.is_symlink(), target.read_text(encoding="utf-8")) == (True, "keep")
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_seed_entry_points_replace_in_directory_symlink(
+    tmp_path: Path, no_seed_session: Session, install_console_scripts: Callable[[str], None]
+) -> None:
+    target: Final[Path] = tmp_path / "target"
+    target.write_text("keep", encoding="utf-8")
+    link: Final[Path] = no_seed_session.creator.script("example")
+    link.symlink_to(target)
+    install_console_scripts("example = example:main\n")
+    assert (link.is_symlink(), target.read_text(encoding="utf-8")) == (False, "keep")
 
 
 @pytest.fixture

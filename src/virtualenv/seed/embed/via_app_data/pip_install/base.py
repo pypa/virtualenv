@@ -31,6 +31,7 @@ from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Final
 
 from distlib.scripts import ScriptMaker, enquote_executable
+from distlib.util import is_in_directory
 
 from virtualenv.util.path import remove_file, safe_delete
 
@@ -385,7 +386,7 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         for name in names:
             path: Final[Path] = Path(self.target_dir) / (f"{name}.exe" if os.name == "nt" else name)
-            if path.is_symlink():
+            if is_in_directory(os.path.join(self.target_dir, name), self.target_dir) and path.is_symlink():
                 path.unlink()
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
