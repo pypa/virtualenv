@@ -37,7 +37,7 @@ def get_short_path_name(long_name: str) -> str:
 
 if os.name == "nt":
 
-    def clear_readonly(path: str) -> None:
+    def delete_readonly(path: str) -> None:
         kernel: Final[ctypes.WinDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
         create = kernel.CreateFileW
         create.argtypes = [
@@ -59,8 +59,8 @@ if os.name == "nt":
         close = kernel.CloseHandle
         close.argtypes = [wintypes.HANDLE]
         close.restype = wintypes.BOOL
-        # Open the entry itself and deny replacement while changing its read-only attribute.
-        handle: Final[int | None] = create(path, 0x180, 0x3, None, 3, 0x02200000, None)
+        # Delete through the checked handle so another entry cannot replace the path.
+        handle: Final[int | None] = create(path, 0x10180, 0x3, None, 3, 0x02200000, None)
         if handle == wintypes.HANDLE(-1).value:
             raise ctypes.WinError(ctypes.get_last_error())
         try:
@@ -70,11 +70,40 @@ if os.name == "nt":
             if info.attributes & 0x400:
                 msg: Final[str] = f"refusing to change attributes of a reparse point: {path}"
                 raise OSError(msg)
-            info.attributes = (info.attributes & ~0x1) or 0x80
-            if not set_info(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
-                raise ctypes.WinError(ctypes.get_last_error())
+            # FileDispositionInfoEx can delete a read-only link without changing the file's attributes.
+            disposition: Final[wintypes.DWORD] = wintypes.DWORD(0x11)
+            if set_info(handle, 21, ctypes.byref(disposition), ctypes.sizeof(disposition)):
+                return
+            error: Final[int] = ctypes.get_last_error()
+            if error not in {50, 87}:
+                raise ctypes.WinError(error)
+            # Some Windows filesystems and SMB shares reject the extended disposition, so a file with other links fails.
+            _delete_readonly_legacy(path, handle, info, kernel)
         finally:
             close(handle)
+
+    def _delete_readonly_legacy(path: str, handle: int, info: _FileBasicInfo, kernel: ctypes.WinDLL) -> None:
+        get_info = kernel.GetFileInformationByHandleEx
+        set_info = kernel.SetFileInformationByHandle
+        standard: Final[_FileStandardInfo] = _FileStandardInfo()
+        if not get_info(handle, 1, ctypes.byref(standard), ctypes.sizeof(standard)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        if standard.number_of_links > 1:
+            msg: Final[str] = f"cannot delete read-only hard link without changing its other names: {path}"
+            raise OSError(msg)
+        original_attributes: Final[int] = info.attributes
+        info.attributes = (info.attributes & ~0x1) or 0x80
+        if not set_info(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            legacy_disposition: Final[ctypes.c_ubyte] = ctypes.c_ubyte(1)
+            if not set_info(handle, 4, ctypes.byref(legacy_disposition), ctypes.sizeof(legacy_disposition)):
+                raise ctypes.WinError(ctypes.get_last_error())
+        except OSError:
+            info.attributes = original_attributes
+            if not set_info(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
+                raise ctypes.WinError(ctypes.get_last_error()) from None
+            raise
 
     class _FileBasicInfo(ctypes.Structure):
         _fields_: Final[list[tuple[str, type[ctypes.c_longlong | wintypes.DWORD]]]] = [
@@ -85,5 +114,16 @@ if os.name == "nt":
             ("attributes", wintypes.DWORD),
         ]
 
+    class _FileStandardInfo(ctypes.Structure):
+        _fields_: Final[list[tuple[str, type[ctypes.c_longlong | wintypes.DWORD | ctypes.c_ubyte]]]] = [
+            ("allocation_size", ctypes.c_longlong),
+            ("end_of_file", ctypes.c_longlong),
+            ("number_of_links", wintypes.DWORD),
+            ("delete_pending", ctypes.c_ubyte),
+            ("directory", ctypes.c_ubyte),
+        ]
 
-__all__ = ["clear_readonly", "get_short_path_name"] if os.name == "nt" else ["get_short_path_name"]  # ruff:ignore[invalid-all-format]  # platform dependent
+
+__all__ = (  # ruff:ignore[invalid-all-format]  # platform dependent
+    ["delete_readonly", "get_short_path_name"] if os.name == "nt" else ["get_short_path_name"]
+)
