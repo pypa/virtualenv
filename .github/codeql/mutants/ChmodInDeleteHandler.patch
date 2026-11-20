@@ -10,4 +10,4 @@ index b64fb6d5..ca7571ff 100644
 +        os.chmod(path, 0o200)
          func(path)
 
-     target = windows_extended_path(str(dest)) if os.name == "nt" else str(dest)
+     target = str(dest)

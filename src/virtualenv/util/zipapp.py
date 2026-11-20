@@ -6,7 +6,7 @@ __lazy_modules__ = [
     "typing",
     "uuid",
     "virtualenv.info",
-    "virtualenv.util.path",
+    "virtualenv.util.path.windows",
     "zipfile",
 ]
 
@@ -19,7 +19,7 @@ from typing import Final
 from uuid import uuid4
 
 from virtualenv.info import ROOT
-from virtualenv.util.path import windows_extended_path
+from virtualenv.util.path.windows import windows_extended_path
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 

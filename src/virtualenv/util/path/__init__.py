@@ -8,7 +8,7 @@ __lazy_modules__ = [
 
 from ._permission import make_exe, set_tree
 from ._sync import copy, ensure_dir, ensure_within, remove_file, safe_delete, symlink, write_file
-from ._win import get_short_path_name, windows_extended_path
+from ._win import get_short_path_name
 
 __all__ = [
     "copy",
@@ -20,6 +20,5 @@ __all__ = [
     "safe_delete",
     "set_tree",
     "symlink",
-    "windows_extended_path",
     "write_file",
 ]
