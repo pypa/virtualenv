@@ -1900,6 +1900,9 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     [
         pytest.param("base\u2028alias", id="line-separator"),
         pytest.param("base\nother", id="newline", marks=pytest.mark.skipif(IS_WIN, reason="Windows forbids newlines")),
+        pytest.param(
+            "base ", id="trailing-space", marks=pytest.mark.skipif(IS_WIN, reason="Windows trims trailing spaces")
+        ),
     ],
 )
 def test_pyenv_cfg_rejects_unrecordable_path(tmp_path: Path, key: str, name: str) -> None:
