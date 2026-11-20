@@ -94,7 +94,7 @@ def write_file(path: Path, data: bytes) -> None:
 
 
 def remove_file(path: Path) -> None:
-    """Remove a file, clearing its read-only flag on Windows when that blocks the removal.
+    """Remove a file, retrying read-only deletion on Windows when needed.
 
     :param path: the file to remove
 
@@ -135,7 +135,7 @@ def _ensure_safe_to_do(src: Path, dest: Path) -> None:
 
 
 def safe_delete(dest: Path) -> None:
-    """Delete a file or folder tree, clearing read-only flags where needed.
+    """Delete a file or folder tree, retrying read-only entries on Windows.
 
     :param dest: the path to delete
 
