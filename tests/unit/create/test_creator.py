@@ -43,9 +43,37 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
+    from virtualenv.app_data import AppDataDiskFolder
     from virtualenv.run.session import Session
 
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
+
+
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython" or sys.version_info < (3, 11),
+    reason="PYTHONSAFEPATH requires CPython 3.11 or newer",
+)
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(["--creator", "venv", "--without-pip"], id="venv"),
+        pytest.param(["--seeder", "app-data", "--symlink-app-data"], id="symlink"),
+    ],
+)
+def test_child_python_skips_cwd_at_startup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, args: list[str], session_app_data: AppDataDiskFolder
+) -> None:
+    marker = tmp_path / "loaded"
+    for name in ("linecache", "traceback"):
+        (tmp_path / f"{name}.py").write_text(
+            f"open({str(marker)!r}, 'w').close()\nraise ImportError\n", encoding="utf-8"
+        )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("PYTHONSAFEPATH", raising=False)
+
+    cli_run([*args, "--app-data", str(session_app_data), str(tmp_path / "env")])
+
+    assert not marker.exists()
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")

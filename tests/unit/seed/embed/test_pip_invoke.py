@@ -229,7 +229,7 @@ def test_pip_invoke_runs_pip_for_environment_python(tmp_path: Path, mocker: Mock
 
     session.seeder.run(session.creator)
 
-    assert Path(process.call_args.kwargs["env"]["PYTHONPATH"]).name == get_embed_wheel("pip", target).name
+    assert Path(process.call_args.kwargs["env"]["VIRTUALENV_PIP_WHEEL"]).name == get_embed_wheel("pip", target).name
 
 
 def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:
