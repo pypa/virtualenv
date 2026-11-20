@@ -267,6 +267,41 @@ def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
     assert f"pip=={version}" in result.stdout.splitlines()
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX launcher rewrite")
+def test_pip_invoke_leaves_stale_record_outside_environment(tmp_path: Path) -> None:
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+    ])
+    session.creator.run()
+    outside: Final[Path] = tmp_path / "outside-1.dist-info" / "RECORD"
+    outside.parent.mkdir()
+    outside.write_text("outside untouched\n", encoding="utf-8")
+    tool: Final[Path] = session.creator.script_dir / "stale-tool"
+    old_script: Final[bytes] = b"#!/bin/sh\n'''exec' true\n' '''\nprint('stale')\n"
+    tool.write_bytes(old_script)
+    metadata: Final[Path] = session.creator.purelib / "pip-0.dist-info"
+    metadata.mkdir()
+    (metadata / "METADATA").write_text("Metadata-Version: 2.1\nName: pip\nVersion: 0\n", encoding="utf-8")
+    (metadata / "RECORD").write_text(
+        f"{os.path.relpath(tool, session.creator.purelib)},,\n{os.path.relpath(outside, session.creator.purelib)},,\n",
+        encoding="utf-8",
+    )
+
+    session.seeder.run(session.creator)
+
+    assert (outside.read_text(encoding="utf-8"), tool.read_bytes(), (session.creator.purelib / "pip").is_dir()) == (
+        "outside untouched\n",
+        old_script,
+        True,
+    )
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires two compatible bundled pip versions")
 def test_pip_reseed_removes_previous_version_metadata(tmp_path: Path) -> None:

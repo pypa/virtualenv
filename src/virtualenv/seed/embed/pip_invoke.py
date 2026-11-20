@@ -4,7 +4,6 @@ __lazy_modules__ = [
     "base64",
     "csv",
     "hashlib",
-    "importlib.metadata",
     "io",
     "logging",
     "pathlib",
@@ -27,7 +26,6 @@ import logging
 import os
 from base64 import urlsafe_b64encode
 from contextlib import contextmanager
-from importlib.metadata import distributions
 from pathlib import Path
 from shutil import copyfile
 from stat import S_IMODE
@@ -196,40 +194,47 @@ class PipInvoke(BaseEmbed):
         return process
 
     def _rewrite_launchers(self, creator: Creator) -> None:
-        selected: Final[dict[str, str]] = self.distribution_to_versions()
+        for wheel in self._wheels:
+            with ZipFile(wheel) as archive:
+                record_name: Final[str] = next(
+                    name for name in archive.namelist() if name.count("/") == 1 and name.endswith(".dist-info/RECORD")
+                )
+            for root in {creator.purelib, creator.platlib}:
+                record: Final[Path] = root / record_name
+                if record.is_file():
+                    self._rewrite_record_launchers(record, root, creator)
+
+    @staticmethod
+    def _rewrite_record_launchers(record: Path, root: Path, creator: Creator) -> None:
+        rows: Final[list[list[str]]] = list(csv.reader(io.StringIO(record.read_text(encoding="utf-8"))))
         exe: Final[bytes] = str(creator.exe).encode("utf-8")
         via_shell: Final[bool] = len(exe.split()) > 1 or not encodes_as_utf8(str(creator.exe))
-        for distribution in distributions(path=sorted({str(creator.purelib), str(creator.platlib)})):
-            if distribution.metadata["Name"].lower().replace("-", "_") not in selected:
+        changed = False
+        for row in rows:
+            path: Final[Path] = Path(os.path.abspath(str(root / row[0])))
+            if path.parent != creator.script_dir or not path.is_file():
                 continue
-            rows: Final[list[list[str]]] = list(csv.reader(io.StringIO(distribution.read_text("RECORD") or "")))
-            changed = False
-            for row in rows:
-                path: Final[Path] = Path(os.path.abspath(str(distribution.locate_file(row[0]))))
-                if path.parent != creator.script_dir or not path.is_file():
-                    continue
-                content = path.read_bytes()
-                if content.startswith(b"#!/bin/sh\n'''exec' "):
-                    body = content.split(b"\n", 3)[3]
-                elif content.startswith(b"#!" + exe + b"\n") and via_shell:
-                    body = content.split(b"\n", 1)[1]
-                else:
-                    continue
-                content = shell_shebang(str(creator.exe)) + body
-                mode: Final[int] = S_IMODE(path.stat().st_mode) & 0o755
-                path.unlink()
-                with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode), "wb") as stream:
-                    stream.write(content)
-                row[1:] = [
-                    f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
-                    str(len(content)),
-                ]
-                changed = True
-            if changed:
-                record: Final[str] = next(row[0] for row in rows if row[0].endswith(".dist-info/RECORD"))
-                buffer: Final[io.StringIO] = io.StringIO()
-                csv.writer(buffer).writerows(rows)
-                write_file(Path(str(distribution.locate_file(record))), buffer.getvalue().encode("utf-8"))
+            content = path.read_bytes()
+            if content.startswith(b"#!/bin/sh\n'''exec' "):
+                body = content.split(b"\n", 3)[3]
+            elif content.startswith(b"#!" + exe + b"\n") and via_shell:
+                body = content.split(b"\n", 1)[1]
+            else:
+                continue
+            content = shell_shebang(str(creator.exe)) + body
+            mode: Final[int] = S_IMODE(path.stat().st_mode) & 0o755
+            path.unlink()
+            with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode), "wb") as stream:
+                stream.write(content)
+            row[1:] = [
+                f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
+                str(len(content)),
+            ]
+            changed = True
+        if changed:
+            buffer: Final[io.StringIO] = io.StringIO()
+            csv.writer(buffer).writerows(rows)
+            write_file(record, buffer.getvalue().encode("utf-8"))
 
 
 __all__ = [
