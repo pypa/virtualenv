@@ -624,9 +624,10 @@ def test_cshell_disabled_prompt_skips_legacy_literal(csh_venv: _CshVenv, big5_hk
 
 
 @pytest.mark.skipif(IS_WIN or not _is_bsd_csh(), reason="requires bsd-csh")
-def test_bsd_cshell_displays_one_backslash(csh_venv: _CshVenv) -> None:
+@pytest.mark.parametrize("prompt", [pytest.param(r"a\b", id="ascii"), pytest.param(r"別\p", id="stateful")])
+def test_bsd_cshell_displays_one_backslash(csh_venv: _CshVenv, prompt: str) -> None:
     shell: Final[str | None] = which("bsd-csh") or which("csh")
-    dest, _ = csh_venv("plain", prompt="a\\b")
+    dest, _ = csh_venv("plain", prompt=prompt)
     result: Final[CompletedProcess[str]] = run(
         [shell, "-f", "-i"],
         input=f"source {dest / 'bin' / 'activate.csh'}\nexit\n",
@@ -635,7 +636,7 @@ def test_bsd_cshell_displays_one_backslash(csh_venv: _CshVenv) -> None:
         encoding="utf-8",
         check=True,
     )
-    assert "(a\\b) " in result.stdout + result.stderr
+    assert f"({prompt}) " in result.stdout + result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")

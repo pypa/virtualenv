@@ -138,9 +138,8 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:  # fmt: skip
 
 
 def _prompt_command(value: str, *, tcsh: bool) -> str:
-    escaped = value.replace("\\", "\\\\").replace("!", "\\!")
-    if tcsh:
-        escaped = escaped.replace("%", "%%").replace("^", "\\^")
+    escaped = value.replace("\\", "\\\\").replace("%", "%%").replace("^", "\\^") if tcsh else value
+    escaped = escaped.replace("!", "\\!")
     return (
         "\"`$_virtualenv_printf '%b' '"
         + "".join(f"\\0{byte:03o}" for byte in f"({escaped})".encode("utf-8", "surrogateescape"))
