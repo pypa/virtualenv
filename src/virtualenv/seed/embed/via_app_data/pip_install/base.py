@@ -172,16 +172,14 @@ class PipInstall(ABC):
     @staticmethod
     def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
         base: Final[Path] = dist_base.resolve()
-        for folder in sorted(
-            {
-                parent
-                for entry in paths
-                for parent in Path(os.path.normpath(entry)).parents
-                if dist_base in parent.parents
-            },
-            key=lambda folder: len(folder.parts),
-            reverse=True,
-        ):
+        folders: Final[set[Path]] = set()
+        for entry in paths:
+            folder = Path(os.path.normpath(entry)).parent
+            if folder.is_relative_to(dist_base):
+                while folder != dist_base and folder not in folders:
+                    folders.add(folder)
+                    folder = folder.parent
+        for folder in sorted(folders, key=lambda path: len(path.parts), reverse=True):
             # a RECORD row can lead through a link, so only remove what still resolves inside the packages folder
             if (
                 folder.is_dir()
