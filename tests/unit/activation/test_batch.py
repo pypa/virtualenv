@@ -113,6 +113,32 @@ def test_batch_pydoc_uses_environment_python(tmp_path: Path, pydoc_call: str, pa
     assert f"INTERPRETER={creator.bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
 
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize("pydoc_call", [pytest.param("pydoc", id="path"), pytest.param('"!launcher!"', id="full-path")])
+def test_batch_pydoc_moved_env_with_exclamation_mark(tmp_path: Path, pydoc_call: str) -> None:
+    created = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    bin_dir = created.dest.rename(tmp_path / "env !q!") / created.bin_dir.name
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    result = subprocess.run(
+        f'"{os.environ["COMSPEC"]}" /D /V:ON /S /C "{pydoc_call} pydoc_probe"',
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "q": "X",
+            "launcher": str(bin_dir / "pydoc.bat"),
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        },
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={bin_dir / 'python.exe'}" in result.stdout.splitlines()
+
+
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "activate_lines", "deactivate_lines"),
     [
