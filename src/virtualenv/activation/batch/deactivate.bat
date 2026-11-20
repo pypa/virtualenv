@@ -4,28 +4,35 @@
 @REM Don't use () to avoid problems with them in %PATH%
 @if not defined _OLD_VIRTUAL_PROMPT @goto ENDIFVPROMPT
     @set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
+    @if "!!"=="" @set "PROMPT=!_OLD_VIRTUAL_PROMPT!"
     @set _OLD_VIRTUAL_PROMPT=
 :ENDIFVPROMPT
 
 @if not defined _OLD_VIRTUAL_PYTHONHOME @goto ENDIFVHOME
     @set "PYTHONHOME=%_OLD_VIRTUAL_PYTHONHOME%"
+    @if "!!"=="" @set "PYTHONHOME=!_OLD_VIRTUAL_PYTHONHOME!"
     @set _OLD_VIRTUAL_PYTHONHOME=
 :ENDIFVHOME
 
 @if defined _OLD_VIRTUAL_TCL_LIBRARY @set "TCL_LIBRARY=%_OLD_VIRTUAL_TCL_LIBRARY%"
+@if defined _OLD_VIRTUAL_TCL_LIBRARY @if "!!"=="" @set "TCL_LIBRARY=!_OLD_VIRTUAL_TCL_LIBRARY!"
 @if not defined _OLD_VIRTUAL_TCL_LIBRARY @set TCL_LIBRARY=
 @set _OLD_VIRTUAL_TCL_LIBRARY=
 
 @if defined _OLD_VIRTUAL_TK_LIBRARY @set "TK_LIBRARY=%_OLD_VIRTUAL_TK_LIBRARY%"
+@if defined _OLD_VIRTUAL_TK_LIBRARY @if "!!"=="" @set "TK_LIBRARY=!_OLD_VIRTUAL_TK_LIBRARY!"
 @if not defined _OLD_VIRTUAL_TK_LIBRARY @set TK_LIBRARY=
 @set _OLD_VIRTUAL_TK_LIBRARY=
 
 @if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"
+@if defined _OLD_PKG_CONFIG_PATH @if "!!"=="" @set "PKG_CONFIG_PATH=!_OLD_PKG_CONFIG_PATH!"
 @if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=
 @set _OLD_PKG_CONFIG_PATH=
 
+@REM In /V:ON, !! is empty and !NAME! does not rescan ! in the value.
 @if not defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH
     @set "PATH=%_OLD_VIRTUAL_PATH%"
+    @if "!!"=="" @set "PATH=!_OLD_VIRTUAL_PATH!"
     @set _OLD_VIRTUAL_PATH=
 :ENDIFVPATH
 @if defined _OLD_VIRTUAL_PATH_UNSET @set PATH=
