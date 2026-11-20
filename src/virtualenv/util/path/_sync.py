@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = [
     "pathlib",
     "shutil",
+    f"{__spec__.parent}._permission",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}._win",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.windows",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
@@ -12,9 +13,10 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from stat import S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_IMODE, S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
 
+from ._permission import owner_executable_mode
 from .windows import windows_extended_path
 
 if os.name == "nt":
@@ -211,8 +213,11 @@ def _copy_file(src: Path, dest: Path, *, executable: bool = False) -> None:
     _ensure_safe_to_do(src, dest)
     mode: Final[int] = 0o755 if executable or src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
     flags: Final[int] = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
-    # Creation applies the current umask without changing the process-wide setting.
     with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
+        if executable and os.name == "posix":
+            created = S_IMODE(os.fstat(target.fileno()).st_mode)
+            if (allowed := owner_executable_mode(dest.parent, created)) != created:
+                os.fchmod(target.fileno(), allowed)
         shutil.copyfileobj(source, target, length=1024 * 1024)
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
@@ -60,6 +61,12 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
         pytest.param(0o027, 0o750, id="no-other"),
         pytest.param(0o077, 0o700, id="private"),
         pytest.param(0o011, 0o744, id="read-without-execute"),
+        pytest.param(
+            0o177,
+            0o700,
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="Linux default ACL detection"),
+            id="owner-execute-masked",
+        ),
     ],
 )
 @pytest.mark.parametrize("source_mode", [0o755, 0o644])
@@ -102,6 +109,18 @@ def test_copied_executables_inherit_default_acl(tmp_path: Path, group: str, expe
         0o775,
         [expected, expected],
     )
+
+
+@pytest.mark.skipif(os.name != "posix" or shutil.which("setfacl") is None, reason="requires POSIX default ACL")
+def test_copied_interpreter_needs_owner_execute_in_default_acl(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.write_bytes(b"interpreter")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    subprocess.run(["setfacl", "-d", "-m", "u::rw-,g::r-x,o::---", str(bin_dir)], check=True)
+    ref = ExePathRefToDest(source, targets=["python"], dest=lambda _creator, _src: bin_dir / "python")
+    with pytest.raises(PermissionError, match=r"owner-executable.*--symlinks"):
+        ref.run(object(), symlinks=False)
 
 
 @pytest.fixture
