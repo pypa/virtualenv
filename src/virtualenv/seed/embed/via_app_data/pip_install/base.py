@@ -130,7 +130,36 @@ class PipInstall(ABC):
             if not Path(os.path.abspath(entry)).is_relative_to(lexical_root):
                 LOGGER.warning("skip removal of %s listed by %s: not inside environment %s", entry, dist.name, root)
                 continue
-            PipInstall._remove_recorded_path(entry, dist.name, root, metadata_parents)
+            if not entry.exists() and not entry.is_symlink():
+                continue
+            linked: Final[bool] = entry.is_symlink()
+            junction: Final[bool] = (
+                os.name == "nt"
+                and not linked
+                and bool(entry.lstat().st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+                and entry.is_dir()
+            )
+            try:
+                # Unlinking a final link leaves its target intact; parent links still affect containment.
+                resolved: Final[Path] = (
+                    entry.parent.resolve(strict=True) / entry.name if linked or junction else entry.resolve(strict=True)
+                )
+            except OSError as exception:
+                LOGGER.warning("skip removal of %s listed by %s: cannot resolve it: %s", entry, dist.name, exception)
+                continue
+            if root not in resolved.parents or resolved in metadata_parents:
+                LOGGER.warning(
+                    "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
+                    entry,
+                    dist.name,
+                    root,
+                )
+            elif junction:
+                resolved.rmdir()
+            elif resolved.is_dir() and not linked:
+                safe_delete(resolved)
+            else:
+                remove_file(resolved)
         # without top_level.txt, as in wheels pip itself installs, RECORD lists files only and their directories stay behind
         PipInstall._remove_emptied_folders(paths, dist_base)
 
@@ -169,39 +198,6 @@ class PipInstall(ABC):
             source.with_suffix(".pyo"),
             *(path for path in (source.parent / "__pycache__").glob("*.pyc") if cached.fullmatch(path.name)),
         ]
-
-    @staticmethod
-    def _remove_recorded_path(entry: Path, dist_name: str, root: Path, metadata_parents: set[Path]) -> None:
-        if not entry.exists() and not entry.is_symlink():
-            return
-        linked: Final[bool] = entry.is_symlink()
-        junction: Final[bool] = (
-            os.name == "nt"
-            and not linked
-            and bool(entry.lstat().st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
-            and entry.is_dir()
-        )
-        try:
-            # Unlinking a final link leaves its target intact; parent links still affect containment.
-            resolved: Final[Path] = (
-                entry.parent.resolve(strict=True) / entry.name if linked or junction else entry.resolve(strict=True)
-            )
-        except OSError as exception:
-            LOGGER.warning("skip removal of %s listed by %s: cannot resolve it: %s", entry, dist_name, exception)
-            return
-        if root not in resolved.parents or resolved in metadata_parents:
-            LOGGER.warning(
-                "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
-                entry,
-                dist_name,
-                root,
-            )
-        elif junction:
-            resolved.rmdir()
-        elif resolved.is_dir() and not linked:
-            safe_delete(resolved)
-        else:
-            remove_file(resolved)
 
     @staticmethod
     def _remove_emptied_folders(paths: set[Path], dist_base: Path) -> None:
