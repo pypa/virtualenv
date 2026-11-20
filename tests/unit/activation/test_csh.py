@@ -121,8 +121,8 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, activate_lines) ->
 
     # PKG_CONFIG_PATH is always saved on activation
     assert 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"' in activate
-    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in activate
-    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in activate
+    assert 'setenv PKG_CONFIG_PATH "$_virtualenv_dir:q/lib/pkgconfig:${PKG_CONFIG_PATH}"' in activate
+    assert 'setenv PKG_CONFIG_PATH "$_virtualenv_dir:q/lib/pkgconfig"' in activate
 
     assert [line for line in activate_lines if line not in activate] == []
 
@@ -162,7 +162,7 @@ def _create_csh_venv(dest: Path, current_fastest: str, prompt: str | None = None
     if prompt is not None:
         cmd += ["--prompt", prompt]
     cli_run(cmd)
-    return (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
+    return (dest / "bin" / "activate.csh").read_text(encoding="utf-8", errors="surrogateescape")
 
 
 # the deactivate tests only source the script, so they share one environment
@@ -265,7 +265,7 @@ def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, pro
 def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: dict[str, str]) -> None:
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
-    script.write_text(content, encoding="utf-8")
+    script.write_text(content, encoding="utf-8", errors="surrogateescape")
 
     # only an interactive shell draws the prompt, which is where tcsh turns ^c into a control character
     result = run(
@@ -287,6 +287,40 @@ def gbk_env() -> dict[str, str]:
     if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(".gbk")), None)) is None:
         pytest.skip("no gbk locale is installed")
     return {**os.environ, "LC_ALL": locale}
+
+
+@pytest.fixture
+def big5_hkscs_env() -> dict[str, str]:
+    locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if (locale := next((name for name in locales if "big5hkscs" in name.lower().replace("-", "")), None)) is None:
+        pytest.skip("no Big5-HKSCS locale is installed")
+    return {**os.environ, "LC_ALL": locale}
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("送別", id="closing-quote"),
+        pytest.param("別^b", id="prompt-display"),
+        pytest.param("x別y", id="interior-text"),
+        pytest.param("別x", id="leading-text"),
+    ],
+)
+def test_cshell_keeps_prompt_literal_in_big5_hkscs(
+    csh_venv: _CshVenv, big5_hkscs_env: dict[str, str], prompt: str
+) -> None:
+    dest, _ = csh_venv("plain", prompt=prompt)
+    result = run(
+        [_TCSH, "-f"],
+        input=f"source {dest / 'bin' / 'activate.csh'}\nprintenv VIRTUAL_ENV_PROMPT\n".encode(),
+        env=big5_hkscs_env,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"{prompt}\n".encode(), b"")
 
 
 @pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
@@ -504,6 +538,63 @@ def test_cshell_preserves_non_newline_path(csh_venv: _CshVenv, tmp_path: Path, b
     )
 
     assert result.stdout == str(dest).encode()
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("stĺp", id="separator-low-byte"),
+        pytest.param("demoįevil", id="slash-low-byte"),
+        pytest.param("demoĀevil", id="nul-low-byte"),
+    ],
+)
+def test_cshell_keeps_destination_after_locale_change(csh_venv: _CshVenv, name: str) -> None:
+    dest, _ = csh_venv(name)
+    result = run(
+        [_TCSH, "-f"],
+        input=(
+            'setenv PATH "/usr/bin:/bin"\n'
+            f"source {dest / 'bin' / 'activate.csh'}\n"
+            "setenv LC_ALL C\ncd /\n"
+            "/usr/bin/printenv VIRTUAL_ENV PATH PKG_CONFIG_PATH\n"
+            "deactivate\n/usr/bin/printenv PATH\n"
+        ).encode(),
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    expected = f"{dest}\n{dest}/bin:/usr/bin:/bin\n{dest}/lib/pkgconfig\n/usr/bin:/bin\n".encode()
+    assert (result.returncode, result.stdout, result.stderr) == (0, expected, b"")
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+def test_cshell_keeps_values_with_custom_histchars_and_locale_change(
+    csh_venv: _CshVenv, big5_hkscs_env: dict[str, str]
+) -> None:
+    prompt = "送別@missing"
+    dest, _ = csh_venv("stĺp", prompt=prompt)
+    result = run(
+        [_TCSH, "-f"],
+        input=(
+            "set histchars = '@^'\n"
+            'setenv PATH "/usr/bin:/bin"\n'
+            f"source {dest / 'bin' / 'activate.csh'}\n"
+            "setenv LC_ALL C\ncd /\n"
+            "/usr/bin/printenv VIRTUAL_ENV VIRTUAL_ENV_PROMPT PATH\n"
+            "echo $histchars:q\n"
+            "deactivate\n/usr/bin/printenv PATH\n"
+        ).encode(),
+        env=big5_hkscs_env,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    expected = f"{dest}\n{prompt}\n{dest}/bin:/usr/bin:/bin\n@^\n/usr/bin:/bin\n".encode()
+    assert (result.returncode, result.stdout, result.stderr) == (0, expected, b"")
 
 
 _TEST_CSHELL_HISTCHARS_REPLACES_HASH_IN_PROMPT_PATTERN: Final[re.Pattern[str]] = re.compile(r"\(a%\d+b\) __END__")

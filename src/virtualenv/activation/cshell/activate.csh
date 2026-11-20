@@ -15,13 +15,14 @@ endif
 # Undo an activation that is still in effect, otherwise its values get saved as the ones to restore
 if ($?_OLD_VIRTUAL_PATH) source __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
 
-setenv VIRTUAL_ENV __VIRTUAL_ENV__
+set _virtualenv_dir=__VIRTUAL_ENV__
+setenv VIRTUAL_ENV "$_virtualenv_dir:q"
 
 set _OLD_VIRTUAL_PATH="$PATH:q"
 if ("$PATH:q" == "") then
-    setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__
+    setenv PATH "$_virtualenv_dir:q/"__BIN_NAME__
 else
-    setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
+    setenv PATH "$_virtualenv_dir:q/"__BIN_NAME__":$PATH:q"
 endif
 
 # PYTHONHOME can redirect the standard library lookup away from this environment.
@@ -32,10 +33,10 @@ endif
 
 if ($?PKG_CONFIG_PATH) then
     set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
-    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    setenv PKG_CONFIG_PATH "$_virtualenv_dir:q/lib/pkgconfig:${PKG_CONFIG_PATH}"
 else
     set _OLD_PKG_CONFIG_PATH=""
-    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"
+    setenv PKG_CONFIG_PATH "$_virtualenv_dir:q/lib/pkgconfig"
 endif
 
 if (__TCL_LIBRARY__ != "") then
@@ -59,7 +60,7 @@ endif
 if (__VIRTUAL_PROMPT__ != "") then
     setenv VIRTUAL_ENV_PROMPT __VIRTUAL_PROMPT__
 else
-    setenv VIRTUAL_ENV_PROMPT "$VIRTUAL_ENV:t:q"
+    setenv VIRTUAL_ENV_PROMPT "$_virtualenv_dir:t:q"
 endif
 
 if ( $?VIRTUAL_ENV_DISABLE_PROMPT ) then
@@ -94,6 +95,7 @@ endif
 
 unset env_name
 unset do_prompt
+unset _virtualenv_dir
 unset _virtualenv_prompt_tcsh
 unset _virtualenv_prompt_plain
 
