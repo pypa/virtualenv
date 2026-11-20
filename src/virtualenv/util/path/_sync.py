@@ -15,7 +15,7 @@ from stat import S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
 
 if os.name == "nt":
-    from stat import FILE_ATTRIBUTE_READONLY, IO_REPARSE_TAG_MOUNT_POINT
+    from stat import FILE_ATTRIBUTE_READONLY
 
     from ._win import delete_readonly
 
@@ -44,6 +44,8 @@ def ensure_within(root: Path, path: Path) -> None:
         raise ValueError(msg)
     ensure_dir(root)
     folder = root
+    # PyPy 3.9 exposes st_reparse_tag but omits IO_REPARSE_TAG_MOUNT_POINT from stat.
+    mount_point_tag: Final[int] = 0xA0000003
     for part in parts:
         folder /= part
         try:
@@ -51,19 +53,17 @@ def ensure_within(root: Path, path: Path) -> None:
         except FileNotFoundError:
             pass
         else:
-            if S_ISLNK(metadata.st_mode):
-                _LOGGER.warning("replace environment directory link %s", folder)
-                folder.unlink()
-            elif os.name == "nt" and metadata.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT:
+            if os.name == "nt" and metadata.st_reparse_tag == mount_point_tag:
                 _LOGGER.warning("replace environment directory junction %s", folder)
                 folder.rmdir()
+            elif S_ISLNK(metadata.st_mode):
+                _LOGGER.warning("replace environment directory link %s", folder)
+                folder.unlink()
         try:
             folder.mkdir()
         except FileExistsError:
             created: Final[os.stat_result] = folder.lstat()
-            if not S_ISDIR(created.st_mode) or (
-                os.name == "nt" and created.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT
-            ):
+            if not S_ISDIR(created.st_mode) or (os.name == "nt" and created.st_reparse_tag == mount_point_tag):
                 msg: Final[str] = f"environment directory is not a real directory: {folder}"
                 raise NotADirectoryError(msg) from None
 
