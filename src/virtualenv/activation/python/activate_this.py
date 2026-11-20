@@ -8,12 +8,9 @@ This can be used when you must use an existing Python interpreter, not the virtu
 
 from __future__ import annotations
 
-__lazy_modules__ = ["collections"]
-
 import os
 import site
 import sys
-from collections import Counter
 
 # runpy.run_path returns these globals; keep the names emitted by existing activation scripts.
 try:
@@ -52,14 +49,32 @@ def _add_libraries() -> None:
             for lib in __LIB_FOLDERS__.split(os.pathsep)  # ty: ignore[unresolved-reference]  # filled in during generation
         )
     )
-    base_dir = os.path.normcase(os.path.realpath(sys.base_prefix)) + os.sep
-    # GraalPy keeps implementation modules outside the standard library directory.
+    stdlib_dir = os.path.dirname(os.path.realpath(os.__file__))
+    stdlib_candidates = {
+        os.path.normcase(os.path.realpath(path))
+        for path in (
+            stdlib_dir,
+            os.path.join(stdlib_dir, "lib-dynload"),
+            os.path.join(
+                os.path.dirname(stdlib_dir),
+                f"python{sys.version_info.major}{sys.version_info.minor}{'t' if sys.implementation.cache_tag.endswith('t') else ''}.zip",
+            ),
+            os.path.join(sys.base_prefix, "DLLs"),
+        )
+    }
+    # GraalPy keeps implementation modules outside its Python standard library directory.
+    if sys.implementation.name == "graalpy":
+        base_dir = os.path.normcase(os.path.realpath(sys.base_prefix)) + os.sep
+        stdlib_candidates.update(
+            real_path
+            for path in original_paths
+            if path
+            and (real_path := os.path.normcase(os.path.realpath(path))).startswith(base_dir)
+            and os.path.basename(real_path) == "modules"
+            and os.path.basename(os.path.dirname(real_path)).startswith("graalpy")
+        )
     stdlib_paths = [
-        path
-        for path in original_paths
-        if path
-        and (real_path := os.path.normcase(os.path.realpath(path))).startswith(base_dir)
-        and not any(part in {"site-packages", "dist-packages"} for part in real_path.split(os.sep))
+        path for path in original_paths if path and os.path.normcase(os.path.realpath(path)) in stdlib_candidates
     ]
     # .pth imports need the environment before host paths, with the standard library still first.
     sys.path[:] = (
@@ -71,11 +86,14 @@ def _add_libraries() -> None:
     for path in lib_paths:
         if path not in original_paths:
             added_paths.append(path)
-        previous_paths = Counter(sys.path)
+        # .pth import lines can insert paths anywhere, including duplicates.
+        previous_paths: dict[str, int] = {}
+        for entry in sys.path:
+            previous_paths[entry] = previous_paths.get(entry, 0) + 1
         # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
         site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
         for entry in sys.path:
-            if previous_paths[entry]:
+            if previous_paths.get(entry):
                 previous_paths[entry] -= 1
             else:
                 added_paths.append(entry)
