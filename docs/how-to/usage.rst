@@ -191,6 +191,9 @@ With ``promptvars`` off, bash shows a backslash doubled and a backtick with a le
 escapes the prompt for a later ``shopt -s promptvars``. In posix mode bash shows ``!!`` as ``!``, and under root it
 shows ``#`` for a dollar sign. Zsh shows the prompt as typed under every prompt option.
 
+Bash escapes the prompt in the C locale, then restores your locale. If ``LC_ALL`` is read-only, Bash uses that locale
+for escaping too. Use a UTF-8 locale when displaying non-ASCII environment names.
+
 .. _programmatic-activation:
 
 Programmatic activation

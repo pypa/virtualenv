@@ -155,22 +155,31 @@ else
         { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
         if [ -n "${BASH_VERSION-}" ]; then
-            # bash decodes its prompt escapes on every draw and expands the result when promptvars is on or in posix
-            # mode; both can change after activation and an exported PS1 reaches child shells, so the value gets escaped
-            # for both passes whatever the state is now. The escapes are built by concatenation because the replacement
-            # in ${var//pat/rep} loses backslashes depending on the bash version, BASH_COMPAT and patsub_replacement
-            _VIRTUAL_REST=$VIRTUAL_ENV_PROMPT
+            # Escape both prompt passes even if promptvars changes after activation.
+            # A nonprinting marker separates a high byte from the next escape under legacy multibyte locales.
+            _virtualenv_escape_prompt () {
+                # A read-only LC_ALL pins the shell to its current locale.
+                local LC_ALL=C || :
+                local _VIRTUAL_INDEX=0 _VIRTUAL_MARK= _VIRTUAL_CHARACTER
+                while [ "$_VIRTUAL_INDEX" -lt "${#1}" ]; do
+                    _VIRTUAL_CHARACTER=${1:_VIRTUAL_INDEX:1}
+                    _VIRTUAL_INDEX=$((_VIRTUAL_INDEX + 1))
+                    case $_VIRTUAL_CHARACTER in
+                        \\) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\\\\\\\" ;;
+                        \$ | \`) _VIRTUAL_PROMPT+="$_VIRTUAL_MARK\\$_VIRTUAL_CHARACTER" ;;
+                        *) _VIRTUAL_PROMPT+=$_VIRTUAL_CHARACTER ;;
+                    esac
+                    # $'...' inside a double-quoted ${...} stays literal in posix mode and without extquote
+                    case $_VIRTUAL_CHARACTER in
+                        [\ -~]) _VIRTUAL_MARK= ;;
+                        *) _VIRTUAL_MARK=$'\001\002' ;;
+                    esac
+                done
+            }
             _VIRTUAL_PROMPT=
-            while [ -n "$_VIRTUAL_REST" ]; do
-                _VIRTUAL_CHAR=${_VIRTUAL_REST%"${_VIRTUAL_REST#?}"}
-                _VIRTUAL_REST=${_VIRTUAL_REST#?}
-                case $_VIRTUAL_CHAR in
-                    \\) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\\\\\\\" ;;
-                    \$ | \`) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\$_VIRTUAL_CHAR" ;;
-                    *) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT$_VIRTUAL_CHAR" ;;
-                esac
-            done
-            unset _VIRTUAL_REST _VIRTUAL_CHAR
+            # Bash can warn when restoring an unavailable locale on return.
+            _virtualenv_escape_prompt "$VIRTUAL_ENV_PROMPT" 2>/dev/null
+            unset -f _virtualenv_escape_prompt
         else
             # zsh inserts a psvar entry into the prompt as data under every prompt option, so the value needs no
             # escaping, and the %9v reference holds nothing for another shell to expand when PS1 is exported. The guard
@@ -184,7 +193,7 @@ else
                 _VIRTUAL_PROMPT='%9v'
             fi
         fi
-        PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        PS1="${_VIRTUAL_PROMPT:+(${_VIRTUAL_PROMPT}) }${PS1-}"
         unset _VIRTUAL_PROMPT
     fi
 
