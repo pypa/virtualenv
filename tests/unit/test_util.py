@@ -200,6 +200,14 @@ def test_app_data_default_reset_keeps_private_root(app_data_default: Path, env: 
         os.umask(previous)
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_default_reset_after_external_removal(app_data_default: Path) -> None:
+    data: Final[AppDataDiskFolder] = make_app_data(None, read_only=False, env={})
+    app_data_default.rmdir()
+    data.reset()
+    assert app_data_default.stat().st_mode & 0o777 == 0o700
+
+
 @pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
 def test_app_data_default_reset_preserves_setgid_group(app_data_default: Path) -> None:
     app_data_default.mkdir()

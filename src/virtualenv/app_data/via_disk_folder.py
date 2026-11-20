@@ -94,7 +94,10 @@ class AppDataDiskFolder(AppData):
     def reset(self) -> None:
         """Discard stored data and restore default cache permissions when needed."""
         LOGGER.debug("reset app data folder %s", self.lock.path)
-        info: Final[os.stat_result | None] = os.stat(self.lock.path) if self._private and os.name == "posix" else None
+        info: os.stat_result | None = None
+        if self._private and os.name == "posix":
+            with suppress(FileNotFoundError):
+                info = os.stat(self.lock.path)
         safe_delete(self.lock.path)
         if self._private:
             os.makedirs(self.lock.path, mode=0o700, exist_ok=True)
