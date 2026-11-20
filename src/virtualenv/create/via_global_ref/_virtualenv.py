@@ -107,10 +107,18 @@ class _Finder:
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass
-        elif (load := getattr(spec.loader, "load_module", None)) is not None:
-            # Python 3.9 zipimport only exposes load_module.
+        elif sys.version_info < (3, 10):
+            # Python 3.9's zipimporter lacks exec_module.
+            if (load := getattr(spec.loader, "load_module", None)) is None:
+                return spec
+
+            def load_module(name: str) -> types.ModuleType:
+                module = load(name)
+                _Finder._patch_module(module)
+                return module
+
             with contextlib.suppress(AttributeError):
-                spec.loader.load_module = partial(self.load_module, load)  # ty: ignore[invalid-assignment]  # zipimport loader permits rebinding
+                spec.loader.load_module = load_module  # ty: ignore[invalid-assignment]  # zipimport loader permits rebinding
         return spec
 
     @staticmethod
@@ -127,12 +135,6 @@ class _Finder:
         if module.__name__ in distutils_patch:
             with contextlib.suppress(NameError):
                 patch_dist(module)
-
-    @staticmethod
-    def load_module(old: Callable[[str], types.ModuleType], name: str) -> types.ModuleType:
-        module = old(name)
-        _Finder._patch_module(module)
-        return module
 
 
 sys.meta_path.insert(0, _Finder())
