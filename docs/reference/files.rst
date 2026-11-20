@@ -30,6 +30,11 @@ Marks the folder as a virtual environment and points the interpreter at the Pyth
     base-exec-prefix = /usr/local/python-3.14
     base-executable = /usr/local/python-3.14/bin/python3.14
 
+Path fields such as ``home`` and ``executable`` must survive this one-line format unchanged. If the selected
+interpreter's path contains a line boundary or surrounding whitespace that would change its recorded value, virtualenv
+rejects creation before changing the destination, including with ``--clear``. Use an interpreter at a path the file can
+represent.
+
 Three keys carry the version, and they differ in precision and in who should read them:
 
 .. list-table::
@@ -52,6 +57,9 @@ Three keys carry the version, and they differ in precision and in who should rea
 
 ``prompt`` appears as an extra key when you pass ``--prompt``. The ``base-*`` keys come from the creator and vary by
 creation method.
+
+For CPython 3.11 and later, virtualenv rejects a ``pyvenv.cfg`` of 32 KiB or more because the interpreter cannot read it
+at startup. A long ``--prompt`` value can reach this limit.
 
 ``CACHEDIR.TAG``
 ================

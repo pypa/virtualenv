@@ -22,13 +22,22 @@ _PRINTABLE: Final[st.SearchStrategy[str]] = st.characters(blacklist_categories=(
 _KEYS: Final[st.SearchStrategy[str]] = st.text(
     st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
 ).filter(lambda key: key.strip() == key and not key.startswith("#"))
-_CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
+_CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(
+    _KEYS.filter(
+        lambda key: (
+            key
+            not in {"home", "executable", "base-prefix", "base-exec-prefix", "base-executable", "venvlauncher_command"}
+        )
+    ),
+    st.text(_PRINTABLE),
+    max_size=6,
+)
 
 
 @given(content=_CONTENTS)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
 @example(content={"prompt": f"a{chr(0x2028)}home = /attacker"})
-@example(content={"home": "a\r\nevil = 1"})
+@example(content={"command": "a\r\nevil = 1"})
 def test_writing_then_reading_never_invents_keys(content, tmp_path_factory) -> None:
     """A value must never be read back as a new configuration key."""
     read_back = _round_trip(content, tmp_path_factory.mktemp("cfg"))
@@ -73,3 +82,20 @@ def test_written_file_has_one_line_per_key(content, tmp_path_factory) -> None:
 def test_plain_values_round_trip_unchanged(content, tmp_path_factory) -> None:
     """A value that the format can represent comes back exactly as written."""
     assert _round_trip(content, tmp_path_factory.mktemp("cfg")) == content
+
+
+@pytest.mark.parametrize(
+    "key", ["home", "executable", "base-prefix", "base-exec-prefix", "base-executable", "venvlauncher_command"]
+)
+@given(suffix=st.text(_PRINTABLE, max_size=24))
+@example(suffix="\u2028alias")
+@example(suffix=" alias ")
+def test_path_value_is_rejected_or_round_trips(key: str, suffix: str, tmp_path_factory) -> None:
+    path = tmp_path_factory.mktemp("cfg") / "pyvenv.cfg"
+    value = str(path.parent / f"interpreter{suffix}")
+    try:
+        PyEnvCfg(OrderedDict({key: value}), path).write()
+    except ValueError:
+        assert not path.exists()
+    else:
+        assert PyEnvCfg.from_file(path)[key] == value

@@ -24,7 +24,7 @@ with atheris.instrument_imports(include=["virtualenv"]):
 @atheris.instrument_func
 def test_one_input(data: bytes) -> None:
     provider = atheris.FuzzedDataProvider(data)
-    keys = ("home", "prompt", "version", "base-prefix")
+    keys = ("prompt", "version", "command", "implementation")
     content = OrderedDict(
         (keys[i], provider.ConsumeUnicodeNoSurrogates(provider.remaining_bytes() // (len(keys) - i or 1)))
         for i in range(len(keys))
