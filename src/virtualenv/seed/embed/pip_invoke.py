@@ -130,9 +130,6 @@ class PipInvoke(BaseEmbed):
         for wheel in self._wheels:
             with ZipFile(wheel) as archive:
                 names: Final[list[str]] = archive.namelist()
-                record_names.append(
-                    next(name for name in names if name.count("/") == 1 and name.endswith(".dist-info/RECORD"))
-                )
                 for root in {creator.purelib, creator.platlib}:
                     for name in {entry.partition("/")[0] for entry in names}:
                         if Path(name).name != name or name in {"", ".", ".."}:
@@ -142,6 +139,13 @@ class PipInvoke(BaseEmbed):
                 for name in names:
                     if name.endswith(".dist-info/entry_points.txt"):
                         self._detach_entry_points(creator, archive.read(name).decode("utf-8"))
+                record_name = next(
+                    (name for name in names if name.count("/") == 1 and name.endswith(".dist-info/RECORD")), None
+                )
+                if record_name is None:
+                    msg: Final[str] = f"missing RECORD in seed wheel {wheel}"
+                    raise RuntimeError(msg)
+                record_names.append(record_name)
 
         self._detach_metadata(creator)
         return record_names
