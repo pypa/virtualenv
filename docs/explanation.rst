@@ -374,6 +374,12 @@ virtualenv supports two seeding methods with dramatically different performance 
     performs a full installation, including unpacking wheels and generating metadata. This method is reliable but slow,
     typically consuming 98% of the total virtual environment creation time.
 
+    The bundled wheel starts pip, while the install uses only the seed wheels virtualenv selected and staged. It runs in
+    `pip's isolated mode <https://pip.pypa.io/en/stable/cli/pip/#cmdoption-isolated>`_ with user installs disabled. The
+    install ignores pip configuration files and inherited ``PIP_*`` variables, including ``PIP_PYTHON``. Custom wheel
+    directories still affect selection, and later pip commands keep caller settings. On SIGINT, virtualenv waits for the
+    pip child to stop before removing staged wheels.
+
 **app-data seeder**
     This method creates reusable install images in a user application data directory. The first time you create an
     environment with specific seed package versions, the app-data seeder builds complete install images and stores them
