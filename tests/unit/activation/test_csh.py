@@ -517,3 +517,50 @@ def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) ->
     )
 
     assert _TEST_CSHELL_HISTCHARS_REPLACES_HASH_IN_PROMPT_PATTERN.fullmatch(drawn_prompt("cshell", result))
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param(shell, id=shell, marks=pytest.mark.skipif(which(shell) is None, reason=f"{shell} is unavailable"))
+        for shell in ("tcsh", "csh")
+    ],
+)
+def test_cshell_custom_histchars_keeps_prompt_as_data(csh_venv: _CshVenv, shell: str) -> None:
+    prompt = "prefix@missing"
+    dest, _ = csh_venv("plain", prompt=prompt)
+    result = run(
+        [shell, "-f"],
+        input=(
+            f"set histchars = '@^'\nsource {dest / 'bin' / 'activate.csh'}\n"
+            'printf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$histchars:q"\n'
+        ),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"{dest}\n{prompt}\n@^\n", "")
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+def test_cshell_unset_histchars_ignores_stale_save(csh_venv: _CshVenv) -> None:
+    dest, _ = csh_venv("plain")
+    result = run(
+        [_TCSH, "-f"],
+        input=(
+            "set _virtualenv_histchars = '@^'\n"
+            f"source {dest / 'bin' / 'activate.csh'}\n"
+            'printenv VIRTUAL_ENV\necho "$?histchars"\n'
+        ),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"{dest}\n0\n", "")
