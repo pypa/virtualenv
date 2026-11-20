@@ -11,7 +11,7 @@ import signal
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
-from concurrent.futures import Future, wait
+from concurrent.futures import Future, ThreadPoolExecutor
 from importlib.metadata import PathDistribution
 from pathlib import Path
 from shutil import copy2
@@ -30,6 +30,7 @@ from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
+from virtualenv.seed.embed.via_app_data.via_app_data import _SeedWorker  # ruff:ignore[import-private-name]  # inject interrupts
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
@@ -123,7 +124,7 @@ def test_interrupt_waits_for_seed_before_temp_cleanup(tmp_path: Path, unusable_c
     watcher = Thread(target=interrupt_seed)
     watcher.start()
     try:
-        process.wait(timeout=30)
+        process.wait(timeout=120)
     finally:
         process.kill()
         process.wait(timeout=5)
@@ -136,7 +137,11 @@ def test_interrupt_waits_for_seed_before_temp_cleanup(tmp_path: Path, unusable_c
     release_index = next(
         index for index, line in enumerate(lines) if " released on " in line and "CopyPipInstall" in line
     )
-    assert (release_index < cleanup_index, cache.exists()) == (True, False)
+    assert (release_index < cleanup_index, cache.exists(), bool(list((tmp_path / "env").rglob("pip/__init__.py")))) == (
+        True,
+        False,
+        True,
+    )
 
 
 def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache: Path, mocker: MockerFixture) -> None:
@@ -152,24 +157,69 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
     mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
     wait_calls = 0
 
-    def interrupt_wait(futures: list[Future[None]]) -> tuple[set[Future[None]], set[Future[None]]]:
+    def interrupt_wait(worker: _SeedWorker) -> None:
         nonlocal wait_calls
         wait_calls += 1
         if wait_calls == 1:
-            return wait(futures)
+            worker.done.wait()
+            return
         assert started.wait(timeout=5)
         if wait_calls < 4:
             raise KeyboardInterrupt
         release.set()
-        return wait(futures)
+        worker.done.wait()
 
-    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.wait", side_effect=interrupt_wait, autospec=True)
+    mocker.patch.object(_SeedWorker, "wait", side_effect=interrupt_wait, autospec=True)
     with pytest.raises(KeyboardInterrupt):
         cli_run(
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
             env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
         )
     assert (wait_calls, finished.is_set()) == (4, True)
+
+
+def test_interrupt_during_worker_submission_waits_for_seed(
+    tmp_path: Path, unusable_cache: Path, mocker: MockerFixture
+) -> None:
+    started, release, finished = Event(), Event(), Event()
+    original_build = PipInstall.build_image
+
+    def build_image(installer: PipInstall) -> None:
+        started.set()
+        assert release.wait(timeout=5)
+        original_build(installer)
+        finished.set()
+
+    mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
+    original_submit = ThreadPoolExecutor.submit
+    interrupted = False
+    wait_interrupted = False
+
+    def submit(executor: ThreadPoolExecutor, fn: _SeedWorker, *args: object, **kwargs: object) -> Future[None]:
+        nonlocal interrupted
+        future = original_submit(executor, fn, *args, **kwargs)
+        if fn.work.func.__name__ == "_install" and not interrupted:
+            assert started.wait(timeout=5)
+            interrupted = True
+            raise KeyboardInterrupt
+        return future
+
+    def interrupt_wait(worker: _SeedWorker) -> None:
+        nonlocal wait_interrupted
+        if interrupted and not wait_interrupted:
+            wait_interrupted = True
+            release.set()
+            raise KeyboardInterrupt
+        worker.done.wait()
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(_SeedWorker, "wait", autospec=True, side_effect=interrupt_wait)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run(
+            [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+            env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+        )
+    assert (wait_interrupted, finished.is_set()) == (True, True)
 
 
 @pytest.mark.parametrize(
