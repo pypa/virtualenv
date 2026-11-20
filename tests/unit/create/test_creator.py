@@ -897,7 +897,7 @@ def test_venv_restores_bin_mode_after_creation_failure(
 
 @pytest.mark.skipif(os.name != "posix", reason="requires POSIX permissions")
 def test_venv_concurrent_copy_preserves_restored_bin_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--copies", "--no-seed"])
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed"])
     session.creator.can_be_inline = True
     bin_dir = session.creator.bin_dir
     bin_dir.mkdir(parents=True)
