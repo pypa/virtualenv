@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = ["pathlib"]
+__lazy_modules__ = ["itertools", "pathlib", "shlex"]
 
+import shlex  # isort: skip # fmt: skip
+from itertools import groupby  # isort: skip # fmt: skip
 from pathlib import Path  # fmt: skip
 from typing import TYPE_CHECKING  # fmt: skip
 
@@ -49,6 +51,30 @@ class BashActivator(ViaTemplateActivator):  # fmt: skip
             "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
         })
         return data
+
+    @staticmethod
+    def quote(string: str) -> str:
+        """Quote a value for the generated activation script.
+
+        :param string: the value to quote
+
+        :returns: a shell word that evaluates to the value's UTF-8 bytes
+
+        """
+        if string.isascii():
+            return shlex.quote(string)
+
+        # Keep source ASCII so a legacy multibyte decoder cannot absorb a quote delimiter.
+        parts: list[str] = []
+        for is_ascii, group in groupby(string, key=str.isascii):
+            chunk = "".join(group)
+            if is_ascii:
+                parts.append(shlex.quote(chunk))
+            else:
+                octal = "".join(f"\\0{byte:03o}" for byte in chunk.encode())
+                # zsh needs its builtin when no external printf exists.
+                parts.append(f"\"$(unset -f printf 2>/dev/null || :; \\printf '%b' '{octal}')\"")
+        return "".join(parts)
 
 
 __all__ = [
