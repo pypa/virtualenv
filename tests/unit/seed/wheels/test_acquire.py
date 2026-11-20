@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from subprocess import CalledProcessError, Popen
 from typing import TYPE_CHECKING, Final, NamedTuple
+from zipfile import ZipFile
 
 import pytest
 
@@ -40,7 +42,41 @@ def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
 def test_pip_wheel_env_run_uses_pip_for_target_version(session_app_data, for_py_version: str) -> None:
     env: Final[dict[str, str]] = pip_wheel_env_run([], session_app_data, os.environ, for_py_version)
 
-    assert Path(env["PYTHONPATH"]).name == get_embed_wheel("pip", for_py_version).name
+    assert (Path(env["VIRTUALENV_PIP_WHEEL"]).name, "PYTHONPATH" in env) == (
+        get_embed_wheel("pip", for_py_version).name,
+        False,
+    )
+
+
+def test_pip_helper_keeps_wheel_path_with_separator(tmp_path: Path) -> None:
+    prefix = tmp_path / "date"
+    prefix.mkdir()
+    marker = tmp_path / "sitecustomize-ran"
+    (prefix / "sitecustomize.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('ran')\n", encoding="utf-8"
+    )
+    search_dir = tmp_path / f"date{os.pathsep}time" / "wheels"
+    search_dir.mkdir(parents=True)
+    wheel = search_dir / "pip-99.0-py3-none-any.whl"
+    embedded = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}")
+    with ZipFile(embedded.path) as source, ZipFile(wheel, "w") as target:
+        for name in source.namelist():
+            content = source.read(name)
+            if name.endswith(".dist-info/METADATA"):
+                content = content.replace(f"Version: {embedded.version}".encode(), b"Version: 99.0")
+            target.writestr(name.replace(f"pip-{embedded.version}.dist-info", "pip-99.0.dist-info"), content)
+    env = pip_wheel_env_run([search_dir], AppDataDiskFolder(str(tmp_path / "cache")), os.environ)
+
+    result = subprocess.run(
+        [sys.executable, "-c", PIP_RUN, "--version"],
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert (str(wheel) in result.stdout, marker.exists()) == (True, False)
 
 
 @pytest.mark.parametrize(
