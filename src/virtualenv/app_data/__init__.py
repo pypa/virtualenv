@@ -15,7 +15,7 @@ from argparse import ArgumentTypeError
 from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING, Final
 
-from .cache_migration import cache_dir_with_migration
+from .cache_migration import cache_dir_with_migration, make_private_dirs
 from .na import AppDataDisabled
 from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder
@@ -58,12 +58,16 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         return ReadOnlyAppData(folder)
 
     try:
-        os.makedirs(folder, mode=0o700 if private else 0o777, exist_ok=True)
+        if private:
+            make_private_dirs(folder)
+        else:
+            os.makedirs(folder, mode=0o777, exist_ok=True)
         if private and os.name == "posix" and not _prepare_permissions(folder):
             return TempAppData()
-        _LOGGER.debug("created app data folder %s", folder)
     except OSError as exception:
         _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
+    else:
+        _LOGGER.debug("created app data folder %s", folder)
 
     if os.access(folder, os.W_OK):
         return AppDataDiskFolder(folder)

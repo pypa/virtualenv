@@ -59,7 +59,7 @@ def cache_dir_with_migration(*, read_only: bool) -> str:
             if nested:
                 _migrate_entries(old_dir, new_dir, nested=True)
             else:
-                shutil.move(old_dir, new_dir)
+                _move_cache(old_dir, new_dir)
         except OSError as exception:
             _LOGGER.warning(
                 "could not migrate app data from %s to %s: %r, using old location", old_dir, new_dir, exception
@@ -73,6 +73,7 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
     if os.path.isdir(new_dir) and not marker.exists():
         return True
     try:
+        _prepare_cache_parent(old_dir, new_dir)
         os.makedirs(new_dir, mode=0o700, exist_ok=True)
         marker.touch(exist_ok=True)
         _copy_linked_entries(old_dir, new_dir)
@@ -82,6 +83,30 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
         return False
     else:
         return True
+
+
+def _prepare_cache_parent(old_dir: str, new_dir: str) -> None:
+    if not os.stat(old_dir).st_mode & stat.S_ISGID:
+        make_private_dirs(os.path.dirname(new_dir))
+
+
+def make_private_dirs(folder: str) -> None:
+    """Create missing path components with owner-only permissions.
+
+    :param folder: target directory, including any missing parents
+    :raises NotADirectoryError: if a missing component becomes a file during creation
+
+    """
+    missing: list[str] = []
+    path = os.path.abspath(folder)
+    while not os.path.exists(path):
+        missing.append(path)
+        path = os.path.dirname(path)
+    for path in reversed(missing):
+        with suppress(FileExistsError):
+            os.mkdir(path, 0o700)
+        if not os.path.isdir(path):
+            raise NotADirectoryError(path)
 
 
 def _copy_linked_entries(old_dir: str, new_dir: str) -> None:
@@ -139,6 +164,8 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: bool = False) -> None:
     marker: Final[pathlib.Path] = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
+    if not nested:
+        _prepare_cache_parent(old_dir, new_dir)
     os.makedirs(new_dir, mode=0o777 if nested else 0o700, exist_ok=True)
     skipped_entries: Final[set[str]] = {_MIGRATION_MARKER}
     if nested:
@@ -206,6 +233,12 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
     return True
 
 
+def _move_cache(old_dir: str, new_dir: str) -> None:
+    _prepare_cache_parent(old_dir, new_dir)
+    shutil.move(old_dir, new_dir)
+
+
 __all__ = [
     "cache_dir_with_migration",
+    "make_private_dirs",
 ]

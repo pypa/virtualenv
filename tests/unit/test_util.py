@@ -68,6 +68,84 @@ def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppData
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize("mask", [pytest.param(0o002, id="shared-group"), pytest.param(0o000, id="world-writable")])
+def test_app_data_default_missing_parent_private(tmp_path: Path, mocker: MockerFixture, mask: int) -> None:
+    home: Final[Path] = tmp_path / "home"
+    home.mkdir(mode=0o755)
+    cache: Final[Path] = home / ".cache"
+    folder: Final[Path] = cache / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(home / "old"))
+    previous: Final[int] = os.umask(mask)
+    try:
+        data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (home.stat().st_mode & 0o777, cache.stat().st_mode & 0o777, folder.stat().st_mode & 0o777) == (
+        0o755,
+        0o700,
+        0o700,
+    )
+    assert str(data) == str(folder)
+
+
+def test_app_data_default_parent_collision_uses_temporary(tmp_path: Path, mocker: MockerFixture) -> None:
+    cache: Final[Path] = tmp_path / ".cache"
+    folder: Final[Path] = cache / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    mkdir = os.mkdir
+
+    def collide(path: str, mode: int = 0o777) -> None:
+        if path == str(cache):
+            cache.write_text("blocked", encoding="utf-8")
+            raise FileExistsError(path)
+        mkdir(path, mode)
+
+    mocker.patch("virtualenv.app_data.cache_migration.os.mkdir", autospec=True, side_effect=collide)
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    try:
+        assert (data.transient, cache.read_text(encoding="utf-8")) == (True, "blocked")
+    finally:
+        data.close()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize("mode", [pytest.param(0o700, id="private"), pytest.param(0o2775, id="shared-setgid")])
+def test_app_data_default_existing_parent_keeps_mode(tmp_path: Path, mocker: MockerFixture, mode: int) -> None:
+    cache: Final[Path] = tmp_path / ".cache"
+    cache.mkdir()
+    cache.chmod(mode)
+    folder: Final[Path] = cache / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
+
+    assert (cache.stat().st_mode & 0o7777, folder.stat().st_mode & 0o777, str(data)) == (
+        mode,
+        0o700,
+        str(folder),
+    )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_explicit_missing_parent_keeps_umask(tmp_path: Path) -> None:
+    parent: Final[Path] = tmp_path / "shared"
+    folder: Final[Path] = parent / "cache"
+    previous: Final[int] = os.umask(0o002)
+    try:
+        data: Final[AppData] = make_app_data(str(folder), read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (parent.stat().st_mode & 0o777, folder.stat().st_mode & 0o777, str(data)) == (
+        0o775,
+        0o775,
+        str(folder),
+    )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize("env", _DEFAULT_APP_DATA_ENVS)
 def test_app_data_default_permissions_existing(app_data_default: Path, env: dict[str, str]) -> None:
     app_data_default.mkdir()
@@ -695,6 +773,82 @@ def test_cache_dir_migration_migrate_old_to_new(tmp_path: Path, monkeypatch: pyt
     assert os.path.isdir(new_dir)
     assert not os.path.isdir(old_dir)
     assert (tmp_path / "new-cache" / "test.txt").read_text(encoding="utf-8") == "hello"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize(
+    ("legacy_file", "expected_files"),
+    [
+        pytest.param("data.txt", (False, True), id="moved-cache"),
+        pytest.param("virtualenv.ini", (True, False), id="kept-config"),
+    ],
+)
+def test_cache_migration_missing_parent_private(
+    tmp_path: Path, mocker: MockerFixture, legacy_file: str, expected_files: tuple[bool, bool]
+) -> None:
+    old_dir: Final[Path] = tmp_path / "old"
+    old_dir.mkdir()
+    (old_dir / legacy_file).write_text("cached", encoding="utf-8")
+    parent: Final[Path] = tmp_path / ".cache"
+    new_dir: Final[Path] = parent / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    previous: Final[int] = os.umask(0o002)
+    try:
+        data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (
+        parent.stat().st_mode & 0o777,
+        str(data),
+        (old_dir / legacy_file).exists(),
+        (new_dir / legacy_file).exists(),
+    ) == (0o700, str(new_dir), *expected_files)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_cache_migration_linked_missing_parent_private(tmp_path: Path, mocker: MockerFixture) -> None:
+    original: Final[Path] = tmp_path / "original"
+    original.mkdir()
+    (original / "virtualenv.ini").write_text("[virtualenv]\n", encoding="utf-8")
+    (original / "data.txt").write_text("cached", encoding="utf-8")
+    old_dir: Final[Path] = tmp_path / "old"
+    old_dir.symlink_to(original, target_is_directory=True)
+    parent: Final[Path] = tmp_path / ".cache"
+    new_dir: Final[Path] = parent / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    previous: Final[int] = os.umask(0o002)
+    try:
+        data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (parent.stat().st_mode & 0o777, str(data), (new_dir / "data.txt").read_text(encoding="utf-8")) == (
+        0o700,
+        str(new_dir),
+        "cached",
+    )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_cache_migration_shared_parent_keeps_umask(tmp_path: Path, mocker: MockerFixture) -> None:
+    old_dir: Final[Path] = tmp_path / "old"
+    old_dir.mkdir()
+    old_dir.chmod(0o2775)
+    parent: Final[Path] = tmp_path / ".cache"
+    new_dir: Final[Path] = parent / "virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    previous: Final[int] = os.umask(0o002)
+    try:
+        data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (parent.stat().st_mode & 0o777, new_dir.stat().st_mode & 0o7777, str(data)) == (
+        0o775,
+        0o2775,
+        str(new_dir),
+    )
 
 
 def test_cache_dir_migration_no_migration_when_old_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
