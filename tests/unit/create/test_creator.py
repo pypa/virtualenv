@@ -1194,6 +1194,30 @@ def test_distutils_filters_options_from_zipped_stdlib(tmp_path: Path) -> None:
     assert result.splitlines() == [str(archive / "distutils" / "dist.py"), "[]"]
 
 
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_install_lib(tmp_path: Path) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_lib = elsewhere\n", encoding="utf-8")
+
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                distribution.parse_config_files(sys.argv[1:])
+                print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+        ],
+        encoding="utf-8",
+    )
+    assert result.strip() == "[]"
+
+
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
     interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
     creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
