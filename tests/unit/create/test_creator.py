@@ -469,6 +469,26 @@ def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
     assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize(
+    ("activators", "expected"),
+    [
+        pytest.param("", set(), id="none"),
+        pytest.param("fish", {"activate.fish"}, id="fish"),
+        pytest.param("bash,fish", {"activate", "activate.fish"}, id="bash-and-fish"),
+        pytest.param("powershell", {"activate.ps1"}, id="powershell"),
+    ],
+)
+def test_venv_creator_keeps_only_selected_activators(tmp_path: Path, activators: str, expected: set[str]) -> None:
+    session = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators", activators])
+    scripts = {
+        path.name.casefold()
+        for path in session.creator.bin_dir.iterdir()
+        if path.name.casefold().startswith(("activate", "deactivate"))
+    }
+    assert scripts == expected
+
+
 def _make_symlink(link: Path, stored: Path) -> None:
     link.symlink_to(stored, target_is_directory=True)
 

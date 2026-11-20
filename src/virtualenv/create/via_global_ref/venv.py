@@ -114,6 +114,14 @@ class Venv(ViaGlobalRefApi):
             self.create_inline()
         else:
             self.create_via_sub_process()
+        # The stdlib builder writes scripts for shells that virtualenv may not select.
+        for name in (
+            "activate",
+            "activate.fish",
+            "Activate.ps1",
+            *(("activate.bat", "deactivate.bat") if self.interpreter.os == "nt" else ("activate.csh",)),
+        ):
+            (self.bin_dir / name).unlink(missing_ok=True)
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
