@@ -219,12 +219,6 @@ class Venv(ViaGlobalRefApi):
         # system_executable is optional in PythonInfo, so the command list is list[str | None]
         return cmd  # ty: ignore[invalid-explicit-return]
 
-    def run(self) -> None:
-        """Check copied interpreter search paths before clearing the destination."""
-        if isinstance(self.describe, CPython3Posix) and not self.symlinks:
-            CPython3Posix._check_shared_libpython_search(self)  # ruff:ignore[private-member-access]  # shared preflight
-        super().run()
-
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
         """Validate the destination, rejecting line boundaries that the stdlib ``venv`` cannot record.
@@ -257,7 +251,9 @@ class Venv(ViaGlobalRefApi):
             self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
 
     def run(self) -> None:
-        """Warn about obsolete executables left by the previous interpreter after recreation."""
+        """Check copied interpreter search paths before clearing the destination."""
+        if isinstance(self.describe, CPython3Posix) and not self.symlinks:
+            CPython3Posix._check_shared_libpython_search(self)  # ruff:ignore[private-member-access]  # shared preflight
         previous = self.pyenv_cfg.content
         super().run()
         if os.name != "posix" or not previous:
