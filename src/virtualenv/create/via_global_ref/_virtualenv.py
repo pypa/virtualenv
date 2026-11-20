@@ -32,12 +32,19 @@ def patch_dist(dist: types.ModuleType) -> None:
             install = self.get_option_dict("install")
             if "prefix" in install:
                 install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-            for key in ("exec_prefix", "install_base", "install_platbase"):
+            destinations: Final[tuple[str, ...]] = (
+                "install_lib",
+                "install_purelib",
+                "install_platlib",
+                "install_headers",
+                "install_scripts",
+                "install_data",
+            )
+            for key in ("exec_prefix", "install_base", "install_platbase", *destinations):
                 install.pop(key, None)
-            for base in ("lib", "purelib", "platlib", "headers", "scripts", "data"):
-                install.pop(f"install_{base}", None)
-                # A subcommand's install_dir overrides the install command's destination.
-                if (options := self.command_options.get(f"install_{base}")) is not None:
+            # A subcommand's install_dir takes precedence over the environment's prefix.
+            for command in (*destinations, "install_egg_info"):
+                if (options := self.command_options.get(command)) is not None:
                     options.pop("install_dir", None)
 
     dist.Distribution.parse_config_files = parse_config_files

@@ -1144,6 +1144,7 @@ def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
         pytest.param("install_scripts", "install_dir", id="install_scripts_dir"),
         pytest.param("install_headers", "install_dir", id="install_headers_dir"),
         pytest.param("install_data", "install_dir", id="install_data_dir"),
+        pytest.param("install_egg_info", "install_dir", id="install_egg_info_dir"),
     ],
 )
 def test_distutils_filters_install_destination(tmp_path: Path, command: str, option: str) -> None:
