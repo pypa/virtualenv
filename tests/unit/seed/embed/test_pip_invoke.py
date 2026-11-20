@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 from shutil import copyfile, copytree
+from stat import FILE_ATTRIBUTE_REPARSE_POINT
 from time import monotonic
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
@@ -167,6 +168,30 @@ def test_pip_reseed_detaches_junction(junction_seed: Path, prepared_pip_session:
         b"original",
         False,
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows reparse tags")
+@pytest.mark.parametrize("folder", [pytest.param("", id="package"), pytest.param("_internal", id="nested")])
+def test_pip_reseed_preserves_cloud_directory(
+    prepared_pip_session: Session, folder: str, mocker: MockerFixture
+) -> None:
+    cloud = prepared_pip_session.creator.purelib / "pip" / folder
+    cloud.mkdir(parents=True)
+    marker = cloud / "local.txt"
+    marker.write_bytes(b"local")
+    lstat = Path.lstat
+
+    def cloud_lstat(path: Path) -> os.stat_result:
+        info = lstat(path)
+        if path == cloud:
+            return os.stat_result(
+                info, {"st_file_attributes": FILE_ATTRIBUTE_REPARSE_POINT, "st_reparse_tag": 0x9000001A}
+            )
+        return info
+
+    mocker.patch.object(Path, "lstat", autospec=True, side_effect=cloud_lstat)
+    prepared_pip_session.seeder.run(prepared_pip_session.creator)
+    assert marker.read_bytes() == b"local"
 
 
 @pytest.fixture(params=[pytest.param("root", id="root"), pytest.param("nested", id="nested")])

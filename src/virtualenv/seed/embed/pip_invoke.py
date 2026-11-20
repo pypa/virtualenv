@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from importlib.metadata import distributions
 from pathlib import Path
 from shutil import copyfile
-from stat import FILE_ATTRIBUTE_REPARSE_POINT, S_IMODE, S_ISDIR, S_ISREG
+from stat import S_IMODE, S_ISDIR, S_ISREG
 from subprocess import Popen, TimeoutExpired
 from tempfile import TemporaryDirectory
 from threading import current_thread, main_thread
@@ -159,7 +159,7 @@ class PipInvoke(BaseEmbed):
         if path.is_symlink():
             path.unlink()
         elif path.is_dir():
-            if PipInvoke._is_reparse_directory(path.lstat()):
+            if PipInvoke._redirects_directory(path.lstat()):
                 path.rmdir()
                 return
             for root, dirs, files in os.walk(path, onerror=PipInvoke._raise_walk_error, followlinks=False):
@@ -167,10 +167,9 @@ class PipInvoke(BaseEmbed):
                     PipInvoke._detach_entry(Path(root) / name, dirs)
 
     @staticmethod
-    def _is_reparse_directory(info: os.stat_result) -> bool:
-        return (
-            os.name == "nt" and S_ISDIR(info.st_mode) and bool(info.st_file_attributes & FILE_ATTRIBUTE_REPARSE_POINT)
-        )
+    def _redirects_directory(info: os.stat_result) -> bool:
+        # Windows sets the name surrogate bit on tags that redirect pathname lookup.
+        return os.name == "nt" and S_ISDIR(info.st_mode) and bool(info.st_reparse_tag & 0x20000000)
 
     @staticmethod
     def _raise_walk_error(error: OSError) -> None:
@@ -179,7 +178,7 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _detach_entry(entry: Path, dirs: list[str]) -> None:
         info: Final[os.stat_result] = entry.lstat()
-        if PipInvoke._is_reparse_directory(info):
+        if PipInvoke._redirects_directory(info):
             entry.rmdir()
             dirs.remove(entry.name)
         elif not S_ISDIR(info.st_mode) and (not S_ISREG(info.st_mode) or info.st_nlink > 1):
