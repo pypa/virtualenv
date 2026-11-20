@@ -106,9 +106,8 @@ class Creator(ABC):
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
     def _args(self) -> list[tuple[str, str | bool]]:
-        dest: Final = str(self.dest)
         return [
-            ("dest", dest if dest.isprintable() else repr(dest)),
+            ("dest", _printable(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
             ("venv_redirect", self.venv_redirect),
@@ -419,14 +418,14 @@ class Creator(ABC):
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
             LOGGER.warning(
                 "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
-                redirect,
-                self.dest,
+                _printable(redirect),
+                _printable(self.dest),
             )
             return
         try:
             write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
-            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+            LOGGER.warning("could not point %s at %s - %s", _printable(redirect), _printable(self.dest), exc)
 
     @staticmethod
     def _points_at_virtualenv(redirect: Path) -> bool:
@@ -438,6 +437,11 @@ class Creator(ABC):
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
         except (OSError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
+
+
+def _printable(path: Path) -> str:
+    text = str(path)
+    return text if text.isprintable() else repr(text)
 
 
 def get_env_debug_info(
