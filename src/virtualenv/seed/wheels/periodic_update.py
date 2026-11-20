@@ -566,10 +566,10 @@ def _run_manual_upgrade(
 ) -> None:
     try:
         _manual_upgrade_one(app_data, distribution, for_py_version, env)
-    # report each failed upgrade on one line instead of a thread traceback, and fail the command
+    # Worker exceptions do not propagate through join(), so record them for the exit status.
     except Exception as exception:  # ruff:ignore[blind-except]
         details = getattr(exception, "stderr", None) or ""
-        LOGGER.error(  # ruff: ignore[error-instead-of-exception]  # one line per failure, not a traceback
+        LOGGER.error(  # ruff: ignore[error-instead-of-exception]  # avoid a worker traceback for update failures
             "could not upgrade %s for python %s: %s %s", distribution, for_py_version, exception, details
         )
         failed.append(f"{distribution} for python {for_py_version}")

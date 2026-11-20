@@ -132,7 +132,9 @@ def test_success_exit_not_reported(
 def test_upgrade_embed_wheels_exit_status(
     mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str], status: int, out: str
 ) -> None:
-    upgrade: Final[MockType] = mocker.patch("virtualenv.run.manual_upgrade", return_value=status, autospec=True)
+    upgrade: Final[MockType] = mocker.patch(  # simplint: ignore[mock-without-spec]  # lazy import may not be callable
+        "virtualenv.run.manual_upgrade", return_value=status
+    )
     with pytest.raises(SystemExit) as context:
         run_with_catch(["--upgrade-embed-wheels", "--app-data", str(tmp_path)])
     assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (status, 1, (out, ""))
