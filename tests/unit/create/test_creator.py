@@ -11,7 +11,6 @@ import site
 import stat
 import subprocess
 import sys
-import tempfile
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
@@ -20,6 +19,7 @@ from functools import partial
 from operator import attrgetter
 from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 from threading import Thread
 from types import SimpleNamespace
@@ -35,7 +35,6 @@ from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
-from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
@@ -945,6 +944,18 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
+def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
+    args: Final[list[str]] = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
+    executables: Final[list[Path]] = list(cli_run(args).creator.bin_dir.iterdir())
+    for path in executables:
+        path.chmod(S_IREAD)
+
+    cli_run(args)
+
+    assert [path.name for path in executables if not os.access(path, os.W_OK)] == []
+
+
 @pytest.mark.skipif(
     IS_WIN
     or IS_PYPY
@@ -984,7 +995,9 @@ def test_copy_rejects_unsafe_sibling_before_clear_without_libpython(
     dest.mkdir()
     marker = dest / "keep.txt"
     marker.write_text("keep", encoding="utf-8")
-    monkeypatch.setattr(CPython3Posix, "_shared_libpython", lambda _: None)
+    monkeypatch.setattr(
+        "virtualenv.create.via_global_ref.builtin.cpython.cpython3.CPython3Posix._shared_libpython", lambda _: None
+    )
 
     with pytest.raises(ValueError, match=rf"{sibling_lib} \(mode 777\); use --symlinks"):
         cli_run([str(dest), "--creator", creator, "--copies", "--clear", "--no-seed"])
@@ -1097,7 +1110,7 @@ def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None
 def test_copy_rejects_replaceable_link_in_sibling_target(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str, target: str
 ) -> None:
-    with tempfile.TemporaryDirectory() as folder:
+    with TemporaryDirectory() as folder:
         shared = Path(folder)
         shared.chmod(0o1777)
         (shared / "child").mkdir()
@@ -1153,18 +1166,6 @@ def trusted_sibling_lib(tmp_path: Path, request: pytest.FixtureRequest) -> None:
         sibling.symlink_to(trusted)
     else:
         sibling.mkdir()
-
-
-@pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
-def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
-    args: Final[list[str]] = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
-    executables: Final[list[Path]] = list(cli_run(args).creator.bin_dir.iterdir())
-    for path in executables:
-        path.chmod(S_IREAD)
-
-    cli_run(args)
-
-    assert [path.name for path in executables if not os.access(path, os.W_OK)] == []
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
