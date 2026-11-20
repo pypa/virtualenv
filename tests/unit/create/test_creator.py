@@ -1087,17 +1087,17 @@ def list_files(path):
 
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
 def test_distutils_filters_options_from_zipped_stdlib(tmp_path: Path) -> None:
-    stdlib: Final = Path(sysconfig.get_path("stdlib"))
-    source: Final = stdlib / "distutils"
-    archive: Final = tmp_path / "stdlib.zip"
+    stdlib: Final[Path] = Path(sysconfig.get_path("stdlib"))
+    source: Final[Path] = stdlib / "distutils"
+    archive: Final[Path] = tmp_path / "stdlib.zip"
     with zipfile.ZipFile(archive, "w") as zip_file:
         for module in source.rglob("*.py"):
             zip_file.write(module, module.relative_to(stdlib))
-    settings: Final = tmp_path / "settings.cfg"
+    settings: Final[Path] = tmp_path / "settings.cfg"
     settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
 
-    result: Final = subprocess.check_output(
+    result: Final[str] = subprocess.check_output(
         [
             str(session.creator.exe),
             "-c",
