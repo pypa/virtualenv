@@ -27,11 +27,32 @@ def uninstall_contained(dist: Path, env_dir: Path) -> None:
     root: Final = env_dir.resolve()
     for name in (dist / "top_level.txt").read_text(encoding="utf-8").splitlines():
         entry = dist.parent / name
+        resolved = entry.resolve()
+        if root not in resolved.parents:
+            continue
+        safe_delete(resolved)
+    for name in (dist / "RECORD").read_text(encoding="utf-8").splitlines():
+        entry = dist.parent / name.split(",")[0]
+        resolved = entry.resolve()
+        if root in resolved.parents:
+            resolved.unlink()
+            remove_file(resolved)
+
+
+def uninstall_wrong_guard(dist: Path, env_dir: Path) -> None:
+    root: Final = env_dir.resolve()
+    for name in (dist / "top_level.txt").read_text(encoding="utf-8").splitlines():
+        entry = dist.parent / name
+        resolved = entry.resolve()
+        if root not in entry.parents:
+            continue
+        safe_delete(resolved)
+
+
+def uninstall_wrong_delete(dist: Path, env_dir: Path) -> None:
+    root: Final = env_dir.resolve()
+    for name in (dist / "top_level.txt").read_text(encoding="utf-8").splitlines():
+        entry = dist.parent / name
         if root not in entry.resolve().parents:
             continue
         safe_delete(entry)
-    for name in (dist / "RECORD").read_text(encoding="utf-8").splitlines():
-        entry = dist.parent / name.split(",")[0]
-        if root in entry.resolve().parents:
-            entry.unlink()
-            remove_file(entry)
