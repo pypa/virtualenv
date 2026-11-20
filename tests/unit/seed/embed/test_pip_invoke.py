@@ -260,11 +260,14 @@ def _interrupt_pip_seed(tmp_path: Path) -> dict[str, int | bool]:
         while monotonic() < deadline:
             assert not select.select([parent_fd], [], [], 0)[0], "virtualenv exited before starting pip"
             for child in Path(f"/proc/{parent.pid}/task/{parent.pid}/children").read_text(encoding="ascii").split():
-                args = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
-                if b"--find-links" in args:
-                    child_fd = os.pidfd_open(int(child))
-                    folder = Path(os.fsdecode(args[args.index(b"--find-links") + 1]))
-                    break
+                try:
+                    args = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
+                    if b"--find-links" in args:
+                        child_fd = os.pidfd_open(int(child))
+                        folder = Path(os.fsdecode(args[args.index(b"--find-links") + 1]))
+                        break
+                except (FileNotFoundError, ProcessLookupError):
+                    continue
             if child_fd is not None:
                 break
             select.select([parent_fd], [], [], 0.01)
