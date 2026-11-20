@@ -729,6 +729,80 @@ def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
     assert result.stdout == "(a\\\\\\\\b\\$c\\`d) __END__"
 
 
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    ("source_locale", "draw_locale"),
+    [
+        pytest.param("C.UTF-8", "C.UTF-8", id="utf8"),
+        pytest.param("zh_CN.gbk", "zh_CN.gbk", id="gbk"),
+        pytest.param("zh_CN.gb18030", "zh_CN.gb18030", id="gb18030"),
+        pytest.param("C.UTF-8", "zh_CN.gbk", id="utf8-to-gbk"),
+        pytest.param("C.UTF-8", "zh_CN.gb18030", id="utf8-to-gb18030"),
+        pytest.param("zh_CN.gbk", "C.UTF-8", id="gbk-to-utf8"),
+    ],
+)
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("中$(printf X)", id="dollar"),
+        pytest.param("中`printf X`", id="backtick"),
+        pytest.param(r"中\more", id="backslash"),
+    ],
+)
+def test_bash_prompt_escaping_across_locales(tmp_path: Path, source_locale: str, draw_locale: str, prompt: str) -> None:
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            '. "$1"; LC_ALL=$2; printf %s "${PS1@P}"',
+            "test",
+            str(generate_script("bash", tmp_path / "env", prompt)),
+            draw_locale,
+        ],
+        env=_locale_env(source_locale, draw_locale),
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.replace(b"\001\002", b""), result.stderr) == (
+        0,
+        f"({prompt}) ".encode(),
+        b"",
+    )
+
+
+def _locale_env(*locales: str) -> dict[str, str]:
+    for locale in locales:
+        env = {**os.environ, "LC_ALL": locale}
+        if subprocess.run(["locale", "charmap"], env=env, capture_output=True, check=False).returncode:
+            pytest.skip(f"{locale} is unavailable")
+    return {**os.environ, "LC_ALL": locales[0]}
+
+
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+@pytest.mark.parametrize("locale", ["C.UTF-8", "zh_CN.gbk", "zh_CN.gb18030"])
+def test_bash_long_prompt_activates_promptly(tmp_path: Path, locale: str) -> None:
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            '. "$1"; printf %s "$PS1"',
+            "test",
+            str(generate_script("bash", tmp_path / "env", "a" * 4000)),
+        ],
+        env=_locale_env(locale),
+        capture_output=True,
+        timeout=5,
+        check=True,
+    )
+
+    assert result.stdout == b"(" + b"a" * 4000 + b") "
+
+
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 @pytest.mark.parametrize(
     "child",

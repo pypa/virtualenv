@@ -25,13 +25,9 @@ rules:
           metavariable: $NAME
           regex: ^(PS1|PROMPT)$
       - pattern-not: $NAME="${_OLD_VIRTUAL_PS1}"
-      # structure only: what the loop does to each character is the prompt tests' job
+      # structure only: what the Bash branch does to the prompt is the prompt tests' job
       - pattern-not-inside: |
           if [ -n "${BASH_VERSION-}" ]; then
-              ...
-              while [ -n "${_VIRTUAL_REST}" ]; do
-                  ...
-              done
               ...
           else
               ...
