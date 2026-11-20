@@ -86,7 +86,7 @@ def _main() -> None:
 def _newest_tag(token: str, repository: str, *, prerelease: bool) -> str:
     owner, name = repository.split("/")
     # the REST release listing of RustPython/RustPython comes back empty, so query GraphQL, which sees its releases
-    query: Final = """
+    query: Final[str] = """
 query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     latestRelease { tagName }
@@ -129,7 +129,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
 
 
 def _sha256(repository: str, asset_id: int) -> str:
-    digest: Final = hashlib.sha256()
+    digest = hashlib.sha256()
     # no token: the API redirects to a signed storage URL, and urllib would forward the Authorization header there
     with urlopen(
         Request(

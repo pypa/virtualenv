@@ -178,7 +178,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
         f"{code}"
     )
     # drop the implicit working-directory entry before anything else is imported, as sys is built in
-    cmd: Final = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
+    cmd: Final[list[str]] = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}
@@ -754,7 +754,7 @@ def _drop_yanked(
 ) -> list[NewVersion]:
     # pip skips yanked releases, so a logged one above its newest offer or below a new find may be yanked; the
     # bundled wheel beats any release at or below it
-    above_bundle: Final = {
+    above_bundle: Final[set[str]] = {
         version.filename
         for version in update_versions
         if embed_version is None or version.wheel.parsed_version > embed_version

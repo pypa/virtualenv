@@ -18,7 +18,7 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[
 
 def _run_as_module() -> None:
     try:
-        current: Final = os.getcwd()
+        current: Final[str] = os.getcwd()
     except OSError:
         pass
     else:

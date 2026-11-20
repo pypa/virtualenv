@@ -106,7 +106,7 @@ class Creator(ABC):
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
     def _args(self) -> list[tuple[str, str | bool]]:
-        dest: Final = str(self.dest)
+        dest: Final[str] = str(self.dest)
         return [
             ("dest", dest if dest.isprintable() else repr(dest)),
             ("clear", self.clear),
@@ -208,12 +208,12 @@ class Creator(ABC):
                 values: str | Sequence[str] | None,
                 option_string: str | None = None,
             ) -> None:
-                raw: Final = cast("str", values)
+                raw: Final[str] = cast("str", values)
                 try:
                     namespace.dest = cls.validate_dest(raw)
                 except ArgumentTypeError as exception:
                     parser.error(f"argument {option_string or self.dest}: {exception}")
-                destination: Final = Path(os.path.abspath(raw))
+                destination: Final[Path] = Path(os.path.abspath(raw))
                 namespace.dest_is_link = destination.is_symlink() or (
                     os.name == "nt"
                     and destination.exists()

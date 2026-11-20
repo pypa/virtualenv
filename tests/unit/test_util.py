@@ -32,7 +32,9 @@ if os.name == "nt":
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
+
+    from virtualenv.app_data import AppData
 
 
 _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
@@ -53,12 +55,12 @@ def test_package_api_definition_modules() -> None:
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize("env", _DEFAULT_APP_DATA_ENVS)
 def test_app_data_default_permissions_new(app_data_default: Path, env: dict[str, str]) -> None:
-    data: Final = _make_app_data_with_zero_umask(env)
+    data: Final[AppDataDiskFolder] = _make_app_data_with_zero_umask(env)
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o700)
 
 
 def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppDataDiskFolder:
-    previous: Final = os.umask(0)
+    previous: Final[int] = os.umask(0)
     try:
         return make_app_data(None, read_only=False, env=env)
     finally:
@@ -70,21 +72,21 @@ def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppData
 def test_app_data_default_permissions_existing(app_data_default: Path, env: dict[str, str]) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o777)
-    data: Final = _make_app_data_with_zero_umask(env)
+    data: Final[AppDataDiskFolder] = _make_app_data_with_zero_umask(env)
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o755)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 def test_app_data_argument_permissions(tmp_path: Path) -> None:
     tmp_path.chmod(0o775)
-    data: Final = make_app_data(str(tmp_path), read_only=False, env={})
+    data: Final[AppData] = make_app_data(str(tmp_path), read_only=False, env={})
     assert (str(data), tmp_path.stat().st_mode & 0o777) == (str(tmp_path), 0o775)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 def test_app_data_environment_permissions(tmp_path: Path) -> None:
     tmp_path.chmod(0o775)
-    data: Final = make_app_data(None, read_only=False, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(tmp_path)})
+    data: Final[AppData] = make_app_data(None, read_only=False, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(tmp_path)})
     assert (str(data), tmp_path.stat().st_mode & 0o777) == (str(tmp_path), 0o775)
 
 
@@ -98,13 +100,13 @@ def test_app_data_read_only_does_not_create(app_data_default: Path) -> None:
 def test_app_data_read_only_permissions(app_data_default: Path) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o775)
-    data: Final = make_app_data(None, read_only=True, env={})
+    data: Final[AppData] = make_app_data(None, read_only=True, env={})
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o775)
 
 
 def test_app_data_default_writable(app_data_default: Path) -> None:
-    data: Final = make_app_data(None, read_only=False, env={})
-    target: Final = app_data_default / "entry"
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    target: Final[Path] = app_data_default / "entry"
     target.write_text("cached", encoding="utf-8")
     assert (str(data), target.read_text(encoding="utf-8"), data.transient) == (
         str(app_data_default),
@@ -118,7 +120,7 @@ def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mock
     app_data_default.mkdir()
     app_data_default.chmod(0o777)
     mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
-    data: Final = make_app_data(None, read_only=False, env={})
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
     try:
         assert isinstance(data, TempAppData)
         assert str(data) != str(app_data_default)
@@ -130,7 +132,7 @@ def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mock
 def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture, writable: bool) -> None:
     mocker.patch("virtualenv.app_data.os.makedirs", autospec=True, side_effect=PermissionError)
     mocker.patch("virtualenv.app_data.os.access", autospec=True, return_value=writable)
-    data: Final = make_app_data(str(tmp_path), read_only=False, env={})
+    data: Final[AppData] = make_app_data(str(tmp_path), read_only=False, env={})
     try:
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
     finally:
@@ -140,7 +142,7 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
 @pytest.fixture
 def app_data_default(tmp_path: Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)  # a blank override resolved to the working directory, so keep that inside tmp_path
-    folder: Final = tmp_path / "cache"
+    folder: Final[Path] = tmp_path / "cache"
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
     return folder
@@ -167,28 +169,28 @@ def test_copy_uses_current_umask(
     tmp_path: Path, layout: tuple[str, str], source_mode: int, mask: int, expected: int
 ) -> None:
     source_rel, result_rel = layout
-    source: Final = tmp_path / "source"
+    source: Final[Path] = tmp_path / "source"
     source.mkdir()
-    payload: Final = source / "entry"
+    payload: Final[Path] = source / "entry"
     payload.write_bytes(b"copied bytes")
     payload.chmod(source_mode)
-    destination: Final = tmp_path / "destination"
-    previous: Final = os.umask(mask)
+    destination: Final[Path] = tmp_path / "destination"
+    previous: Final[int] = os.umask(mask)
     try:
         copy(source / source_rel, destination)
     finally:
         os.umask(previous)
-    result: Final = destination / result_rel
+    result: Final[Path] = destination / result_rel
     assert (result.read_bytes(), result.stat().st_mode & 0o777) == (b"copied bytes", expected)
 
 
 @pytest.mark.parametrize("layout", [pytest.param(("entry", ""), id="file"), pytest.param(("", "entry"), id="tree")])
 def test_copy_replaces_contents(tmp_path: Path, layout: tuple[str, str]) -> None:
     source_rel, result_rel = layout
-    source: Final = tmp_path / "source"
+    source: Final[Path] = tmp_path / "source"
     source.mkdir()
     (source / "entry").write_bytes(b"new")
-    destination: Final = tmp_path / "destination"
+    destination: Final[Path] = tmp_path / "destination"
     destination.write_bytes(b"old")
     copy(source / source_rel, destination)
     assert (destination / result_rel).read_bytes() == b"new"
@@ -204,15 +206,15 @@ def test_copy_replaces_read_only_file(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
-    source: Final = tmp_path / "source"
+    source: Final[Path] = tmp_path / "source"
     source.mkdir()
-    target: Final = source / "target"
+    target: Final[Path] = source / "target"
     target.mkdir()
     (target / "inside.txt").write_text("content", encoding="utf-8")
     (source / "link_to_file").symlink_to(target / "inside.txt")
     (source / "link_to_dir").symlink_to(target, target_is_directory=True)
 
-    destination: Final = tmp_path / "destination"
+    destination: Final[Path] = tmp_path / "destination"
     copy(source, destination)
 
     assert (
@@ -224,12 +226,12 @@ def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 @pytest.mark.parametrize("target", [pytest.param(".", id="itself"), pytest.param("..", id="above-source")])
 def test_copy_does_not_expand_a_symlinked_directory_pointing_at_a_parent(tmp_path: Path, target: str) -> None:
-    source: Final = tmp_path / "source"
+    source: Final[Path] = tmp_path / "source"
     source.mkdir()
     (source / "entry.txt").write_text("content", encoding="utf-8")
     (source / "loop").symlink_to(target, target_is_directory=True)
 
-    destination: Final = tmp_path / "destination"
+    destination: Final[Path] = tmp_path / "destination"
     copy(source, destination)
 
     assert sorted(i.name for i in destination.iterdir()) == ["entry.txt"]
@@ -237,7 +239,7 @@ def test_copy_does_not_expand_a_symlinked_directory_pointing_at_a_parent(tmp_pat
 
 @pytest.mark.skipif(sys.platform != "linux", reason="minimal Linux builds can omit ctypes")
 def test_command_line_import_without_ctypes() -> None:
-    result: Final = run_cmd([
+    result: Final[tuple[int, str, str]] = run_cmd([
         sys.executable,
         "-c",
         (
@@ -260,12 +262,12 @@ def test_command_line_import_without_ctypes() -> None:
 def test_safe_delete_reports_attribute_errors(
     tmp_path: Path, mocker: MockerFixture, operation: str, failure_return: Callable[[], int]
 ) -> None:
-    folder: Final = tmp_path / "folder"
+    folder: Final[Path] = tmp_path / "folder"
     folder.mkdir()
-    source: Final = folder / "read-only"
+    source: Final[Path] = folder / "read-only"
     source.touch()
     source.chmod(S_IREAD)
-    kernel: Final = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
     mocker.patch.object(kernel, operation, autospec=True, return_value=failure_return())
     mocker.patch("ctypes.WinDLL", autospec=True, return_value=kernel)
     mocker.patch("ctypes.get_last_error", autospec=True, return_value=5)
@@ -277,14 +279,16 @@ def test_safe_delete_reports_attribute_errors(
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_safe_delete_does_not_chmod_link_target(tmp_path: Path, mocker: MockerFixture) -> None:
-    source: Final = tmp_path / "read-only"
+    source: Final[Path] = tmp_path / "read-only"
     source.write_text("unchanged", encoding="utf-8")
     source.chmod(S_IREAD)
-    mode: Final = source.stat().st_mode
-    folder: Final = tmp_path / "folder"
+    mode: Final[int] = source.stat().st_mode
+    folder: Final[Path] = tmp_path / "folder"
     folder.mkdir()
     (folder / "link").symlink_to(source)
-    unlink: Final = mocker.patch("os.unlink", autospec=True, side_effect=PermissionError(EACCES, "entry is busy"))
+    unlink: Final[MockType] = mocker.patch(
+        "os.unlink", autospec=True, side_effect=PermissionError(EACCES, "entry is busy")
+    )
     try:
         with pytest.raises(PermissionError, match="entry is busy"):
             safe_delete(folder)
@@ -294,13 +298,13 @@ def test_safe_delete_does_not_chmod_link_target(tmp_path: Path, mocker: MockerFi
 
 
 def test_write_file_creates_missing_file(tmp_path: Path) -> None:
-    path: Final = tmp_path / "generated"
+    path: Final[Path] = tmp_path / "generated"
     write_file(path, b"generated")
     assert path.read_bytes() == b"generated"
 
 
 def test_write_file_replaces_content(tmp_path: Path) -> None:
-    path: Final = tmp_path / "generated"
+    path: Final[Path] = tmp_path / "generated"
     path.write_bytes(b"previous")
     write_file(path, b"generated")
     assert path.read_bytes() == b"generated"
@@ -326,20 +330,20 @@ def test_write_file_reports_read_only_directory(tmp_path: Path) -> None:
 
 
 def test_environment_directories_create_nested_path(tmp_path: Path) -> None:
-    folder: Final = tmp_path / "env" / "lib" / "python"
+    folder: Final[Path] = tmp_path / "env" / "lib" / "python"
     ensure_within(tmp_path / "env", folder)
     assert folder.is_dir()
 
 
 def test_environment_directories_keep_existing_nested_path(tmp_path: Path) -> None:
-    folder: Final = tmp_path / "env" / "lib" / "python"
+    folder: Final[Path] = tmp_path / "env" / "lib" / "python"
     folder.mkdir(parents=True)
     ensure_within(tmp_path / "env", folder)
     assert folder.is_dir()
 
 
 def test_environment_directories_reject_regular_file(tmp_path: Path) -> None:
-    folder: Final = tmp_path / "file"
+    folder: Final[Path] = tmp_path / "file"
     folder.touch()
     with pytest.raises(NotADirectoryError, match="not a real directory"):
         ensure_within(tmp_path, folder)
@@ -354,8 +358,8 @@ def test_environment_directories_reject_parent_components(tmp_path: Path) -> Non
 def test_environment_directories_remove_links_to_missing_target(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    target: Final = tmp_path / "stored"
-    link: Final = tmp_path / "link"
+    target: Final[Path] = tmp_path / "stored"
+    link: Final[Path] = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
     ensure_within(tmp_path, link / "nested")
     assert (
@@ -370,9 +374,9 @@ def test_environment_directories_remove_links_to_missing_target(
 def test_environment_directories_remove_links_to_existing_target(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    target: Final = tmp_path / "stored"
+    target: Final[Path] = tmp_path / "stored"
     target.mkdir()
-    link: Final = tmp_path / "link"
+    link: Final[Path] = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
     ensure_within(tmp_path, link / "nested")
     assert (
@@ -385,9 +389,9 @@ def test_environment_directories_remove_links_to_existing_target(
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
 def test_environment_directories_report_replaced_junction(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-    target: Final = tmp_path / "stored"
+    target: Final[Path] = tmp_path / "stored"
     target.mkdir()
-    link: Final = tmp_path / "link"
+    link: Final[Path] = tmp_path / "link"
     subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True)
     ensure_within(tmp_path, link)
     assert (link.resolve(), f"replace environment directory junction {link}" in caplog.text) == (link, True)
@@ -444,7 +448,7 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
     ],
 )
 def test_safe_delete_hands_rmtree_the_extended_length_path(mocker: MockerFixture, given: str, expected: str) -> None:
-    rmtree: Final = mocker.patch("shutil.rmtree", autospec=True)
+    rmtree: Final[MockType] = mocker.patch("shutil.rmtree", autospec=True)
 
     safe_delete(Path(given))
 
@@ -453,11 +457,11 @@ def test_safe_delete_hands_rmtree_the_extended_length_path(mocker: MockerFixture
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows MAX_PATH")
 def test_safe_delete_removes_files_past_max_path(tmp_path: Path) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     # a seed image built through its short path holds files that only its long path reaches, past MAX_PATH
-    deep: Final = Path(f"\\\\?\\{target}", "d" * 120, "e" * 120)
+    deep: Final[Path] = Path(f"\\\\?\\{target}", "d" * 120, "e" * 120)
     deep.mkdir(parents=True)
-    cached: Final = deep / "wheel.py"
+    cached: Final[Path] = deep / "wheel.py"
     cached.write_text("cached", encoding="utf-8")
     cached.chmod(S_IREAD)
 
@@ -486,9 +490,9 @@ _DIRECTORY_LINKS: Final[list[pytest.ParameterSet]] = [
 
 @pytest.fixture
 def kept(tmp_path: Path) -> Path:
-    outside: Final = tmp_path / "outside"
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
-    kept: Final = outside / "kept.txt"
+    kept: Final[Path] = outside / "kept.txt"
     kept.write_text("kept", encoding="utf-8")
     kept.chmod(S_IREAD)
     return kept
@@ -498,7 +502,7 @@ def kept(tmp_path: Path) -> Path:
 def test_safe_delete_removes_a_directory_link_without_following_it(
     tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
 ) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
     make_link(target / "link", kept.parent)
 
@@ -511,7 +515,7 @@ def test_safe_delete_removes_a_directory_link_without_following_it(
 def test_safe_delete_refuses_a_directory_link_as_the_root(
     tmp_path: Path, kept: Path, make_link: Callable[[Path, Path], None]
 ) -> None:
-    link: Final = tmp_path / "link"
+    link: Final[Path] = tmp_path / "link"
     make_link(link, kept.parent)
 
     with pytest.raises(OSError) as raised:  # ruff: ignore[pytest-raises-too-broad] # str() differs on POSIX
@@ -793,10 +797,10 @@ def test_cache_dir_migrates_contents(
     old_dir_value: Callable[[Path], str],
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.mkdir()
     (old_dir / "test.txt").write_text("hello", encoding="utf-8")
-    new_dir: Final = tmp_path / new_dir_rel
+    new_dir: Final[Path] = tmp_path / new_dir_rel
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch(
         "virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=old_dir_value(old_dir)
@@ -819,11 +823,11 @@ def test_cache_dir_nested_migration_keeps_parent(nested_cache_dirs: tuple[Path, 
     [pytest.param("cache", id="sibling"), pytest.param("data/Cache", id="nested")],
 )
 def test_cache_migration_preserves_config(tmp_path: Path, mocker: MockerFixture, cache_path: str) -> None:
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.mkdir()
     (old_dir / "virtualenv.ini").write_text("[virtualenv]\nno_periodic_update = true\n", encoding="utf-8")
     (old_dir / "wheel.txt").write_text("cached", encoding="utf-8")
-    new_dir: Final = tmp_path / cache_path
+    new_dir: Final[Path] = tmp_path / cache_path
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
 
@@ -836,11 +840,11 @@ def test_cache_migration_preserves_config(tmp_path: Path, mocker: MockerFixture,
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
 def test_sibling_cache_migration_preserves_shared_mode(tmp_path: Path, mocker: MockerFixture) -> None:
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.mkdir()
     old_dir.chmod(0o2775)
     (old_dir / "virtualenv.ini").touch()
-    new_dir: Final = tmp_path / "cache"
+    new_dir: Final[Path] = tmp_path / "cache"
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
 
@@ -853,21 +857,21 @@ def test_failed_config_cache_migration_reset_keeps_config(
     nested_cache_dirs: tuple[Path, Path], mocker: MockerFixture
 ) -> None:
     old_dir, new_dir = nested_cache_dirs
-    config: Final = old_dir / "virtualenv.ini"
+    config: Final[Path] = old_dir / "virtualenv.ini"
     config.write_text("[virtualenv]\n", encoding="utf-8")
     mocker.patch("virtualenv.app_data.cache_migration.shutil.move", autospec=True, side_effect=PermissionError)
 
-    app_data: Final = make_app_data(None, read_only=False, env={})
+    app_data: Final[AppData] = make_app_data(None, read_only=False, env={})
     app_data.reset()
 
     assert (str(app_data), config.read_text(encoding="utf-8")) == (str(new_dir), "[virtualenv]\n")
 
 
 def test_cache_migration_resumes_into_existing_entries(tmp_path: Path, mocker: MockerFixture) -> None:
-    old_dir: Final = tmp_path / "data"
-    new_dir: Final = tmp_path / "cache"
-    old_house: Final = old_dir / "wheel/house"
-    new_house: Final = new_dir / "wheel/house"
+    old_dir: Final[Path] = tmp_path / "data"
+    new_dir: Final[Path] = tmp_path / "cache"
+    old_house: Final[Path] = old_dir / "wheel/house"
+    new_house: Final[Path] = new_dir / "wheel/house"
     old_house.mkdir(parents=True)
     new_house.mkdir(parents=True)
     (old_dir / "virtualenv.ini").write_text("[virtualenv]\n", encoding="utf-8")
@@ -879,7 +883,7 @@ def test_cache_migration_resumes_into_existing_entries(tmp_path: Path, mocker: M
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
 
-    app_data: Final = make_app_data(None, read_only=False, env={})
+    app_data: Final[AppData] = make_app_data(None, read_only=False, env={})
 
     assert (
         str(app_data),
@@ -891,8 +895,8 @@ def test_cache_migration_resumes_into_existing_entries(tmp_path: Path, mocker: M
 
 
 def test_read_only_cache_migration_uses_legacy_dir_on_lock_error(tmp_path: Path, mocker: MockerFixture) -> None:
-    old_dir: Final = tmp_path / "data"
-    new_dir: Final = tmp_path / "cache"
+    old_dir: Final[Path] = tmp_path / "data"
+    new_dir: Final[Path] = tmp_path / "cache"
     old_dir.mkdir()
     (old_dir / "virtualenv.ini").touch()
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
@@ -906,17 +910,17 @@ def test_read_only_cache_migration_uses_legacy_dir_on_lock_error(tmp_path: Path,
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_config_cache_migration_leaves_linked_data_dir(tmp_path: Path, mocker: MockerFixture) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
     (target / "virtualenv.ini").write_text("[virtualenv]\n", encoding="utf-8")
     (target / "wheel.txt").write_text("cached", encoding="utf-8")
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.symlink_to(target, target_is_directory=True)
-    new_dir: Final = tmp_path / "cache"
+    new_dir: Final[Path] = tmp_path / "cache"
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
 
-    app_data: Final = make_app_data(None, read_only=False, env={})
+    app_data: Final[AppData] = make_app_data(None, read_only=False, env={})
 
     assert (
         str(app_data),
@@ -929,16 +933,16 @@ def test_config_cache_migration_leaves_linked_data_dir(tmp_path: Path, mocker: M
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_linked_cache_migration_replaces_target_link(tmp_path: Path, mocker: MockerFixture) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
     (target / "virtualenv.ini").touch()
     (target / "wheel.txt").write_text("cached", encoding="utf-8")
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.symlink_to(target, target_is_directory=True)
-    new_dir: Final = tmp_path / "cache"
+    new_dir: Final[Path] = tmp_path / "cache"
     new_dir.mkdir()
     (new_dir / ".virtualenv-migration-incomplete").touch()
-    outside: Final = tmp_path / "outside.txt"
+    outside: Final[Path] = tmp_path / "outside.txt"
     outside.write_text("keep", encoding="utf-8")
     (new_dir / "wheel.txt").symlink_to(outside)
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
@@ -967,7 +971,7 @@ def test_cache_dir_nested_migration_failure_selection(
     cleanup_error: OSError | None,
     retry_index: int,
 ) -> None:
-    old_dir: Final = nested_cache_dirs[0]
+    old_dir: Final[Path] = nested_cache_dirs[0]
     mocker.patch(
         "virtualenv.app_data.cache_migration.shutil.move",
         autospec=True,
@@ -1007,7 +1011,7 @@ def test_cache_dir_interrupted_migration_keeps_old_location(
 
 
 def test_cache_dir_existing_nested_cache_stays_selected(nested_cache_dirs: tuple[Path, Path]) -> None:
-    new_dir: Final = nested_cache_dirs[1]
+    new_dir: Final[Path] = nested_cache_dirs[1]
     new_dir.mkdir()
 
     assert str(make_app_data(None, read_only=False, env={})) == str(new_dir)
@@ -1015,11 +1019,11 @@ def test_cache_dir_existing_nested_cache_stays_selected(nested_cache_dirs: tuple
 
 @pytest.fixture
 def nested_cache_dirs(tmp_path: Path, mocker: MockerFixture) -> tuple[Path, Path]:
-    old_dir: Final = tmp_path / "data"
+    old_dir: Final[Path] = tmp_path / "data"
     old_dir.mkdir()
     (old_dir / "one.txt").write_text("one", encoding="utf-8")
     (old_dir / "two.txt").write_text("two", encoding="utf-8")
-    new_dir: Final = old_dir / "Cache"
+    new_dir: Final[Path] = old_dir / "Cache"
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
     return old_dir, new_dir
@@ -1050,7 +1054,7 @@ def test_zipapp_extract_uses_destination_name(fake_zipapp_root: Path, tmp_path: 
 def test_zipapp_extract_keeps_previous_file_on_copy_error(
     fake_zipapp_root: Path, tmp_path: Path, mocker: MockerFixture
 ) -> None:
-    dest: Final = tmp_path / "extracted.txt"
+    dest: Final[Path] = tmp_path / "extracted.txt"
     dest.write_text("previous", encoding="utf-8")
     mocker.patch("zipfile.shutil.copyfileobj", autospec=True, side_effect=OSError(EACCES, "copy failed"))
 
@@ -1090,7 +1094,7 @@ def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker:
     app_data_default.chmod(0o1777)
     mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
     mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
-    data: Final = make_app_data(None, read_only=False, env={})
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
     assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
         True,
         str(app_data_default),

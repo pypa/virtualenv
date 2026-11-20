@@ -38,16 +38,16 @@ def ensure_within(root: Path, path: Path) -> None:
     :raises NotADirectoryError: when a folder on the way is a link or a mount point instead of a real directory
 
     """
-    parts: Final = path.relative_to(root).parts
+    parts: Final[tuple[str, ...]] = path.relative_to(root).parts
     if ".." in parts:
-        msg: Final = f"environment directory {path} must remain inside {root}"
+        msg: Final[str] = f"environment directory {path} must remain inside {root}"
         raise ValueError(msg)
     ensure_dir(root)
     folder = root
     for part in parts:
         folder /= part
         try:
-            metadata: Final = folder.lstat()
+            metadata: Final[os.stat_result] = folder.lstat()
         except FileNotFoundError:
             pass
         else:
@@ -60,11 +60,11 @@ def ensure_within(root: Path, path: Path) -> None:
         try:
             folder.mkdir()
         except FileExistsError:
-            created: Final = folder.lstat()
+            created: Final[os.stat_result] = folder.lstat()
             if not S_ISDIR(created.st_mode) or (
                 os.name == "nt" and created.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT
             ):
-                msg: Final = f"environment directory is not a real directory: {folder}"
+                msg: Final[str] = f"environment directory is not a real directory: {folder}"
                 raise NotADirectoryError(msg) from None
 
 
@@ -185,16 +185,16 @@ def copy(src: Path, dest: Path) -> None:
 
 def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
     for root, dirnames, files in os.walk(src):
-        dest_dir: Final = dest / os.path.relpath(root, src)
+        dest_dir: Final[Path] = dest / os.path.relpath(root, src)
         dest_dir.mkdir(parents=True, exist_ok=True)
         for name in files:
             _copy_file(Path(root) / name, dest_dir / name)
         for name in dirnames:
-            link: Final = Path(root) / name
+            link: Final[Path] = Path(root) / name
             if not link.is_symlink():
                 continue
             # os.walk does not descend into a symlinked directory, so its content is copied the way a symlinked file is
-            target: Final = link.resolve()
+            target: Final[Path] = link.resolve()
             if any(ancestor.is_relative_to(target) for ancestor in ancestors):
                 _LOGGER.warning("skip symlinked directory %s, it points at one of its own parents", link)
                 continue
@@ -203,8 +203,8 @@ def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
 
 def _copy_file(src: Path, dest: Path) -> None:
     _ensure_safe_to_do(src, dest)
-    mode: Final = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
-    flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
+    mode: Final[int] = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
+    flags: Final[int] = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
     # Creation applies the current umask without changing the process-wide setting.
     with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
         shutil.copyfileobj(source, target, length=1024 * 1024)

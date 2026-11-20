@@ -14,7 +14,7 @@ from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
 
 def test_relative_path(session_app_data, monkeypatch) -> None:
@@ -127,7 +127,7 @@ def test_cli_replaces_configured_interpreters(  # ruff:ignore[too-many-arguments
         f"[virtualenv]\n{dest} =\n    configured-1\n    configured-2\n", encoding="utf-8"
     )
     monkeypatch.setenv(variable.format(dest=dest.upper()), value.format(config=config))
-    get_interpreter: Final = mocker.patch(
+    get_interpreter: Final[MockType] = mocker.patch(
         "virtualenv.discovery.builtin.get_interpreter", autospec=True, return_value=None
     )
 

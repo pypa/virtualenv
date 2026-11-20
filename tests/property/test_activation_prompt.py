@@ -3,7 +3,7 @@ from __future__ import annotations
 import tempfile
 from itertools import product
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from hypothesis import given, settings
@@ -18,6 +18,9 @@ from prompt_matrix import (
     unavailable_mark,
 )
 
+if TYPE_CHECKING:
+    from prompt_matrix import Shell
+
 # each example launches the shell once per state and later action, so 60 PowerShell examples alone run past the suite's
 # 120 second per-test timeout
 pytestmark: Final[list[pytest.MarkDecorator]] = [pytest.mark.property, pytest.mark.timeout(900)]
@@ -31,10 +34,10 @@ def test_prompt_stays_data(shell: str, data: st.DataObject) -> None:
 
 
 def _check_every_state(shell: str, prompt: str) -> None:
-    spec: Final = SHELLS[shell]
+    spec: Final[Shell] = SHELLS[shell]
     with tempfile.TemporaryDirectory() as tmp:
-        root: Final = Path(tmp)
-        script: Final = generate_script(shell, root / "env", prompt)
+        root: Final[Path] = Path(tmp)
+        script: Final[Path] = generate_script(shell, root / "env", prompt)
         for state, action in product(spec.states, spec.actions):
             if unavailable(shell, action):
                 continue
@@ -45,8 +48,8 @@ def _check_every_state(shell: str, prompt: str) -> None:
 
 
 def _prompt_values(shell: str) -> st.SearchStrategy[str]:
-    common: Final = ["\\", "x", "${", "}", "'", '"', "%", "!", "(", ")", ";", "é"]
-    tokens: Final = {
+    common: Final[list[str]] = ["\\", "x", "${", "}", "'", '"', "%", "!", "(", ")", ";", "é"]
+    tokens: Final[dict[str, list[str]]] = {
         "bash": [*common, "$(touch PWNED)", "`touch PWNED`"],
         "zsh": [*common, "$(touch PWNED)", "`touch PWNED`"],
         "fish": [*common, "$(touch PWNED)", "(touch PWNED)", "\\'"],
@@ -68,7 +71,7 @@ def _prompt_values(shell: str) -> st.SearchStrategy[str]:
 
 @pytest.mark.parametrize("shell", [pytest.param(shell, marks=unavailable_mark(shell, "none")) for shell in SHELLS])
 def test_prompt_seeds_stay_data(shell: str) -> None:
-    seeds: Final = {
+    seeds: Final[dict[str, list[str]]] = {
         "bash": [
             PROMPT_PAYLOADS["backslash-dollar"],
             PROMPT_PAYLOADS["two-backslashes-dollar"],

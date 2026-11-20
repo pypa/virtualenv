@@ -48,8 +48,8 @@ def windows_extended_path(path: str) -> str:
 if os.name == "nt":
 
     def clear_readonly(path: str) -> None:
-        kernel: Final = ctypes.WinDLL("kernel32", use_last_error=True)
-        create: Final = kernel.CreateFileW
+        kernel: Final[ctypes.WinDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+        create = kernel.CreateFileW
         create.argtypes = [
             wintypes.LPCWSTR,
             wintypes.DWORD,
@@ -60,25 +60,25 @@ if os.name == "nt":
             wintypes.HANDLE,
         ]
         create.restype = wintypes.HANDLE
-        get_info: Final = kernel.GetFileInformationByHandleEx
+        get_info = kernel.GetFileInformationByHandleEx
         get_info.argtypes = [wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD]
         get_info.restype = wintypes.BOOL
-        set_info: Final = kernel.SetFileInformationByHandle
+        set_info = kernel.SetFileInformationByHandle
         set_info.argtypes = get_info.argtypes
         set_info.restype = wintypes.BOOL
-        close: Final = kernel.CloseHandle
+        close = kernel.CloseHandle
         close.argtypes = [wintypes.HANDLE]
         close.restype = wintypes.BOOL
         # Open the entry itself and deny replacement while changing its read-only attribute.
-        handle: Final = create(path, 0x180, 0x3, None, 3, 0x02200000, None)
+        handle: Final[int | None] = create(path, 0x180, 0x3, None, 3, 0x02200000, None)
         if handle == wintypes.HANDLE(-1).value:
             raise ctypes.WinError(ctypes.get_last_error())
         try:
-            info: Final = _FileBasicInfo()
+            info: Final[_FileBasicInfo] = _FileBasicInfo()
             if not get_info(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
                 raise ctypes.WinError(ctypes.get_last_error())
             if info.attributes & 0x400:
-                msg: Final = f"refusing to change attributes of a reparse point: {path}"
+                msg: Final[str] = f"refusing to change attributes of a reparse point: {path}"
                 raise OSError(msg)
             info.attributes = (info.attributes & ~0x1) or 0x80
             if not set_info(handle, 0, ctypes.byref(info), ctypes.sizeof(info)):
@@ -87,7 +87,7 @@ if os.name == "nt":
             close(handle)
 
     class _FileBasicInfo(ctypes.Structure):
-        _fields_: Final = [
+        _fields_: Final[list[tuple[str, type[ctypes.c_longlong | wintypes.DWORD]]]] = [
             ("creation", ctypes.c_longlong),
             ("access", ctypes.c_longlong),
             ("write", ctypes.c_longlong),

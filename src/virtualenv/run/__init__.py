@@ -37,6 +37,7 @@ from .plugin.seeders import SeederSelector as SeederSelector
 from .session import Session as Session
 
 if TYPE_CHECKING:
+    from argparse import Action
     from collections.abc import MutableMapping
 
     from .plugin.base import ComponentBuilder
@@ -167,7 +168,7 @@ def build_parser(
 
 def _validate_option_values(args: list[str] | None) -> None:
     # Staged parsing can act on later options before noticing that an earlier option lacks its value.
-    parser: Final = ArgumentParser(prog="virtualenv", add_help=False)
+    parser: Final[ArgumentParser] = ArgumentParser(prog="virtualenv", add_help=False)
     parser.add_argument("-v", "-q", action="count")
     for option in (
         "--app-data",
@@ -244,7 +245,7 @@ def load_app_data(
     options, _ = parser.parse_known_args(args, namespace=options)
 
     # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
-    app_data: Final = parser.add_argument(
+    app_data: Final[Action] = parser.add_argument(
         "--app-data",
         help="a data folder used as cache by the virtualenv",
         type=partial(make_app_data, read_only=options.read_only_app_data, env=options.env),

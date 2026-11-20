@@ -37,8 +37,8 @@ def cache_dir_with_migration(*, read_only: bool) -> str:
     :returns: the cache directory path
 
     """
-    new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
-    old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
+    new_dir: Final[str] = user_cache_dir(appname="virtualenv", appauthor="pypa")
+    old_dir: Final[str] = user_data_dir(appname="virtualenv", appauthor="pypa")
     if new_dir == old_dir:
         return new_dir
     if os.path.lexists(os.path.join(old_dir, _CONFIG_NAME)):
@@ -55,7 +55,7 @@ def cache_dir_with_migration(*, read_only: bool) -> str:
     if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
         _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
         try:
-            nested: Final = _is_nested_dir(new_dir, old_dir)
+            nested: Final[bool] = _is_nested_dir(new_dir, old_dir)
             if nested:
                 _migrate_entries(old_dir, new_dir, nested=True)
             else:
@@ -137,10 +137,10 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 
 
 def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: bool = False) -> None:
-    marker: Final = pathlib.Path(old_dir, _MIGRATION_MARKER)
+    marker: Final[pathlib.Path] = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
     os.makedirs(new_dir, mode=0o777 if nested else 0o700, exist_ok=True)
-    skipped_entries: Final = {_MIGRATION_MARKER}
+    skipped_entries: Final[set[str]] = {_MIGRATION_MARKER}
     if nested:
         skipped_entries.add(os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0])
     if keep_config:
@@ -165,7 +165,7 @@ def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: b
 
 
 def _preserve_cache_permissions(old_dir: str, new_dir: str) -> None:
-    old_info: Final = os.stat(old_dir)
+    old_info: Final[os.stat_result] = os.stat(old_dir)
     if os.stat(new_dir).st_gid != old_info.st_gid:
         os.chown(new_dir, -1, old_info.st_gid)
     os.chmod(new_dir, stat.S_IMODE(old_info.st_mode))

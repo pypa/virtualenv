@@ -15,7 +15,9 @@ from virtualenv.run import session_via_cli
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from virtualenv.create.creator import Creator
     from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
+    from virtualenv.run.session import Session
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -125,7 +127,7 @@ def test_ini_value_is_read_literally(tmp_path: Path, monkeypatch: pytest.MonkeyP
     config_file.write_text(f"[virtualenv]\nclear = True\nprompt = {prompt}\n", encoding="utf-8")
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
 
-    creator: Final = session_via_cli(["venv"]).creator
+    creator: Final[Creator] = session_via_cli(["venv"]).creator
     assert (creator.prompt, creator.clear) == (prompt, True)
 
 
@@ -134,6 +136,6 @@ def test_ini_activators_on_separate_lines(tmp_path: Path, monkeypatch: pytest.Mo
     custom_ini.write_text("[virtualenv]\nactivators =\n    bash\n    python\n", encoding="utf-8")
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(custom_ini))
 
-    session: Final = session_via_cli([str(tmp_path / "venv")])
+    session: Final[Session] = session_via_cli([str(tmp_path / "venv")])
 
     assert [type(activator).__name__ for activator in session.activators] == ["BashActivator", "PythonActivator"]

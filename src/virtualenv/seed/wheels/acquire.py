@@ -145,7 +145,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
         raise ValueError(msg)
     _check_version_spec(version_spec)
-    to_download: Final = f"{distribution}{version_spec or ''}"
+    to_download: Final[str] = f"{distribution}{version_spec or ''}"
     if to_download.lower().endswith((
         ".zip",
         ".whl",
@@ -171,11 +171,13 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     # This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
     # invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either
     # way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
-    verify_against_pypi: Final = not any(env.get(var) for var in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX"))
+    verify_against_pypi: Final[bool] = not any(
+        env.get(var) for var in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
+    )
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
-        cmd: Final = [
+        cmd: Final[list[str]] = [
             sys.executable,
             "-c",
             PIP_RUN,
@@ -191,17 +193,19 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
             staging,
             to_download,
         ]
-        process: Final = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
+        process: Final[Popen[str]] = Popen(
+            cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8"
+        )
         out, err = process.communicate()
         if process.returncode != 0:
             raise CalledProcessError(process.returncode, cmd, output=out, stderr=err)
-        result: Final = _downloaded_wheel(Path(staging), distribution, version_spec)
+        result: Final[Wheel] = _downloaded_wheel(Path(staging), distribution, version_spec)
         if verify_against_pypi:
             verify_wheel_digest(result)
         if not result.support_py(for_py_version):
             msg = f"downloaded wheel {result.name} does not support Python {for_py_version}"
             raise RuntimeError(msg)
-        destination: Final = to_folder / result.name
+        destination: Final[Path] = to_folder / result.name
         result.path.replace(destination)
         return Wheel(destination)
 
@@ -254,11 +258,11 @@ def pip_wheel_env_run(
 
 
 def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
-    files: Final = list(folder.iterdir())
+    files: Final[list[Path]] = list(folder.iterdir())
     if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
         msg = f"could not find downloaded wheel for {distribution}: expected one archive"
         raise RuntimeError(msg)
-    result: Final = Wheel.from_path(files[0])
+    result: Final[Wheel | None] = Wheel.from_path(files[0])
     if (
         result is None
         or canonicalize_name(result.distribution) != canonicalize_name(distribution)

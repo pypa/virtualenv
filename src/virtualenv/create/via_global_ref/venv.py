@@ -183,7 +183,7 @@ class Venv(ViaGlobalRefApi):
     def _check_line_boundaries(value: str) -> str:
         # stdlib venv writes the destination into pyvenv.cfg without escaping line boundaries.
         if collapse_line_boundaries(value) != value:
-            msg: Final = (
+            msg: Final[str] = (
                 f"destination {value!r} must not contain a line boundary as venv cannot record it in pyvenv.cfg"
             )
             raise ArgumentTypeError(msg)

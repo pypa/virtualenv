@@ -32,8 +32,10 @@ from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from importlib.metadata import PackagePath
+    from subprocess import CompletedProcess
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType, SpyType
 
     from virtualenv.run.session import Session
 
@@ -52,16 +54,16 @@ _PIP_EXE: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 def test_transient_seed_survives_cache_cleanup(
     tmp_path: Path, config_text: str, extra_env: dict[str, str], extra_args: list[str], unusable_cache: Path
 ) -> None:
-    config: Final = tmp_path / "virtualenv.ini"
+    config: Final[Path] = tmp_path / "virtualenv.ini"
     config.write_text(config_text, encoding="utf-8")
-    env: Final = {
+    env: Final[dict[str, str]] = {
         **os.environ,
         "VIRTUALENV_CONFIG_FILE": str(config),
         "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
         **extra_env,
     }
-    args: Final = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools", *extra_args]
-    session: Final = cli_run(args, env=env)
+    args: Final[list[str]] = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools", *extra_args]
+    session: Final[Session] = cli_run(args, env=env)
     assert (
         session.creator.app_data.transient,
         Path(str(session.creator.app_data)).exists(),
@@ -83,7 +85,7 @@ def test_transient_seed_reports_copy_fallback(
 
 @pytest.fixture
 def unusable_cache(tmp_path: Path) -> Path:
-    blocked: Final = tmp_path / "blocked"
+    blocked: Final[Path] = tmp_path / "blocked"
     blocked.touch()
     return blocked / "cache"
 
@@ -100,9 +102,9 @@ def unusable_cache(tmp_path: Path) -> Path:
 def test_seed_copies_when_symlinks_unsupported(
     tmp_path: Path, config_text: str, env_vars: dict[str, str], flags: tuple[str, ...]
 ) -> None:
-    config: Final = tmp_path / "virtualenv.ini"
+    config: Final[Path] = tmp_path / "virtualenv.ini"
     config.write_text(config_text, encoding="utf-8")
-    session: Final = cli_run(
+    session: Final[Session] = cli_run(
         [
             str(tmp_path / "env"),
             "--app-data",
@@ -113,7 +115,7 @@ def test_seed_copies_when_symlinks_unsupported(
         ],
         env={**os.environ, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
     )
-    pip: Final = session.creator.purelib / "pip"
+    pip: Final[Path] = session.creator.purelib / "pip"
     assert (
         session.creator.app_data.transient,
         pip.is_symlink(),
@@ -147,7 +149,7 @@ def symlinks_unsupported(mocker: MockerFixture) -> None:
 def test_seed_image_compiles_in_isolation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, where: str, name: str
 ) -> None:
-    cmd: Final = [
+    cmd: Final[list[str]] = [
         str(tmp_path / "env"),
         "--app-data",
         str(tmp_path / "cache"),
@@ -155,12 +157,12 @@ def test_seed_image_compiles_in_isolation(
         "--no-periodic-update",
         "--no-setuptools",
     ]
-    purelib: Final = cli_run([*cmd, "--without-pip"]).creator.purelib
-    marker: Final = tmp_path / "marker"
-    planted: Final = {"cwd": tmp_path, "purelib": purelib}[where] / name
+    purelib: Final[Path] = cli_run([*cmd, "--without-pip"]).creator.purelib
+    marker: Final[Path] = tmp_path / "marker"
+    planted: Final[Path] = {"cwd": tmp_path, "purelib": purelib}[where] / name
     planted.write_text(f"import pathlib; pathlib.Path({str(marker)!r}).touch()", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
-    session: Final = cli_run(cmd)
+    session: Final[Session] = cli_run(cmd)
     assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__.*.pyc"))
     assert not marker.exists()
 
@@ -177,13 +179,13 @@ def test_seed_image_compiles_in_isolation(
 def test_seed_metadata_cleanup_stays_inside_package(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, metadata_file: str, content: str
 ) -> None:
-    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
-    session: Final = cli_run(args, setup_logging=False)
-    purelib: Final = session.creator.purelib
-    markers: Final = [tmp_path / "keep.txt", session.creator.dest / "keep.txt", purelib / "keep.txt"]
+    args: Final[list[str]] = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    purelib: Final[Path] = session.creator.purelib
+    markers: Final[list[Path]] = [tmp_path / "keep.txt", session.creator.dest / "keep.txt", purelib / "keep.txt"]
     for marker in markers:
         marker.write_text("keep", encoding="utf-8")
-    dist_info: Final = next(purelib.glob("pip-*.dist-info"))
+    dist_info: Final[Path] = next(purelib.glob("pip-*.dist-info"))
     (dist_info / metadata_file).write_text(
         content.format(
             dest=session.creator.dest,
@@ -206,14 +208,14 @@ def test_seed_metadata_cleanup_stays_inside_package(
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_seed_metadata_unlinks_symlink_without_following(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
-    session: Final = cli_run(args, setup_logging=False)
-    outside: Final = tmp_path / "outside"
+    args: Final[list[str]] = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    outside: Final[Path] = tmp_path / "outside"
     outside.mkdir()
     (outside / "keep.txt").write_text("keep", encoding="utf-8")
-    link: Final = session.creator.purelib / "linked"
+    link: Final[Path] = session.creator.purelib / "linked"
     link.symlink_to(outside, target_is_directory=True)
-    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record: Final[Path] = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
     record.write_text(f"{record.read_text(encoding='utf-8')}\nlinked,,", encoding="utf-8")
     cli_run(args, setup_logging=False)
     assert (link.is_symlink(), (outside / "keep.txt").exists(), "skip removal of" in caplog.text) == (
@@ -235,7 +237,7 @@ def test_seed_metadata_unlinks_symlink_without_following(tmp_path: Path, caplog:
 def test_seed_metadata_keeps_reseeding_supported(
     tmp_path: Path, linked: bool, caplog: pytest.LogCaptureFixture
 ) -> None:
-    args: Final = [
+    args: Final[list[str]] = [
         str(tmp_path / "env"),
         "--pip",
         "embed",
@@ -243,8 +245,8 @@ def test_seed_metadata_keeps_reseeding_supported(
         *{True: ["--symlink-app-data"], False: []}[linked],
     ]
     cli_run(args, setup_logging=False)
-    session: Final = cli_run(args, setup_logging=False)
-    package: Final = session.creator.purelib / "pip"
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    package: Final[Path] = session.creator.purelib / "pip"
     assert ((package / "__init__.py").is_file(), package.is_symlink(), "skip removal of" in caplog.text) == (
         True,
         linked,
@@ -254,33 +256,34 @@ def test_seed_metadata_keeps_reseeding_supported(
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
-    session: Final = cli_run(args, setup_logging=False)
-    outside: Final = tmp_path / "outside" / "empty"
+    args: Final[list[str]] = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    outside: Final[Path] = tmp_path / "outside" / "empty"
     outside.mkdir(parents=True)
     (session.creator.purelib / "linked").symlink_to(outside.parent, target_is_directory=True)
-    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record: Final[Path] = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
     record.write_text(f"{record.read_text(encoding='utf-8')}\nlinked/empty/gone.txt,,", encoding="utf-8")
     cli_run(args, setup_logging=False)
     assert outside.is_dir()
 
 
 def test_seed_metadata_keeps_bytecode_of_dotted_module(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
-    session: Final = cli_run(args, setup_logging=False)
-    cache: Final = session.creator.purelib / "__pycache__"
+    args: Final[list[str]] = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    cache: Final[Path] = session.creator.purelib / "__pycache__"
     cache.mkdir(exist_ok=True)
     (session.creator.purelib / "foo.py").write_text("", encoding="utf-8")
-    own: Final = [cache / "foo.cpython-314.pyc", cache / "foo.cpython-314.opt-1.pyc"]
-    other: Final = cache / "foo.bar.cpython-314.pyc"
+    own: Final[list[Path]] = [cache / "foo.cpython-314.pyc", cache / "foo.cpython-314.opt-1.pyc"]
+    other: Final[Path] = cache / "foo.bar.cpython-314.pyc"
     for path in [*own, other]:
         path.write_bytes(b"")
-    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record: Final[Path] = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
     record.write_text(f"{record.read_text(encoding='utf-8')}\nfoo.py,,", encoding="utf-8")
     cli_run(args, setup_logging=False)
     assert (other.exists(), [path.exists() for path in own]) == (True, [False, False])
 
 
+@pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.parametrize(
     ("install_args", "run_args"),
     [
@@ -301,7 +304,7 @@ def test_seed_metadata_keeps_bytecode_of_dotted_module(tmp_path: Path) -> None:
 def test_reseed_over_pip_installed_by_pip(
     tmp_path: Path, linked: bool, install_args: list[str], run_args: list[str]
 ) -> None:
-    args: Final = [
+    args: Final[list[str]] = [
         str(tmp_path / "env"),
         "--pip",
         "embed",
@@ -309,8 +312,8 @@ def test_reseed_over_pip_installed_by_pip(
         "--no-periodic-update",
         *{True: ["--symlink-app-data"], False: []}[linked],
     ]
-    session: Final = cli_run(args, setup_logging=False)
-    version: Final = next(session.creator.purelib.glob("pip-*.dist-info")).stem.split("-")[1]
+    session: Final[Session] = cli_run(args, setup_logging=False)
+    version: Final[str] = next(session.creator.purelib.glob("pip-*.dist-info")).stem.split("-")[1]
     # a wheel pip installs has no top_level.txt and a RECORD of files only
     check_call([
         str(session.creator.exe),
@@ -328,19 +331,19 @@ def test_reseed_over_pip_installed_by_pip(
     ])
     # running pip writes bytecode RECORD does not list
     check_call([str(session.creator.exe), *run_args, "-m", "pip", "--version"])
-    package: Final = cli_run(args, setup_logging=False).creator.purelib / "pip"
+    package: Final[Path] = cli_run(args, setup_logging=False).creator.purelib / "pip"
     assert ((package / "__init__.py").is_file(), package.is_symlink()) == (True, linked)
 
 
 @pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.skipif(os.name != "nt", reason="Windows refuses to delete read-only files")
 def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "env"), "--copies", "--pip", "embed", "--no-periodic-update"]
-    dest: Final = cli_run(args, setup_logging=False).creator.dest
+    args: Final[list[str]] = [str(tmp_path / "env"), "--copies", "--pip", "embed", "--no-periodic-update"]
+    dest: Final[Path] = cli_run(args, setup_logging=False).creator.dest
     # chmod follows a link on newer Pythons and would mark the base interpreter read-only
     for path in (entry for entry in dest.rglob("*") if entry.is_file() and not entry.is_symlink()):
         path.chmod(S_IREAD)
-    session: Final = cli_run(args, setup_logging=False)
+    session: Final[Session] = cli_run(args, setup_logging=False)
     assert (session.creator.purelib / "pip" / "__init__.py").is_file()
 
 
@@ -387,7 +390,7 @@ _QUOTING_ONLY: Final[pytest.MarkDecorator] = pytest.mark.skipif(
 def test_console_script_preserves_interpreter_path(
     tmp_path: Path, current_fastest: str, name: str, via_python: bool, seeder: str
 ) -> None:
-    destination: Final = os.path.join(str(tmp_path), name, "env")
+    destination: Final[str] = os.path.join(str(tmp_path), name, "env")
     # GraalPy on a busy macOS runner takes over a minute to create and seed an environment, so the timeouts only guard
     # against a hang.
     run(
@@ -412,8 +415,8 @@ def test_console_script_preserves_interpreter_path(
         timeout=300,
         check=True,
     )
-    scripts: Final = os.path.join(destination, _SCRIPTS_DIR)
-    result: Final = run(
+    scripts: Final[str] = os.path.join(destination, _SCRIPTS_DIR)
+    result: Final[CompletedProcess[str]] = run(
         [
             *{True: [os.path.join(scripts, "python")], False: []}[via_python],
             os.path.join(scripts, _PIP_EXE),
@@ -497,7 +500,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     # install a different setuptools to test that virtualenv removes this before installing new; a local stub keeps
     # the test off the network, where an index outage would fail it
     (stub_dir := tmp_path / "stub").mkdir()
-    stub_files: Final = {
+    stub_files: Final[dict[str, str]] = {
         "setuptools/__init__.py": "",
         "setuptools-0.1.dist-info/METADATA": "Metadata-Version: 2.1\nName: setuptools\nVersion: 0.1\n",
         "setuptools-0.1.dist-info/WHEEL": "Wheel-Version: 1.0\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
@@ -571,10 +574,10 @@ def read_only_dir(directory):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_read_only_app_data_extracts_from_populated_house(temp_app_data: Path) -> None:
-    wheel: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").path
+    wheel: Final[Path] = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").path
     (house := temp_app_data / "wheel" / "house").mkdir(parents=True)
     copy2(wheel, house / wheel.name)
-    app_data: Final = ReadOnlyAppData(str(temp_app_data))
+    app_data: Final[ReadOnlyAppData] = ReadOnlyAppData(str(temp_app_data))
 
     # this is how a zipapp makes its embedded wheels available, see ensure_extracted
     with read_only_dir(temp_app_data), app_data.extract(wheel, lambda: app_data.house) as extracted:
@@ -749,8 +752,8 @@ def test_seed_image_build_failure_leaves_no_partial_image(
     failure: Callable[[zipfile.ZipFile, Path], None] | OSError,
     linked: bool,
 ) -> None:
-    cache: Final = tmp_path / "cache"
-    args: Final = [
+    cache: Final[Path] = tmp_path / "cache"
+    args: Final[list[str]] = [
         str(tmp_path / "env"),
         "--app-data",
         str(cache),
@@ -758,17 +761,17 @@ def test_seed_image_build_failure_leaves_no_partial_image(
         "--no-setuptools",
         *{True: ["--symlink-app-data"], False: []}[linked],
     ]
-    patched: Final = mocker.patch(
+    patched: Final[MockType] = mocker.patch(
         f"virtualenv.seed.embed.via_app_data.pip_install.{target}", side_effect=failure, autospec=True
     )
     with pytest.raises(RuntimeError, match="No space left on device"):
         cli_run(args, setup_logging=False)
     mocker.stop(patched)
-    installer: Final = {True: "SymlinkPipInstall", False: "CopyPipInstall"}[linked]
-    images: Final = next(cache.glob("wheel/*/image/1"))
-    left: Final = sorted(i.name for i in [*images.iterdir(), *(images / installer).iterdir()] if i.is_dir())
-    purelib: Final = cli_run(args, setup_logging=False).creator.purelib
-    dist_info: Final = next(purelib.glob("pip-*.dist-info"))
+    installer: Final[str] = {True: "SymlinkPipInstall", False: "CopyPipInstall"}[linked]
+    images: Final[Path] = next(cache.glob("wheel/*/image/1"))
+    left: Final[list[str]] = sorted(i.name for i in [*images.iterdir(), *(images / installer).iterdir()] if i.is_dir())
+    purelib: Final[Path] = cli_run(args, setup_logging=False).creator.purelib
+    dist_info: Final[Path] = next(purelib.glob("pip-*.dist-info"))
     assert (
         left,
         (dist_info / "INSTALLER").is_file(),
@@ -785,22 +788,30 @@ def test_seed_image_build_failure_leaves_no_partial_image(
     ],
 )
 def test_seed_image_build_replaces_leftovers(tmp_path: Path, leftover: str, files: tuple[str, ...], kept: bool) -> None:
-    cache: Final = tmp_path / "cache"
-    version: Final = PythonInfo.current_system().version_release_str
-    path: Final = cache / "wheel" / version / "image" / "1" / leftover.format(Path(BUNDLE_SUPPORT[version]["pip"]).stem)
+    cache: Final[Path] = tmp_path / "cache"
+    version: Final[str] = PythonInfo.current_system().version_release_str
+    path: Final[Path] = (
+        cache / "wheel" / version / "image" / "1" / leftover.format(Path(BUNDLE_SUPPORT[version]["pip"]).stem)
+    )
     path.mkdir(parents=True)
     for name in files:
         (path / name).write_text("", encoding="utf-8")
-    args: Final = [str(tmp_path / "env"), "--app-data", str(cache), "--no-periodic-update", "--no-setuptools"]
-    purelib: Final = cli_run([*args, "--pip", "embed"], setup_logging=False).creator.purelib
+    args: Final[list[str]] = [
+        str(tmp_path / "env"),
+        "--app-data",
+        str(cache),
+        "--no-periodic-update",
+        "--no-setuptools",
+    ]
+    purelib: Final[Path] = cli_run([*args, "--pip", "embed"], setup_logging=False).creator.purelib
     assert (path.exists(), (next(purelib.glob("pip-*.dist-info")) / "RECORD").is_file()) == (kept, True)
 
 
 def test_seed_image_build_direct_call(tmp_path: Path) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
-    wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[session.interpreter.version_release_str]["pip"]
-    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
-    installer: Final = CopyPipInstall(wheel, session.creator, image)
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
+    wheel: Final[Path] = BUNDLE_FOLDER / BUNDLE_SUPPORT[session.interpreter.version_release_str]["pip"]
+    image: Final[Path] = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    installer: Final[CopyPipInstall] = CopyPipInstall(wheel, session.creator, image)
     installer.build_image()
     installer.install(session.interpreter.version_info)
     assert (
@@ -824,18 +835,18 @@ def test_seed_image_without_metadata_fails(no_seed_session: Session, tmp_path: P
     "ending", [pytest.param(b"", id="no-newline"), pytest.param(b"\n", id="lf"), pytest.param(b"\r\n", id="crlf")]
 )
 def test_copy_seed_preserves_record_rows(tmp_path: Path, copy_seed_record: tuple[Path, list[list[str]]]) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
     wheel, original_rows = copy_seed_record
-    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
-    installer: Final = CopyPipInstall(wheel, session.creator, image)
+    image: Final[Path] = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    installer: Final[CopyPipInstall] = CopyPipInstall(wheel, session.creator, image)
     installer.build_image()
     installer.install(session.interpreter.version_info)
 
-    dist_info: Final = next(session.creator.purelib.glob("pip-*.dist-info"))
+    dist_info: Final[Path] = next(session.creator.purelib.glob("pip-*.dist-info"))
     with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
         rows = list(csv.reader(stream))
     assert rows[: len(original_rows)] == original_rows
-    files: Final = PathDistribution(dist_info).files
+    files: Final[list[PackagePath] | None] = PathDistribution(dist_info).files
     assert files is not None
     assert f"{dist_info.name}/INSTALLER" in {Path(file).as_posix() for file in files}
 
@@ -928,8 +939,8 @@ def test_seed_records_quote_generated_paths(
 
 @pytest.fixture
 def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str]]]:
-    bundled: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]["pip"]
-    wheel: Final = tmp_path / bundled.name
+    bundled: Final[Path] = BUNDLE_FOLDER / BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]["pip"]
+    wheel: Final[Path] = tmp_path / bundled.name
     original_rows: list[list[str]] = []
     with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
         for info in source.infolist():
@@ -955,39 +966,41 @@ def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str
 def test_seed_image_short_path_limits(
     tmp_path: Path, mocker: MockerFixture, no_seed_session: Session, entry: str, shortened: int
 ) -> None:
-    image: Final = tmp_path / "image"
+    image: Final[Path] = tmp_path / "image"
     image.mkdir()
     (image / "content").touch()
     # the longest file name that fits under MAX_PATH, which also counts the separator and the terminating null
-    room: Final = 258 - len(str(image))
-    wheel: Final = tmp_path / "pkg.whl"
+    room: Final[int] = 258 - len(str(image))
+    wheel: Final[Path] = tmp_path / "pkg.whl"
     with zipfile.ZipFile(str(wheel), "w") as archive:
         archive.writestr(entry.format(file="f" * room, folder="d" * (room - 12)), "payload")
-    shorten: Final = mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image))
+    shorten: Final[MockType] = mocker.patch(
+        "virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image)
+    )
     assert (CopyPipInstall(wheel, no_seed_session.creator, image).has_image(), shorten.call_count) == (True, shortened)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
 def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixture, no_seed_session: Session) -> None:
-    wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
-    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    wheel: Final[Path] = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    image: Final[Path] = tmp_path / "image" / "CopyPipInstall" / wheel.stem
     # an upper case name stands in for the short one, Windows opens the same directory through either
     mocker.patch(
         "virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall._short_path_if_needed",
         autospec=True,
         side_effect=lambda _zip_ref, folder: folder.with_name(folder.name.upper()),
     )
-    synced: Final = mocker.spy(CopyPipInstall, "_sync")
-    built: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
+    synced: Final[SpyType] = mocker.spy(CopyPipInstall, "_sync")
+    built: Final[CopyPipInstall] = CopyPipInstall(wheel, no_seed_session.creator, image)
     built.build_image()
     built.install(no_seed_session.interpreter.version_info)
-    read_after_build: Final = {str(call.args[1].parent) for call in synced.call_args_list}
+    read_after_build: Final[set[str]] = {str(call.args[1].parent) for call in synced.call_args_list}
     synced.reset_mock()
-    reused: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
-    found: Final = reused.has_image()
+    reused: Final[CopyPipInstall] = CopyPipInstall(wheel, no_seed_session.creator, image)
+    found: Final[bool] = reused.has_image()
     reused.install(no_seed_session.interpreter.version_info)
-    read_on_reuse: Final = {str(call.args[1].parent) for call in synced.call_args_list}
-    short: Final = str(image.with_name(image.name.upper()))
+    read_on_reuse: Final[set[str]] = {str(call.args[1].parent) for call in synced.call_args_list}
+    short: Final[str] = str(image.with_name(image.name.upper()))
     assert (read_after_build, found, read_on_reuse) == ({short}, True, {short})
 
 
@@ -1045,7 +1058,7 @@ def test_seed_entry_points_keep_names_that_are_not_version_suffixes(
 def test_seed_entry_points_do_not_overwrite_the_interpreter(
     no_seed_session: Session, install_console_scripts: Callable[[str], None]
 ) -> None:
-    original: Final = no_seed_session.creator.exe.read_bytes()
+    original: Final[bytes] = no_seed_session.creator.exe.read_bytes()
     install_console_scripts("python3-config = example:main\n")
     assert no_seed_session.creator.exe.read_bytes() == original, "a generated script replaced the interpreter"
 
@@ -1056,7 +1069,7 @@ def test_seed_entry_points_still_fold_version_suffixed_names(
     major, minor = no_seed_session.interpreter.version_info[:2]
     install_console_scripts(f"pip{major}.{minor} = example:main\npip{major} = example:main\n")
     # a single base regenerates these, an extra one per declared name would add names like `pip33`
-    expected: Final = ("pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}")
+    expected: Final[tuple[str, str, str, str]] = ("pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}")
     assert [name for name in expected if not no_seed_session.creator.script(name).exists()] == []
 
 
@@ -1068,8 +1081,8 @@ def no_seed_session(tmp_path: Path) -> Session:
 @pytest.fixture
 def install_console_scripts(tmp_path: Path, no_seed_session: Session) -> Callable[[str], None]:
     def install(entries: str) -> None:
-        image: Final = tmp_path / "image"
-        metadata: Final = image / "example-1.dist-info"
+        image: Final[Path] = tmp_path / "image"
+        metadata: Final[Path] = image / "example-1.dist-info"
         metadata.mkdir(parents=True)
         (metadata / "entry_points.txt").write_text(f"[console_scripts]\n{entries}", encoding="utf-8")
         CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image).install(
@@ -1084,7 +1097,7 @@ def test_symlink_seed_compiles_with_empty_local_module(tmp_path: Path, monkeypat
     (tmp_path / "compileall.py").touch()
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PYTHONHOME", sys.base_prefix)
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         str(tmp_path / "env"),
         "--symlink-app-data",
         "--pip",
@@ -1152,11 +1165,18 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
     ],
 )
 def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_shell: bool) -> None:
-    session: Final = cli_run([str(tmp_path / name), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
-    record: Final = next(session.creator.purelib.glob("pip-*.dist-info/RECORD"))
+    session: Final[Session] = cli_run([
+        str(tmp_path / name),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ])
+    record: Final[Path] = next(session.creator.purelib.glob("pip-*.dist-info/RECORD"))
     with record.open(encoding="utf-8", newline="") as stream:
-        row: Final = next(row for row in csv.reader(stream) if row[0].endswith("/bin/pip"))
-    content: Final = (session.creator.script_dir / "pip").read_bytes()
+        row: Final[list[str]] = next(row for row in csv.reader(stream) if row[0].endswith("/bin/pip"))
+    content: Final[bytes] = (session.creator.script_dir / "pip").read_bytes()
     assert content.startswith(b"#!/bin/sh\n") is via_shell
     assert row[1:] == [
         f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
