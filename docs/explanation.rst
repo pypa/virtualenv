@@ -371,7 +371,7 @@ virtualenv supports two seeding methods with dramatically different performance 
     The bundled wheel starts pip, while the install uses only the seed wheels virtualenv selected and staged. It runs in
     `pip's isolated mode <https://pip.pypa.io/en/stable/cli/pip/#cmdoption-isolated>`_ with user installs disabled, so
     caller pip configuration cannot redirect that install. Custom wheel directories still affect selection, and later
-    pip commands keep caller settings. If interrupted, virtualenv waits for the pip child to stop before removing staged
+    pip commands keep caller settings. On SIGINT, virtualenv waits for the pip child to stop before removing staged
     wheels.
 
 **app-data seeder**
