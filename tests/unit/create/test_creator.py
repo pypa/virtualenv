@@ -539,6 +539,32 @@ def test_creator_replaces_directory_links(
     assert (link.resolve(), session.creator.exe.is_file(), list(stored.iterdir())) == (link, True, [])
 
 
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize(
+    "make_link",
+    [
+        pytest.param(
+            _make_symlink,
+            id="symlink",
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
+        ),
+        pytest.param(
+            _make_junction, id="junction", marks=pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+        ),
+    ],
+)
+def test_venv_creator_replaces_linked_include(tmp_path: Path, make_link: Callable[[Path, Path], None]) -> None:
+    session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed"])
+    session.creator.dest.mkdir()
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    include: Final[Path] = session.creator.dest / ("Include" if os.name == "nt" else "include")
+    make_link(include, outside)
+    with session:
+        session.run()
+    assert (include.resolve(), include.is_dir(), list(outside.iterdir())) == (include, True, [])
+
+
 _CREATE_METHODS: Final[list[str]] = []
 
 
