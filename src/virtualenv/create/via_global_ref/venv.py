@@ -43,9 +43,9 @@ _STALE_INTERPRETER_RE: Final[re.Pattern[str]] = re.compile(r"python(\d+)\.(\d+)[
 def _remove_stale_interpreters(bin_dir: Path, interpreter: PythonInfo) -> None:
     """Remove versioned interpreter executables left by a previous Python version.
 
-    Recreating a copied environment with a different Python minor version leaves the previous version's executable
-    (e.g. ``bin/python3.12`` after recreating with Python 3.14) behind, and it then fails with ``ModuleNotFoundError:
-    No module named 'encodings'``. Only names shaped like a versioned interpreter are removed, so unrelated files in
+    Recreating a copied environment with a different Python minor version leaves the previous version's executable (e.g.
+    ``bin/python3.12`` after recreating with Python 3.14) behind, and it then fails with ``ModuleNotFoundError: No
+    module named 'encodings'``. Only names shaped like a versioned interpreter are removed, so unrelated files in
     ``bin`` are preserved; the current version's names are left for the standard-library creator to replace.
 
     :param bin_dir: the environment's script directory

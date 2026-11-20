@@ -1,2 +1,2 @@
-Recreating a copied environment with a different Python minor version no longer leaves the previous version's
-executable (for example ``bin/python3.12``) behind.
+Recreating a copied environment with a different Python minor version no longer leaves the previous version's executable
+(for example ``bin/python3.12``) behind.
