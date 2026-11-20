@@ -663,7 +663,9 @@ def test_cshell_keeps_destination_after_locale_change(csh_venv: _CshVenv, name: 
             'setenv PATH "/usr/bin:/bin"\n'
             f"source {dest / 'bin' / 'activate.csh'}\n"
             "setenv LC_ALL C\ncd /\n"
-            "/usr/bin/printenv VIRTUAL_ENV PATH PKG_CONFIG_PATH\n"
+            "/usr/bin/printenv VIRTUAL_ENV\n"
+            "/usr/bin/printenv PATH\n"
+            "/usr/bin/printenv PKG_CONFIG_PATH\n"
             "deactivate\n/usr/bin/printenv PATH\n"
         ).encode(),
         env={**os.environ, "LC_ALL": "C.UTF-8"},
@@ -689,7 +691,9 @@ def test_cshell_keeps_values_with_custom_histchars_and_locale_change(
             'setenv PATH "/usr/bin:/bin"\n'
             f"source {dest / 'bin' / 'activate.csh'}\n"
             "setenv LC_ALL C\ncd /\n"
-            "/usr/bin/printenv VIRTUAL_ENV VIRTUAL_ENV_PROMPT PATH\n"
+            "/usr/bin/printenv VIRTUAL_ENV\n"
+            "/usr/bin/printenv VIRTUAL_ENV_PROMPT\n"
+            "/usr/bin/printenv PATH\n"
             "echo $histchars:q\n"
             "deactivate\n/usr/bin/printenv PATH\n"
         ).encode(),
