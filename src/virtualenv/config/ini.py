@@ -75,15 +75,20 @@ class IniConfig:
             self.has_config_file = self.config_file.exists()
             if self.has_config_file:
                 self.config_file = self.config_file.resolve()
-                with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
-                    self.config_parser.read_file(file_handler)
+                self._load()
+                self.has_virtualenv_section = self.config_parser.has_section(self.section)
         except (OSError, UnicodeError, Error) as exc:
             self.has_config_file = None
             exception = exc
-        if self.has_config_file:
-            self.has_virtualenv_section = self.config_parser.has_section(self.section)
         if exception is not None:
             _LOGGER.error("failed to read config file %s because %r", config_file, exception)
+
+    def _load(self) -> None:
+        if self.config_file is None:
+            msg = "cannot load a config file without a path"
+            raise RuntimeError(msg)
+        with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
+            self.config_parser.read_file(file_handler)
 
     def __bool__(self) -> bool:
         return bool(self.has_config_file) and bool(self.has_virtualenv_section)
