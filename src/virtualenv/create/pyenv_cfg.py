@@ -92,23 +92,41 @@ class PyEnvCfg:
         return f"{self.__class__.__name__}(path={self.path})"
 
     def write(self) -> None:
-        """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths."""
+        """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths.
+
+        :raises ValueError: when a CPython configuration would be too large to read
+
+        """
         _validate_path(self.path)
         LOGGER.debug("write %s", self.path)
+        write_file(self.path, self.serialize())
+
+    def serialize(self) -> bytes:
+        """Build the configuration before writing it.
+
+        :returns: the UTF-8 configuration
+
+        :raises ValueError: when a CPython configuration would be too large to read
+
+        """
+        paths = validated_paths(self.content, self.path)
         text = ""
         for key, value in self.content.items():
-            if key == "prompt" and value:
-                normalized_value = f'"{value}"'
-            elif key in _PATH_KEYS and os.path.exists(value):
-                # abspath rather than realpath keeps symlinked prefixes intact, as venv does (#2770)
-                normalized_value = os.path.abspath(value)
-            else:
-                normalized_value = value
+            normalized_value = f'"{value}"' if key == "prompt" and value else paths.get(key, value)
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
             LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
-        write_file(self.path, text.encode("utf-8"))
+        encoded: Final[bytes] = text.encode("utf-8")
+        cpython_config_limit: Final[int] = 32_768
+        if (
+            len(encoded) >= cpython_config_limit
+            and self.content.get("implementation") == "CPython"
+            and tuple(map(int, self.content.get("python-version", "3.11").split("."))) >= (3, 11)
+        ):
+            msg: Final[str] = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
+            raise ValueError(msg)
+        return encoded
 
     def refresh(self) -> OrderedDict[str, str]:
         """Re-read the key-value pairs from the file, discarding in-memory changes.
@@ -137,6 +155,31 @@ def _validate_path(path: Path) -> None:
         raise ValueError(msg)
 
 
+def validated_paths(content: OrderedDict[str, str], path: Path) -> dict[str, str]:
+    """Normalize path values for the configuration.
+
+    :param content: the key-value pairs to check
+    :param path: the configuration path used in errors
+
+    :returns: normalized path values by key
+
+    :raises ValueError: when recording would change a path
+
+    """
+    paths = {}
+    for key, value in content.items():
+        if key not in _PATH_KEYS:
+            continue
+        # abspath rather than realpath keeps symlinked prefixes intact, as venv does (#2770)
+        normalized_value = os.path.abspath(value) if os.path.exists(value) else value
+        if collapse_line_boundaries(normalized_value).strip() != normalized_value:
+            msg = f"cannot record {key} path {normalized_value!r} in {path}"
+            raise ValueError(msg)
+        paths[key] = normalized_value
+    return paths
+
+
 __all__ = [
     "PyEnvCfg",
+    "validated_paths",
 ]
