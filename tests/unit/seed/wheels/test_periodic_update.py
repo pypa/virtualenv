@@ -527,28 +527,79 @@ def test_trigger_update_command(
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
-        do_update('pip', {!r}, {!r}, {!r}, {!r}, True)
+        distribution, for_py_version, wheel_path, app_data, periodic, *search_dirs = sys.argv[2:]
+        do_update(distribution, for_py_version, wheel_path or None, app_data, search_dirs, periodic == 'True')
         """
-    ).format(for_py_version, str(current.path), str(session_app_data), ["a", "b"])
+    )
     loads: Final[dict[bool, str]] = {
-        True: f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}",
+        True: f"import runpy\nwith runpy.run_path(sys.argv[1], run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}",
         False: dedent(
             """\
             import importlib.util
-            spec = importlib.util.spec_from_file_location('virtualenv', {!r})
+            spec = importlib.util.spec_from_file_location('virtualenv', sys.argv[1])
             package = importlib.util.module_from_spec(spec)
             sys.modules['virtualenv'] = package
             spec.loader.exec_module(package)
             """
-        ).format(str(Path(ROOT) / "virtualenv" / "__init__.py"))
+        )
         + update,
     }
     load: Final[str] = loads[zipapp]
     command: Final[str] = f"import sys\nsys.path = [p for p in sys.path if p]\n{load.strip()}"
     process.assert_called_once_with(
-        [sys.executable, "-c", command], env=env, **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug]
+        [
+            sys.executable,
+            "-c",
+            command,
+            {True: ROOT, False: str(Path(ROOT) / "virtualenv" / "__init__.py")}[zipapp],
+            "pip",
+            for_py_version,
+            str(current.path),
+            str(session_app_data),
+            "True",
+            "a",
+            "b",
+        ],
+        env=env,
+        **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug],
     )
     assert process.return_value.communicate.call_count == int(debug)
+
+
+@pytest.fixture
+def gb18030_env() -> dict[str, str]:
+    env = {**os.environ, "LC_ALL": "zh_CN.gb18030"}
+    env.pop("PYTHONUTF8", None)
+    env.pop("VIRTUALENV_NO_PERIODIC_UPDATE", None)
+    try:
+        locale = subprocess.run(["locale", "charmap"], env=env, capture_output=True, encoding="ascii", check=False)
+    except OSError:
+        pytest.skip("locale command unavailable")
+    if locale.returncode != 0 or locale.stdout.strip() != "GB18030":
+        pytest.skip("zh_CN.gb18030 locale unavailable")
+    return env
+
+
+@pytest.mark.skipif(sys.platform != "linux" or sys.version_info >= (3, 15), reason="requires legacy locale decoding")
+def test_trigger_update_quoted_app_data_in_gb18030(tmp_path: Path, gb18030_env: dict[str, str]) -> None:
+    project = tmp_path / "中'\"project"
+    project.mkdir()
+    run = subprocess.run(
+        [sys.executable, "-X", "utf8", "-m", "virtualenv", "--app-data", "cache", "--quiet", "env"],
+        cwd=project,
+        env=gb18030_env
+        | {"PIP_NO_INDEX": "1", "_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1", "PIP_DISABLE_PIP_VERSION_CHECK": "1"},
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=60,
+        check=False,
+    )
+    assert (run.returncode, (project / "env/bin/python").is_file(), "CalledProcessError" in run.stderr) == (
+        0,
+        True,
+        True,
+    )
 
 
 def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
