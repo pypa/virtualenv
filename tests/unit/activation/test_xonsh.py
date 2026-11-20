@@ -196,6 +196,26 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: _Xonsh)
 
 
 @_NEEDS_XONSH
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
+def test_xonsh_keeps_tcl_library_bytes_across_locales(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh
+) -> None:
+    library = tmp_path / "andré" / "tcl9.0"
+    library.mkdir(parents=True)
+    session = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    session.creator.interpreter = copy.copy(session.creator.interpreter)
+    session.creator.interpreter.tcl_lib = str(library)
+    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", os.fsencode(library))
+    XonshActivator(Namespace(prompt=None)).generate(session.creator)
+    script = (
+        "original = __xonsh__.env.pop('TCL_LIBRARY', None)\n"
+        f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\n"
+        "python -c \"import os; print(repr(os.environb.get(b'TCL_LIBRARY')))\""
+    )
+    assert literal_eval(xonsh(script, LC_ALL="C", PYTHONUTF8="0")) == os.fsencode(library)
+
+
+@_NEEDS_XONSH
 @pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
 def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding: str) -> None:
     destination: Final[Path] = tmp_path / "中文環境"
