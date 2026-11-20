@@ -1,2 +1,2 @@
-Leave symlinks outside the environment untouched when a seed wheel declares a console script that escapes the script
-directory. :issue:`3630`
+Reject seed-wheel console script names that escape the script directory before unlinking a matching symlink.
+:issue:`3630`
