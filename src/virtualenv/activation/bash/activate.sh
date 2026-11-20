@@ -154,7 +154,7 @@ else
             # A nonprinting marker separates a high byte from the next escape under legacy multibyte locales.
             _VIRTUAL_REST=$VIRTUAL_ENV_PROMPT
             if ! _VIRTUAL_PROMPT=$(
-                printf '%s.\n' "$_VIRTUAL_REST" |
+                builtin printf '%s.\n' "$_VIRTUAL_REST" |
                     LC_ALL=C command -p awk '{
                         for (position = 1; position <= length($0); position++) {
                             character = substr($0, position, 1)

@@ -730,6 +730,26 @@ def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+def test_bash_prompt_ignores_printf_function(tmp_path: Path) -> None:
+    script = generate_script("bash", tmp_path / "env", "normal")
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            'PS1=__END__; printf() { builtin printf hijacked; }; . "$1"; builtin printf %s "$PS1"',
+            "test",
+            str(script),
+        ],
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, b"(normal) __END__", b"")
+
+
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 @pytest.mark.usefixtures("bash_prompt_rendering")
 @pytest.mark.parametrize(
     ("source_locale", "draw_locale"),
