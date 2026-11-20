@@ -13,6 +13,8 @@ __lazy_modules__ = [
 ]
 
 import logging
+import os
+import re
 from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Final
 
@@ -29,9 +31,38 @@ from .builtin.cpython.mac_os import CPython3macOsBrew
 from .store import handle_store_python
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
+
+_STALE_INTERPRETER_RE: Final[re.Pattern[str]] = re.compile(r"python(\d+)\.(\d+)[a-z]?$")
+
+
+def _remove_stale_interpreters(bin_dir: Path, interpreter: PythonInfo) -> None:
+    """Remove versioned interpreter executables left by a previous Python version.
+
+    Recreating a copied environment with a different Python minor version leaves the previous version's executable
+    (e.g. ``bin/python3.12`` after recreating with Python 3.14) behind, and it then fails with ``ModuleNotFoundError:
+    No module named 'encodings'``. Only names shaped like a versioned interpreter are removed, so unrelated files in
+    ``bin`` are preserved; the current version's names are left for the standard-library creator to replace.
+
+    :param bin_dir: the environment's script directory
+    :param interpreter: the interpreter the environment is recreated with
+
+    """
+    if os.name != "posix":
+        return
+    current: Final[tuple[int, int]] = interpreter.version_info.major, interpreter.version_info.minor
+    for path in bin_dir.iterdir():
+        if not path.is_file():
+            continue
+        if (match := _STALE_INTERPRETER_RE.match(path.name)) is None:
+            continue
+        if (int(match.group(1)), int(match.group(2))) == current:
+            continue
+        path.unlink()
 
 
 class Venv(ViaGlobalRefApi):
@@ -92,6 +123,7 @@ class Venv(ViaGlobalRefApi):
         # hard link would receive them outside the environment
         for directory in (self.bin_dir, self.purelib, self.platlib):
             ensure_within(self.dest, directory)
+        _remove_stale_interpreters(self.bin_dir, self.interpreter)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()

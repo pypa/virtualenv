@@ -730,6 +730,34 @@ def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.skipif(not _CURRENT.has_venv or not fs_supports_symlink(), reason="requires venv and symlinks")
+@pytest.mark.skipif(
+    is_mac_os_framework(_CURRENT) or is_macos_brew(_CURRENT) or (IS_GRAALPY and not IS_WIN) or IS_PYPY,
+    reason="requires a POSIX copy-based standard library creator for CPython",
+)
+def test_venv_recreate_removes_stale_versioned_interpreter(tmp_path: Path) -> None:
+    # Recreating a copied environment with a different Python minor version must not leave the previous version's
+    # executable behind (issue #3751); unrelated files in bin must be preserved.
+    destination: Final[Path] = tmp_path / "env"
+    args: Final[list[str]] = [str(destination), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(args)
+    stale: Final[Path] = destination / "bin" / f"python{sys.version_info.major}.{sys.version_info.minor + 1}"
+    stale.write_bytes(b"stale")
+    unrelated: Final[Path] = destination / "bin" / "my-tool"
+    unrelated.write_bytes(b"keep me")
+
+    cli_run(args)
+
+    assert not stale.exists()
+    assert unrelated.is_file()
+    assert (
+        subprocess.check_output(
+            [str(destination / "bin" / "python"), "-c", "print(1)"], text=True, encoding="utf-8"
+        ).strip()
+        == "1"
+    )
+
+
 @pytest.mark.skipif(not _CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "venv").mkdir()
