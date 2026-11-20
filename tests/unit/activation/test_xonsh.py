@@ -206,15 +206,17 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: _Xonsh)
 @_NEEDS_XONSH
 @pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
 @pytest.mark.parametrize(
-    ("name", "encoding"),
+    "case",
     [
-        pytest.param("andré", "utf-8", id="utf8-source"),
-        pytest.param("andré+AGE-marker", "utf-7", id="utf7-source"),
+        pytest.param(("andré", "utf-8", ""), id="utf8-source"),
+        pytest.param(("andré+AGE-marker", "utf-7", ""), id="utf7-source"),
+        pytest.param(("andré+AGE-marker", "utf-7", "bytes = 'shadow'\n"), id="shadowed-bytes"),
     ],
 )
 def test_xonsh_keeps_tcl_library_bytes_across_locales(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh, name: str, encoding: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh, case: tuple[str, str, str]
 ) -> None:
+    name, encoding, prelude = case
     library = tmp_path / name / "tcl9.0"
     library.mkdir(parents=True)
     session = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
@@ -223,7 +225,7 @@ def test_xonsh_keeps_tcl_library_bytes_across_locales(
     monkeypatch.setitem(os.environb, b"TCL_LIBRARY", os.fsencode(library))
     XonshActivator(Namespace(prompt=None)).generate(session.creator)
     script = (
-        "original = __xonsh__.env.pop('TCL_LIBRARY', None)\n"
+        f"{prelude}original = __xonsh__.env.pop('TCL_LIBRARY', None)\n"
         f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\n"
         "python -c \"import os; print(repr(os.environb.get(b'TCL_LIBRARY')))\""
     )
