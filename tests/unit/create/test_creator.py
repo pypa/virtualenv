@@ -1550,7 +1550,7 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("version", ["3.11", "3.14"])
 def test_pyenv_cfg_rejects_oversized_cpython_config(tmp_path: Path, version: str) -> None:
-    config: Final = PyEnvCfg(
+    config: Final[PyEnvCfg] = PyEnvCfg(
         OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
         tmp_path / "pyvenv.cfg",
     )
@@ -1564,7 +1564,7 @@ def test_pyenv_cfg_rejects_oversized_cpython_config(tmp_path: Path, version: str
 
 @pytest.mark.parametrize("version", ["3.9", "3.10"])
 def test_pyenv_cfg_allows_large_older_cpython_config(tmp_path: Path, version: str) -> None:
-    config: Final = PyEnvCfg(
+    config: Final[PyEnvCfg] = PyEnvCfg(
         OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
         tmp_path / "pyvenv.cfg",
     )

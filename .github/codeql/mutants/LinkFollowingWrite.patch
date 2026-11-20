@@ -3,7 +3,7 @@ diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cf
 +++ b/src/virtualenv/create/pyenv_cfg.py
 @@ -121,7 +121,7 @@
          ):
-             msg: Final = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
+             msg: Final[str] = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
              raise ValueError(msg)
 -        write_file(self.path, encoded)
 -
