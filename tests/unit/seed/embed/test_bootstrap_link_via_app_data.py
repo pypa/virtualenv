@@ -17,7 +17,7 @@ from pathlib import Path
 from shutil import copy2
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import PIPE, STDOUT, Popen, check_call, run
-from threading import Event, Thread, current_thread, main_thread
+from threading import Barrier, BrokenBarrierError, Event, Thread, current_thread, main_thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -394,6 +394,90 @@ def test_seed_metadata_unlinks_symlink_without_following(tmp_path: Path, caplog:
         True,
         False,
     )
+
+
+@pytest.mark.skipif(os.name == "nt" or not fs_supports_symlink(), reason="requires POSIX parent links")
+@pytest.mark.parametrize(
+    ("create", "delete", "name"),
+    [
+        pytest.param(Path.touch, Path.unlink, "remove_file", id="file"),
+        pytest.param(Path.mkdir, safe_delete, "safe_delete", id="directory"),
+    ],
+)
+def test_seed_metadata_removes_checked_path(
+    tmp_path: Path, mocker: MockerFixture, create: Callable[[Path], None], delete: Callable[[Path], None], name: str
+) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    target: Final[Path] = env / "deep" / "a" / "b" / "c"
+    target.mkdir(parents=True)
+    outside_target: Final[Path] = tmp_path / "a" / "b" / "c"
+    outside_target.mkdir(parents=True)
+    inside: Final[Path] = env / "deep" / "keep"
+    outside: Final[Path] = tmp_path / "keep"
+    create(inside)
+    create(outside)
+    (dist_info / "RECORD").write_text("linked/../../../keep,,\n", encoding="utf-8")
+    link: Final[Path] = purelib / "linked"
+    link.symlink_to(target, target_is_directory=True)
+
+    def replace_link_then_delete(path: Path) -> None:
+        if link.is_symlink():
+            link.unlink()
+            link.symlink_to(outside_target, target_is_directory=True)
+        delete(path)
+
+    mocker.patch(
+        f"virtualenv.seed.embed.via_app_data.pip_install.base.{name}",
+        side_effect=replace_link_then_delete,
+        autospec=True,
+    )
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (inside.exists(), outside.exists()) == (False, True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+def test_seed_metadata_removes_junction_without_following(tmp_path: Path) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "Lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    target: Final[Path] = env / "target"
+    target.mkdir()
+    (target / "keep.txt").write_text("keep", encoding="utf-8")
+    link: Final[Path] = purelib / "linked"
+    run(["cmd", "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True)
+    (dist_info / "RECORD").write_text("linked,,\n", encoding="utf-8")
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (link.exists(), (target / "keep.txt").read_text(encoding="utf-8")) == (False, "keep")
+
+
+def test_seed_package_installs_do_not_overlap(tmp_path: Path, mocker: MockerFixture) -> None:
+    ready: Final[Barrier] = Barrier(2)
+    overlap: Final[Barrier] = Barrier(2)
+    concurrent: Final[list[CopyPipInstall]] = []
+
+    def build_image(*_args: object) -> None:
+        ready.wait(timeout=5)
+
+    def install(installer: CopyPipInstall, _version_info: tuple[int, ...]) -> None:
+        try:
+            overlap.wait(timeout=1)
+        except BrokenBarrierError:
+            return
+        concurrent.append(installer)
+
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data._build_wheel_image", side_effect=build_image, autospec=True
+    )
+    installed = mocker.patch.object(CopyPipInstall, "install", side_effect=install, autospec=True)
+    cli_run(
+        [str(tmp_path / "env"), "--no-periodic-update", "--pip", "bundle", "--setuptools", "bundle"],
+        setup_logging=False,
+    )
+    assert (installed.call_count, concurrent) == (2, [])
 
 
 @pytest.mark.parametrize(
