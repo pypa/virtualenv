@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "concurrent.futures",
+    "functools",
     "pathlib",
     "subprocess",
     "threading",
@@ -16,10 +18,12 @@ __lazy_modules__ = [
 import logging
 import sys
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
-from threading import Lock, Thread
+from threading import Event, Lock
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
@@ -31,7 +35,8 @@ from .pip_install.symlink import SymlinkPipInstall
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator, Iterable
+    from typing import NoReturn
 
     from python_discovery import PythonInfo
 
@@ -57,6 +62,7 @@ class FromAppData(BaseEmbed):
 
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
+        self._exit_on_interrupt: Callable[[int], NoReturn] | None = getattr(options, "exit_on_seed_interrupt", None)
         # env var and config file values skip the gate on the CLI flag, so apply it here too
         self.symlinks = options.symlink_app_data and self._can_symlink(self.app_data)
         if options.symlink_app_data and self.app_data.transient:
@@ -106,25 +112,24 @@ class FromAppData(BaseEmbed):
         with self._get_seed_wheels(creator) as name_to_whl:
             installer_class = self.installer_class(name_to_whl["pip"].version_tuple if "pip" in name_to_whl else None)
             exceptions = {}
+            install_lock: Final[Lock] = Lock()
 
             def _install(name: str, wheel: Wheel) -> None:
                 LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                 try:
-                    key = Path(installer_class.__name__) / wheel.path.stem
-                    wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
+                    wheel_img = self.app_data.wheel_image(
+                        creator.interpreter.version_release_str, Path(installer_class.__name__) / wheel.path.stem
+                    )
                     installer = installer_class(wheel.path, creator, wheel_img)
                     _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)
-                    # version_info is a VersionInfo, which install types as a plain tuple
-                    installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
+                    with install_lock:
+                        # version_info is a VersionInfo, which install types as a plain tuple
+                        installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
                 # the failure is stored and raised once every install has finished
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
-            threads = [Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items()]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
+            self._run_workers(partial(_install, name, wheel) for name, wheel in name_to_whl.items())
             if exceptions:
                 messages = [f"failed to build image {', '.join(exceptions.keys())} because:"]
                 for value in exceptions.values():
@@ -134,7 +139,7 @@ class FromAppData(BaseEmbed):
 
     @contextmanager
     # the wheel lookup and its image build share one context, splitting it passes the lock around
-    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
+    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:
         name_to_whl, lock, fail = {}, Lock(), {}
 
         def _get(distribution: str, version: str | None) -> None:
@@ -177,14 +182,9 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
-        threads = [
-            Thread(target=_get, args=(distribution, version))
-            for distribution, version in self.distribution_to_versions().items()
-        ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        self._run_workers(
+            partial(_get, distribution, version) for distribution, version in self.distribution_to_versions().items()
+        )
         if fail:
             msg = f"seed failed due to failing to download wheels {', '.join(fail.keys())}"
             raise RuntimeError(msg)
@@ -202,11 +202,82 @@ class FromAppData(BaseEmbed):
             return SymlinkPipInstall
         return CopyPipInstall
 
+    def _run_workers(self, work: Iterable[Callable[[], None]]) -> None:
+        with ThreadPoolExecutor() as executor:
+            workers: list[_SeedWorker] = []
+            try:
+                for task in work:
+                    worker = _SeedWorker(task)
+                    workers.append(worker)
+                    _submit_or_run(executor, worker)
+                for worker in workers:
+                    worker.wait()
+            except KeyboardInterrupt:
+                self._cancel_workers(workers)
+                raise
+            for worker in workers:
+                if worker.error is not None:
+                    raise worker.error
+
+    def _cancel_workers(self, workers: list[_SeedWorker]) -> None:
+        while True:
+            try:
+                for worker in workers:
+                    worker.skip()
+                if self._exit_on_interrupt is not None:
+                    LOGGER.warning("waiting for seed workers. Press Ctrl+C again to exit immediately")
+                for worker in workers:
+                    worker.wait()
+                break
+            except KeyboardInterrupt:
+                if self._exit_on_interrupt is not None:
+                    # A normal exit would wait for the executor again at interpreter shutdown.
+                    self._exit_on_interrupt(130)
+
 
 def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -> None:
     with parent.non_reentrant_lock_for_key(name):
         if not installer.has_image():
             installer.build_image()
+
+
+class _SeedWorker:
+    def __init__(self, work: Callable[[], None]) -> None:
+        self.work = work
+        self.done = Event()
+        self.error: BaseException | None = None
+        self._lock = Lock()
+        self._started = False
+
+    def __call__(self) -> None:
+        with self._lock:
+            if self._started or self.done.is_set():
+                return
+            self._started = True
+        try:
+            self.work()
+        except BaseException as exception:
+            self.error = exception
+            raise
+        finally:
+            self.done.set()
+
+    def skip(self) -> None:
+        with self._lock:
+            if not self._started:
+                self.done.set()
+
+    def wait(self) -> None:
+        # Windows before Python 3.14 cannot interrupt an unbounded lock wait.
+        while not self.done.wait(timeout=0.25):
+            pass
+
+
+def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
+    try:
+        executor.submit(worker)
+    except RuntimeError:
+        worker()
 
 
 __all__ = [

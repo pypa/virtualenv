@@ -21,6 +21,7 @@ import os
 import posixpath
 import re
 import shlex
+import stat
 import zipfile
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
@@ -110,51 +111,81 @@ class PipInstall(ABC):
         dist_base: Final[Path] = dist.parent
         LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
-        top_txt: Final[Path] = dist / "top_level.txt"
-        paths: Final[set[Path]] = (
-            {dist.parent / i.strip() for i in top_txt.read_text(encoding="utf-8").splitlines()}
-            if top_txt.exists()
-            else set()
-        )
+        top_level = PipInstall._read_regular_metadata(dist / "top_level.txt")
+        paths = {dist.parent / name.strip() for name in top_level.splitlines()} if top_level is not None else set()
         paths.add(dist)
 
-        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy()))
-
+        lexical_root: Final[Path] = Path(os.path.abspath(env_dir))
         root: Final[Path] = env_dir.resolve()
+        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy(), lexical_root=lexical_root))
+
         metadata_parents: Final[set[Path]] = set(dist.resolve().parents)
         for entry in sorted(paths):
-            if entry.exists() or entry.is_symlink():
-                linked: Final[bool] = entry.is_symlink()
-                # Unlinking the final link leaves its target intact; parent links still affect containment.
-                resolved: Final[Path] = entry.parent.resolve() / entry.name if linked else entry.resolve()
-                if root not in resolved.parents or resolved in metadata_parents:
-                    LOGGER.warning(
-                        "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
-                        entry,
-                        dist.name,
-                        root,
-                    )
-                elif entry.is_dir() and not linked:
-                    safe_delete(entry)
-                else:
-                    remove_file(entry)
+            if not Path(os.path.abspath(entry)).is_relative_to(lexical_root):
+                LOGGER.warning("skip removal of %s listed by %s: not inside environment %s", entry, dist.name, root)
+                continue
+            if not entry.exists() and not entry.is_symlink():
+                continue
+            linked: Final[bool] = entry.is_symlink()
+            junction: Final[bool] = (
+                os.name == "nt"
+                and not linked
+                and stat.S_ISDIR((info := entry.lstat()).st_mode)
+                # Windows name-surrogate tags redirect lookup; cloud placeholders keep ordinary directory contents.
+                and bool(info.st_reparse_tag & 0x2000_0000)
+            )
+            try:
+                # Unlinking a final link leaves its target intact; parent links still affect containment.
+                resolved: Final[Path] = (
+                    entry.parent.resolve(strict=True) / entry.name if linked or junction else entry.resolve(strict=True)
+                )
+            except OSError as exception:
+                LOGGER.warning("skip removal of %s listed by %s: cannot resolve it: %s", entry, dist.name, exception)
+                continue
+            if root not in resolved.parents or resolved in metadata_parents:
+                LOGGER.warning(
+                    "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
+                    entry,
+                    dist.name,
+                    root,
+                )
+            elif junction:
+                resolved.rmdir()
+            elif resolved.is_dir() and not linked:
+                safe_delete(resolved)
+            else:
+                remove_file(resolved)
         # without top_level.txt, as in wheels pip itself installs, RECORD lists files only and their directories stay behind
         PipInstall._remove_emptied_folders(paths, dist_base)
 
     @staticmethod
-    def _record_paths(dist: Path, base_dirs: set[Path]) -> set[Path]:
-        record: Final[Path] = dist / "RECORD"
-        if not record.exists():
+    def _read_regular_metadata(path: Path) -> str | None:
+        if not path.is_file():
+            if path.exists():
+                LOGGER.warning("skip reading %s: not a regular file", path)
+            return None
+        # The directory entry can change between is_file() and open().
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOCTTY", 0)
+        with os.fdopen(os.open(path, flags), "rb") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                LOGGER.warning("skip reading %s: not a regular file", path)
+                return None
+            return handle.read().decode("utf-8")
+
+    @staticmethod
+    def _record_paths(dist: Path, base_dirs: set[Path], lexical_root: Path) -> set[Path]:
+        content = PipInstall._read_regular_metadata(dist / "RECORD")
+        if content is None:
             return set()
         paths: Final[set[Path]] = set()
-        for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")):
+        for row in csv.reader(io.StringIO(content, newline="")):
             if not row:
                 continue
             path = dist.parent / row[0]
             if not any(p in base_dirs for p in path.parents):
                 paths.add(path)
                 # bytecode written after the install, by a --no-compile install or an -O run, is not in RECORD
-                if path.suffix == ".py":
+                if path.suffix == ".py" and Path(os.path.abspath(path)).is_relative_to(lexical_root):
                     paths.update(PipInstall._bytecode_of(path))
         return paths
 
@@ -371,7 +402,11 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
 
     def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
         shebang: Final[bytes] = super()._build_shebang(executable, post_interp)
-        if os.name != "posix" or len(shebang.split()) == 1:
+        if os.name != "posix" or (
+            len(shebang.split()) == 1
+            and not needs_shell_shebang(self._raw_executable)
+            and encodes_as_utf8(self._raw_executable)
+        ):
             return shebang
         return shell_shebang(self._raw_executable, post_interp)
 
@@ -390,6 +425,31 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 
+def needs_shell_shebang(executable: str) -> bool:
+    """Whether the interpreter path needs a shell wrapper.
+
+    :param executable: the interpreter path written in the shebang
+
+    :returns: whether the path contains whitespace, quotes, or backslashes
+
+    """
+    return any(character in executable for character in " \t\n\v\f\r'\"\\")
+
+
+def encodes_as_utf8(path: str) -> bool:
+    """Check whether a path has the same filesystem and UTF-8 bytes.
+
+    :param path: the path to compare
+
+    :returns: whether its filesystem bytes equal its UTF-8 bytes
+
+    """
+    try:
+        return os.fsencode(path) == path.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+
+
 def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     # The exec line is read by both sh and Python; double-quoted backslashes survive both readers.
     """Build a shebang that runs the executable through ``sh`` and then Python.
@@ -400,12 +460,19 @@ def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     :returns: the shebang and the wrapper lines, as bytes
 
     """
-    quoted: Final[str] = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
-    return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
+    if encodes_as_utf8(executable):
+        quoted = shlex.quote(executable).replace("\\", "'\"\\\\\"'").encode("utf-8")
+    else:
+        # The shell must use filesystem bytes while Python reads this header as UTF-8.
+        escaped: Final[bytes] = b"".join(f"\\{byte:03o}".encode("ascii") for byte in os.fsencode(executable))
+        quoted = b"\"$(printf '" + escaped + b"')\""
+    return b"#!/bin/sh\n'''exec' " + quoted + post_interp + b' "$0" "$@"\n' + b"' '''\n"
 
 
 __all__ = [
     "EntryPointConfig",
     "PipInstall",
+    "encodes_as_utf8",
+    "needs_shell_shebang",
     "shell_shebang",
 ]

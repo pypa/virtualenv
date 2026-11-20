@@ -7,15 +7,18 @@ import hashlib
 import io
 import logging
 import os
+import shlex
+import signal
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
+from concurrent.futures import Future, ThreadPoolExecutor
 from importlib.metadata import PathDistribution
 from pathlib import Path
 from shutil import copy2
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
-from subprocess import Popen, check_call, run
-from threading import Thread
+from subprocess import PIPE, STDOUT, Popen, check_call, run
+from threading import Barrier, BrokenBarrierError, Event, Thread, current_thread, main_thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -25,13 +28,14 @@ from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[im
 from virtualenv.app_data import ReadOnlyAppData
 from virtualenv.info import IS_GRAALPY, IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall, shell_shebang
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from importlib.metadata import PackagePath
     from subprocess import CompletedProcess
 
@@ -88,6 +92,266 @@ def unusable_cache(tmp_path: Path) -> Path:
     blocked: Final[Path] = tmp_path / "blocked"
     blocked.touch()
     return blocked / "cache"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGINT delivery differs on Windows")
+def test_interrupt_waits_for_seed_before_temp_cleanup(tmp_path: Path, unusable_cache: Path) -> None:
+    (tmp_path / "temp").mkdir()
+    process = Popen(
+        [sys.executable, "-m", "virtualenv", "--no-periodic-update", "-vvv", str(tmp_path / "env")],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "TMPDIR": str(tmp_path / "temp"),
+            "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
+        },
+        stdout=PIPE,
+        stderr=STDOUT,
+        text=True,
+        encoding="utf-8",
+    )
+    assert process.stdout is not None
+    lines: list[str] = []
+    interrupted = Event()
+
+    def interrupt_seed() -> None:
+        for line in process.stdout:
+            lines.append(line)
+            if "build install image for pip" in line and not interrupted.is_set():
+                process.send_signal(signal.SIGINT)
+                interrupted.set()
+
+    watcher = Thread(target=interrupt_seed)
+    watcher.start()
+    try:
+        process.wait(timeout=120)
+    finally:
+        process.kill()
+        process.wait(timeout=5)
+        watcher.join(timeout=5)
+
+    assert interrupted.is_set()
+    cache_line = next(line for line in lines if "created temporary app data folder" in line)
+    cache = Path(cache_line.split(" folder ", 1)[1].split(" [DEBUG", 1)[0])
+    cleanup_index = next(index for index, line in enumerate(lines) if "remove temporary app data folder" in line)
+    release_index = next(
+        index for index, line in enumerate(lines) if " released on " in line and "CopyPipInstall" in line
+    )
+    assert (release_index < cleanup_index, cache.exists(), bool(list((tmp_path / "env").rglob("pip/__init__.py")))) == (
+        True,
+        False,
+        True,
+    )
+
+
+def test_second_interrupt_exits_and_next_run_finishes_seed(tmp_path: Path) -> None:
+    env: Final[Path] = tmp_path / "env"
+    cache: Final[Path] = tmp_path / "cache"
+    args: Final[list[str]] = ["--app-data", str(cache), "--no-periodic-update", "--no-setuptools", str(env)]
+    script: Final[str] = """
+import os
+import sys
+from _thread import interrupt_main
+from threading import Event, Thread
+from virtualenv.__main__ import run_with_catch
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
+
+def block(self, archive, folder):
+    print("staging", folder, flush=True)
+    Event().wait()
+
+def watch_stdin():
+    for _ in sys.stdin:
+        interrupt_main()
+
+if os.name == "nt":
+    Thread(target=watch_stdin, daemon=True).start()
+PipInstall._populate_image = block
+run_with_catch()
+"""
+    with Popen([sys.executable, "-c", script, *args], stdin=PIPE, stdout=PIPE, stderr=STDOUT, text=True) as process:
+        assert process.stdout is not None
+        staging: list[Path] = []
+        signals: list[str] = []
+
+        def interrupt_seed() -> None:
+            for line in process.stdout:
+                if line.startswith("staging "):
+                    staging.append(Path(line.removeprefix("staging ").rstrip()))
+                    signals.append("build")
+                elif "Press Ctrl+C again" in line:
+                    signals.append("wait")
+                else:
+                    continue
+                if os.name == "nt":
+                    # A Windows console interrupt cannot target just this child in the test runner's console.
+                    assert process.stdin is not None
+                    process.stdin.write("\n")
+                    process.stdin.flush()
+                else:
+                    process.send_signal(signal.SIGINT)
+
+        watcher = Thread(target=interrupt_seed)
+        watcher.start()
+        try:
+            process.wait(timeout=30)
+        finally:
+            process.kill()
+            process.wait(timeout=5)
+            watcher.join(timeout=5)
+
+    assert (signals, process.returncode, [path.is_dir() for path in staging]) == (["build", "wait"], 130, [True])
+    session = cli_run(args)
+    assert (staging[0].exists(), (session.creator.purelib / "pip" / "__init__.py").is_file()) == (False, True)
+
+
+def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache: Path, mocker: MockerFixture) -> None:
+    started, release, finished = Event(), Event(), Event()
+    original_build = PipInstall.build_image
+
+    def build_image(installer: PipInstall) -> None:
+        started.set()
+        assert release.wait(timeout=5)
+        original_build(installer)
+        finished.set()
+
+    mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
+    original_submit, original_wait = ThreadPoolExecutor.submit, Event.wait
+    submit_calls = 0
+    interrupts = 0
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls
+        future = original_submit(executor, fn, *args, **kwargs)
+        submit_calls += 1
+        return future
+
+    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
+        nonlocal interrupts
+        if submit_calls >= 2 and current_thread() is main_thread() and event is not started:
+            assert original_wait(started, timeout=30)
+            if interrupts < 2:
+                interrupts += 1
+                raise KeyboardInterrupt
+            release.set()
+        return original_wait(event, timeout)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run(
+            [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+            env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+        )
+    assert (interrupts, finished.is_set()) == (2, True)
+
+
+def test_interrupt_during_worker_submission_waits_for_seed(
+    tmp_path: Path, unusable_cache: Path, mocker: MockerFixture
+) -> None:
+    started, release, finished = Event(), Event(), Event()
+    original_build = PipInstall.build_image
+
+    def build_image(installer: PipInstall) -> None:
+        started.set()
+        assert release.wait(timeout=5)
+        original_build(installer)
+        finished.set()
+
+    mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
+    original_submit = ThreadPoolExecutor.submit
+    submit_calls = 0
+    interrupted = False
+    wait_interrupted = False
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls, interrupted
+        future = original_submit(executor, fn, *args, **kwargs)
+        submit_calls += 1
+        if submit_calls == 2 and not interrupted:
+            assert started.wait(timeout=5)
+            interrupted = True
+            raise KeyboardInterrupt
+        return future
+
+    original_wait = Event.wait
+
+    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
+        nonlocal wait_interrupted
+        if interrupted and current_thread() is main_thread() and not wait_interrupted:
+            wait_interrupted = True
+            release.set()
+            raise KeyboardInterrupt
+        return original_wait(event, timeout)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run(
+            [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+            env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+        )
+    assert (wait_interrupted, finished.is_set()) == (True, True)
+
+
+def test_interrupt_before_queueing_cancels_pending_install(tmp_path: Path, mocker: MockerFixture) -> None:
+    original_submit = ThreadPoolExecutor.submit
+    queued: list[Callable[[], None]] = []
+    calls = 0
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            queued.append(fn)
+            raise KeyboardInterrupt
+        return original_submit(executor, fn, *args, **kwargs)
+
+    original_set = Event.set
+    interrupted_cancel = False
+
+    def interrupt_cancel(event: Event) -> None:
+        nonlocal interrupted_cancel
+        if queued and current_thread() is main_thread() and not interrupted_cancel:
+            interrupted_cancel = True
+            raise KeyboardInterrupt
+        original_set(event)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(Event, "set", autospec=True, side_effect=interrupt_cancel)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run([str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"])
+    queued[0]()
+    assert (interrupted_cancel, list((tmp_path / "env").rglob("pip/__init__.py"))) == (True, [])
+
+
+def test_seed_worker_runs_when_executor_rejects_submission(
+    tmp_path: Path, unusable_cache: Path, mocker: MockerFixture
+) -> None:
+    original_submit = ThreadPoolExecutor.submit
+    rejected = False
+
+    submit_calls = 0
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal submit_calls, rejected
+        submit_calls += 1
+        if submit_calls == 2 and not rejected:
+            rejected = True
+            msg = "cannot start worker"
+            raise RuntimeError(msg)
+        return original_submit(executor, fn, *args, **kwargs)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    session = cli_run(
+        [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+        env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+    )
+    assert (
+        rejected,
+        (session.creator.purelib / "pip" / "__init__.py").is_file(),
+        Path(str(session.creator.app_data)).exists(),
+    ) == (True, True, False)
 
 
 @pytest.mark.parametrize(
@@ -225,6 +489,134 @@ def test_seed_metadata_unlinks_symlink_without_following(tmp_path: Path, caplog:
     )
 
 
+@pytest.mark.skipif(os.name == "nt" or not fs_supports_symlink(), reason="requires POSIX parent links")
+@pytest.mark.parametrize(
+    ("create", "delete", "name"),
+    [
+        pytest.param(Path.touch, Path.unlink, "remove_file", id="file"),
+        pytest.param(Path.mkdir, safe_delete, "safe_delete", id="directory"),
+    ],
+)
+def test_seed_metadata_removes_checked_path(
+    tmp_path: Path, mocker: MockerFixture, create: Callable[[Path], None], delete: Callable[[Path], None], name: str
+) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    target: Final[Path] = env / "deep" / "a" / "b" / "c"
+    target.mkdir(parents=True)
+    outside_target: Final[Path] = tmp_path / "a" / "b" / "c"
+    outside_target.mkdir(parents=True)
+    inside: Final[Path] = env / "deep" / "keep"
+    outside: Final[Path] = tmp_path / "keep"
+    create(inside)
+    create(outside)
+    (dist_info / "RECORD").write_text("linked/../../../keep,,\n", encoding="utf-8")
+    link: Final[Path] = purelib / "linked"
+    link.symlink_to(target, target_is_directory=True)
+
+    def replace_link_then_delete(path: Path) -> None:
+        if link.is_symlink():
+            link.unlink()
+            link.symlink_to(outside_target, target_is_directory=True)
+        delete(path)
+
+    mocker.patch(
+        f"virtualenv.seed.embed.via_app_data.pip_install.base.{name}",
+        side_effect=replace_link_then_delete,
+        autospec=True,
+    )
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (inside.exists(), outside.exists()) == (False, True)
+
+
+@pytest.mark.skipif(sys.platform != "linux" or not fs_supports_symlink(), reason="requires Linux path limits")
+def test_seed_metadata_skips_unresolvable_parent_link(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "notes").write_text("keep", encoding="utf-8")
+    deep = purelib
+    # The expanded out path must exceed Linux's 4095-byte limit.
+    while (remaining := 4093 - len(str(deep))) > 1:
+        deep /= "d" * min(200, remaining - 1)
+        deep.mkdir()
+    (purelib / "hop").symlink_to(deep.relative_to(purelib), target_is_directory=True)
+    (purelib / "hop" / "out").symlink_to(os.path.relpath(outside, deep), target_is_directory=True)
+    (dist_info / "RECORD").write_text("hop/out/notes,,\n", encoding="utf-8")
+    assert env.resolve() in (purelib / "hop" / "out" / "notes").resolve().parents
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert ((outside / "notes").read_text(encoding="utf-8"), "cannot resolve it" in caplog.text) == ("keep", True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+def test_seed_metadata_removes_junction_without_following(tmp_path: Path) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "Lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    target: Final[Path] = env / "target"
+    target.mkdir()
+    (target / "keep.txt").write_text("keep", encoding="utf-8")
+    link: Final[Path] = purelib / "linked"
+    run(["cmd", "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True)
+    (dist_info / "RECORD").write_text("linked,,\n", encoding="utf-8")
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (link.exists(), (target / "keep.txt").read_text(encoding="utf-8")) == (False, "keep")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows cloud reparse tags")
+def test_seed_metadata_removes_cloud_directory_contents(tmp_path: Path, mocker: MockerFixture) -> None:
+    dist_info: Final[Path] = tmp_path / "seed-0.dist-info"
+    dist_info.mkdir()
+    cloud: Final[Path] = tmp_path / "cloud"
+    cloud.mkdir()
+    (cloud / "module.py").touch()
+    (dist_info / "RECORD").write_text("cloud,,\n", encoding="utf-8")
+    original_lstat = Path.lstat
+
+    def cloud_lstat(path: Path) -> os.stat_result:
+        info = original_lstat(path)
+        if path == cloud:
+            # IO_REPARSE_TAG_CLOUD has no name-surrogate bit.
+            return os.stat_result(info, {"st_reparse_tag": 0x9000001A, "st_file_attributes": 0x410})
+        return info
+
+    mocker.patch.object(Path, "lstat", side_effect=cloud_lstat, autospec=True)
+    CopyPipInstall._uninstall_dist(dist_info, tmp_path)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (cloud.exists(), dist_info.exists()) == (False, False)
+
+
+def test_seed_package_installs_do_not_overlap(tmp_path: Path, mocker: MockerFixture) -> None:
+    ready: Final[Barrier] = Barrier(2)
+    overlap: Final[Barrier] = Barrier(2)
+    concurrent: Final[list[CopyPipInstall]] = []
+
+    def build_image(*_args: object) -> None:
+        ready.wait(timeout=5)
+
+    def install(installer: CopyPipInstall, _version_info: tuple[int, ...]) -> None:
+        try:
+            overlap.wait(timeout=1)
+        except BrokenBarrierError:
+            return
+        concurrent.append(installer)
+
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data._build_wheel_image", side_effect=build_image, autospec=True
+    )
+    installed = mocker.patch.object(CopyPipInstall, "install", side_effect=install, autospec=True)
+    cli_run(
+        [str(tmp_path / "env"), "--no-periodic-update", "--pip", "bundle", "--setuptools", "bundle"],
+        setup_logging=False,
+    )
+    assert (installed.call_count, concurrent) == (2, [])
+
+
 @pytest.mark.parametrize(
     "linked",
     [
@@ -252,6 +644,94 @@ def test_seed_metadata_keeps_reseeding_supported(
         linked,
         False,
     )
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires FIFOs")
+@pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
+def test_seed_metadata_skips_fifo(no_seed_session: Session, tmp_path: Path, metadata_file: str) -> None:
+    dist_info: Final[Path] = no_seed_session.creator.purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    os.mkfifo(dist_info / metadata_file)
+    result = run(
+        [
+            sys.executable,
+            "-m",
+            "virtualenv",
+            str(no_seed_session.creator.dest),
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+            "--no-setuptools",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert (
+        result.returncode,
+        "not a regular file" in result.stdout,
+        dist_info.exists(),
+        (no_seed_session.creator.purelib / "pip" / "__init__.py").is_file(),
+    ) == (0, True, False, True)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX non-blocking files")
+def test_seed_metadata_is_read_without_blocking(tmp_path: Path, mocker: MockerFixture) -> None:
+    metadata: Final[Path] = tmp_path / "RECORD"
+    metadata.write_text("seed.py,,", encoding="utf-8")
+    original_fstat = os.fstat
+    blocking: list[bool] = []
+
+    def fstat(fd: int) -> os.stat_result:
+        blocking.append(os.get_blocking(fd))
+        return original_fstat(fd)
+
+    mocker.patch.object(os, "fstat", side_effect=fstat, autospec=True)
+    content = PipInstall._read_regular_metadata(metadata)  # ruff:ignore[private-member-access]  # open descriptor
+    assert (content, blocking) == ("seed.py,,", [False])
+
+
+@pytest.mark.skipif(os.name == "nt" or not fs_supports_symlink(), reason="requires POSIX device links")
+@pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
+def test_seed_metadata_skips_device(
+    no_seed_session: Session, tmp_path: Path, caplog: pytest.LogCaptureFixture, metadata_file: str
+) -> None:
+    dist_info: Final[Path] = no_seed_session.creator.purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    (dist_info / metadata_file).symlink_to(os.devnull)
+    cli_run(
+        [str(no_seed_session.creator.dest), "--app-data", str(tmp_path / "cache"), "--no-periodic-update"],
+        setup_logging=False,
+    )
+    assert (
+        "not a regular file" in caplog.text,
+        dist_info.exists(),
+        (no_seed_session.creator.purelib / "pip" / "__init__.py").is_file(),
+    ) == (True, False, True)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize(
+    ("metadata_file", "content"),
+    [
+        pytest.param("top_level.txt", "stale.py\n", id="top-level"),
+        pytest.param("RECORD", "stale.py,,\n", id="record"),
+    ],
+)
+def test_seed_metadata_reads_linked_file(
+    no_seed_session: Session, tmp_path: Path, metadata_file: str, content: str
+) -> None:
+    purelib: Final[Path] = no_seed_session.creator.purelib
+    dist_info: Final[Path] = purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    stale: Final[Path] = purelib / "stale.py"
+    stale.write_text("old", encoding="utf-8")
+    target: Final[Path] = tmp_path / "metadata.txt"
+    target.write_text(content, encoding="utf-8")
+    (dist_info / metadata_file).symlink_to(target)
+    cli_run([str(no_seed_session.creator.dest), "--no-periodic-update"], setup_logging=False)
+    assert (stale.exists(), target.read_text(encoding="utf-8"), dist_info.exists()) == (False, content, False)
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -429,6 +909,43 @@ def test_console_script_preserves_interpreter_path(
         check=True,
     )
     assert os.path.normcase(destination) in os.path.normcase(result.stdout)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shebangs")
+@pytest.mark.parametrize("seeder", [pytest.param("app-data", id="app-data"), pytest.param("pip", id="pip")])
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("rock'n'roll", id="apostrophe"),
+        pytest.param('double"quote"', id="double-quote"),
+        pytest.param("back\\slash", id="backslash"),
+    ],
+)
+def test_console_script_runs_after_xonsh_shebang_parse(tmp_path: Path, seeder: str, name: str) -> None:
+    session: Final[Session] = cli_run([
+        str(tmp_path / name / "env"),
+        "--seeder",
+        seeder,
+        "--pip",
+        "embed",
+        "--no-download",
+        "--no-periodic-update",
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--activators",
+        "",
+    ])
+    script: Final[Path] = session.creator.script("pip")
+    interpreter: Final[list[str]] = shlex.split(os.fsdecode(script.read_bytes().split(b"\n", 1)[0][2:]))
+    result: Final[CompletedProcess[str]] = run(
+        [*interpreter, str(script), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=True,
+    )
+    assert str(session.creator.dest) in result.stdout
 
 
 @pytest.mark.slow
@@ -890,31 +1407,38 @@ def test_seed_uninstall_reads_quoted_record_paths(
     assert (installed.exists(), dist_info.exists(), unrelated.read_text(encoding="utf-8")) == (False, False, "keep")
 
 
-def test_seed_uninstall_removes_empty_ancestor_folders(tmp_path: Path, no_seed_session: Session) -> None:
+def test_seed_uninstall_does_not_look_up_outside_metadata_paths(
+    tmp_path: Path, no_seed_session: Session, mocker: MockerFixture
+) -> None:
+    env_dir = no_seed_session.creator.dest
     purelib = no_seed_session.creator.purelib
-    dist_info = purelib / "example-1.0.dist-info"
-    dist_info.mkdir(parents=True)
-    for leaf in ("b", "c"):
-        folder = purelib / "example" / "a" / leaf
-        folder.mkdir(parents=True)
-        (folder / "mod.txt").write_text("old", encoding="utf-8")
+    dist_info = purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    inside = env_dir / "old.py"
+    inside.write_text("old", encoding="utf-8")
+    outside = tmp_path / "outside.py"
+    outside.write_text("keep", encoding="utf-8")
+    outside_relative = os.path.relpath(outside, purelib)
     (dist_info / "RECORD").write_text(
-        "example/a/b/mod.txt,,\nexample/a/c/mod.txt,,\nexample-1.0.dist-info/RECORD,,\n", encoding="utf-8"
+        f"{outside},,\n{outside_relative},,\n{os.path.relpath(inside, purelib)},,\n", encoding="utf-8"
     )
-    image = tmp_path / "image"
-    new_dist_info = image / "example-2.0.dist-info"
-    new_dist_info.mkdir(parents=True)
-    (new_dist_info / "RECORD").touch()
+    (dist_info / "top_level.txt").write_text(f"{outside}\n{outside_relative}\n", encoding="utf-8")
+    exists = Path.exists
+    glob = Path.glob
 
-    CopyPipInstall(tmp_path / "example-2.0-py3-none-any.whl", no_seed_session.creator, image).install(
-        no_seed_session.interpreter.version_info
-    )
+    def checked_exists(path: Path) -> bool:
+        assert Path(os.path.abspath(path)) != outside
+        return exists(path)
 
-    assert ((purelib / "example").exists(), dist_info.exists(), (purelib / new_dist_info.name).is_dir()) == (
-        False,
-        False,
-        True,
-    )
+    def checked_glob(path: Path, pattern: str) -> Iterator[Path]:
+        assert Path(os.path.abspath(path)) != outside.parent / "__pycache__"
+        return glob(path, pattern)
+
+    mocker.patch.object(Path, "exists", checked_exists)
+    mocker.patch.object(Path, "glob", checked_glob)
+    cli_run([str(env_dir), "--no-periodic-update", "--no-setuptools"], setup_logging=False)
+
+    assert (inside.exists(), outside.read_text(encoding="utf-8"), dist_info.exists()) == (False, "keep", False)
 
 
 @pytest.fixture
@@ -1281,6 +1805,10 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
         pytest.param("plain", False, id="plain"),
         pytest.param("two words", True, id="space"),
         pytest.param("env\tname", True, id="tab"),
+        pytest.param("env\vname", True, id="vertical-tab"),
+        pytest.param("env\fname", True, id="form-feed"),
+        pytest.param("rock'n'roll", True, id="apostrophe"),
+        pytest.param("back\\slash", True, id="backslash"),
     ],
 )
 def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_shell: bool) -> None:
@@ -1301,3 +1829,57 @@ def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_she
         f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
         str(len(content)),
     ]
+
+
+@pytest.mark.skipif(os.name != "posix" or sys.platform == "darwin", reason="requires raw POSIX filename bytes")
+def test_shell_launcher_runs_interpreter_with_non_utf8_path(tmp_path: Path) -> None:
+    interpreter: Final[Path] = Path(os.fsdecode(os.fsencode(tmp_path) + b"/\xff/python"))
+    interpreter.parent.mkdir()
+    interpreter.write_bytes(b"#!/bin/sh\nprintf '%s\\n' \"$0\"\n")
+    interpreter.chmod(0o755)
+    header: Final[bytes] = shell_shebang(str(interpreter))
+    launcher: Final[Path] = tmp_path / "launcher"
+    launcher.write_bytes(header)
+    launcher.chmod(0o755)
+    result: Final[CompletedProcess[bytes]] = run([launcher], capture_output=True, check=True)
+    assert (header.isascii(), result.stdout) == (True, os.fsencode(interpreter) + b"\n")
+    compile(header + b"pass\n", str(launcher), "exec")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("line\nunused_variable", id="interpreter-header"),
+        pytest.param(f"{'x' * 120}\nx\nunused_variable", id="long-shell-header"),
+        pytest.param("two words\nx\nunused_variable", id="shell-header"),
+    ],
+)
+def test_pip_launcher_keeps_line_feed_path_in_header(tmp_path: Path, name: str) -> None:
+    session: Final[Session] = cli_run([
+        str(tmp_path / name),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ])
+    result: Final[CompletedProcess[str]] = run(
+        [str(session.creator.script_dir / "pip"), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=False,
+    )
+    assert (result.returncode, result.stdout.startswith("pip ")) == (0, True)
+
+
+def test_seed_worker_error_reaches_caller(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.get_wheel", autospec=True, side_effect=SystemError("lookup")
+    )
+    mocker.patch.object(logging.Logger, "exception", autospec=True, side_effect=TypeError("logging"))
+
+    with pytest.raises(TypeError, match="logging"):
+        cli_run([str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"])

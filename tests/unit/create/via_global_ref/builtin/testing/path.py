@@ -43,6 +43,9 @@ def is_name(path):
 
 
 def mock_files(mocker, pathlist, filelist) -> None:
+    for parser in (getattr(Path(), "_flavour", None), getattr(Path(), "parser", None)):
+        if hasattr(parser, "altsep"):
+            mocker.patch.object(parser, "altsep", parser.altsep or "\\")
     # the variable is named after the class it patches in, as the test reads it
     PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
     for path in pathlist:
@@ -57,14 +60,6 @@ def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
 
 class PathMockABC(FakeDataABC, Path):
     _flavour = getattr(Path(), "_flavour", None)
-    if hasattr(_flavour, "altsep"):
-        # Allows to pass some tests for Windows via PosixPath.
-        _flavour.altsep = _flavour.altsep or "\\"
-
-    # Python 3.13 renamed _flavour to parser
-    parser = getattr(Path(), "parser", None)
-    if hasattr(parser, "altsep"):
-        parser.altsep = parser.altsep or "\\"
 
     def exists(self):
         return self.is_file() or self.is_dir()

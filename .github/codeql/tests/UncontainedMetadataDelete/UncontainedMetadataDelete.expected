@@ -12,6 +12,20 @@ edges
 | uninstall.py:22:24:22:27 | ControlFlowNode for name | uninstall.py:22:10:22:27 | ControlFlowNode for BinaryExpr | provenance | Config |
 | uninstall.py:22:24:22:27 | ControlFlowNode for name | uninstall.py:23:35:23:38 | ControlFlowNode for name | provenance |  |
 | uninstall.py:23:35:23:38 | ControlFlowNode for name | uninstall.py:23:21:23:38 | ControlFlowNode for BinaryExpr | provenance | Config |
+| uninstall.py:44:9:44:12 | ControlFlowNode for name | uninstall.py:45:31:45:34 | ControlFlowNode for name | provenance |  |
+| uninstall.py:44:17:44:81 | ControlFlowNode for Attribute() | uninstall.py:44:9:44:12 | ControlFlowNode for name | provenance |  |
+| uninstall.py:45:9:45:13 | ControlFlowNode for entry | uninstall.py:46:20:46:24 | ControlFlowNode for entry | provenance |  |
+| uninstall.py:45:17:45:34 | ControlFlowNode for BinaryExpr | uninstall.py:45:9:45:13 | ControlFlowNode for entry | provenance |  |
+| uninstall.py:45:31:45:34 | ControlFlowNode for name | uninstall.py:45:17:45:34 | ControlFlowNode for BinaryExpr | provenance | Config |
+| uninstall.py:46:9:46:16 | ControlFlowNode for resolved | uninstall.py:49:21:49:28 | ControlFlowNode for resolved | provenance |  |
+| uninstall.py:46:20:46:24 | ControlFlowNode for entry | uninstall.py:46:20:46:34 | ControlFlowNode for Attribute() | provenance | Config |
+| uninstall.py:46:20:46:34 | ControlFlowNode for Attribute() | uninstall.py:46:9:46:16 | ControlFlowNode for resolved | provenance |  |
+| uninstall.py:54:9:54:12 | ControlFlowNode for name | uninstall.py:55:31:55:34 | ControlFlowNode for name | provenance |  |
+| uninstall.py:54:17:54:81 | ControlFlowNode for Attribute() | uninstall.py:54:9:54:12 | ControlFlowNode for name | provenance |  |
+| uninstall.py:55:9:55:13 | ControlFlowNode for entry | uninstall.py:56:24:56:28 | ControlFlowNode for entry | provenance |  |
+| uninstall.py:55:17:55:34 | ControlFlowNode for BinaryExpr | uninstall.py:55:9:55:13 | ControlFlowNode for entry | provenance |  |
+| uninstall.py:55:31:55:34 | ControlFlowNode for name | uninstall.py:55:17:55:34 | ControlFlowNode for BinaryExpr | provenance | Config |
+| uninstall.py:56:24:56:28 | ControlFlowNode for entry | uninstall.py:58:21:58:25 | ControlFlowNode for entry | provenance |  |
 nodes
 | uninstall.py:19:9:19:12 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
 | uninstall.py:19:17:19:81 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
@@ -28,9 +42,27 @@ nodes
 | uninstall.py:22:24:22:27 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
 | uninstall.py:23:21:23:38 | ControlFlowNode for BinaryExpr | semmle.label | ControlFlowNode for BinaryExpr |
 | uninstall.py:23:35:23:38 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
+| uninstall.py:44:9:44:12 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
+| uninstall.py:44:17:44:81 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| uninstall.py:45:9:45:13 | ControlFlowNode for entry | semmle.label | ControlFlowNode for entry |
+| uninstall.py:45:17:45:34 | ControlFlowNode for BinaryExpr | semmle.label | ControlFlowNode for BinaryExpr |
+| uninstall.py:45:31:45:34 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
+| uninstall.py:46:9:46:16 | ControlFlowNode for resolved | semmle.label | ControlFlowNode for resolved |
+| uninstall.py:46:20:46:24 | ControlFlowNode for entry | semmle.label | ControlFlowNode for entry |
+| uninstall.py:46:20:46:34 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| uninstall.py:49:21:49:28 | ControlFlowNode for resolved | semmle.label | ControlFlowNode for resolved |
+| uninstall.py:54:9:54:12 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
+| uninstall.py:54:17:54:81 | ControlFlowNode for Attribute() | semmle.label | ControlFlowNode for Attribute() |
+| uninstall.py:55:9:55:13 | ControlFlowNode for entry | semmle.label | ControlFlowNode for entry |
+| uninstall.py:55:17:55:34 | ControlFlowNode for BinaryExpr | semmle.label | ControlFlowNode for BinaryExpr |
+| uninstall.py:55:31:55:34 | ControlFlowNode for name | semmle.label | ControlFlowNode for name |
+| uninstall.py:56:24:56:28 | ControlFlowNode for entry | semmle.label | ControlFlowNode for entry |
+| uninstall.py:58:21:58:25 | ControlFlowNode for entry | semmle.label | ControlFlowNode for entry |
 subpaths
 | uninstall.py:21:43:21:100 | ControlFlowNode for Attribute() | uninstall.py:21:18:21:100 | ControlFlowNode for .0 | uninstall.py:21:18:21:32 | ControlFlowNode for Yield [List element] | uninstall.py:21:18:21:100 | ControlFlowNode for GeneratorExp [List element] |
 #select
 | uninstall.py:20:21:20:38 | ControlFlowNode for BinaryExpr | uninstall.py:19:17:19:81 | ControlFlowNode for Attribute() | uninstall.py:20:21:20:38 | ControlFlowNode for BinaryExpr | $@ is deleted without checking that it stays inside the environment. | uninstall.py:19:17:19:81 | ControlFlowNode for Attribute() | This metadata entry |
 | uninstall.py:22:10:22:27 | ControlFlowNode for BinaryExpr | uninstall.py:21:43:21:100 | ControlFlowNode for Attribute() | uninstall.py:22:10:22:27 | ControlFlowNode for BinaryExpr | $@ is deleted without checking that it stays inside the environment. | uninstall.py:21:43:21:100 | ControlFlowNode for Attribute() | This metadata entry |
 | uninstall.py:23:21:23:38 | ControlFlowNode for BinaryExpr | uninstall.py:21:43:21:100 | ControlFlowNode for Attribute() | uninstall.py:23:21:23:38 | ControlFlowNode for BinaryExpr | $@ is deleted without checking that it stays inside the environment. | uninstall.py:21:43:21:100 | ControlFlowNode for Attribute() | This metadata entry |
+| uninstall.py:49:21:49:28 | ControlFlowNode for resolved | uninstall.py:44:17:44:81 | ControlFlowNode for Attribute() | uninstall.py:49:21:49:28 | ControlFlowNode for resolved | $@ is deleted without checking that it stays inside the environment. | uninstall.py:44:17:44:81 | ControlFlowNode for Attribute() | This metadata entry |
+| uninstall.py:58:21:58:25 | ControlFlowNode for entry | uninstall.py:54:17:54:81 | ControlFlowNode for Attribute() | uninstall.py:58:21:58:25 | ControlFlowNode for entry | $@ is deleted without checking that it stays inside the environment. | uninstall.py:54:17:54:81 | ControlFlowNode for Attribute() | This metadata entry |
