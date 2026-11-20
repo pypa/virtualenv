@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import sysconfig
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -157,6 +158,46 @@ def test_download_wheel_skips_local_pip_module(
     )
 
     assert result.path == tmp_path / "house" / embedded.name
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython", reason="CPython startup import")
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="PYTHONSAFEPATH is new in Python 3.11")
+def test_pip_helper_omits_current_directory_at_startup(session_app_data: AppDataDiskFolder, tmp_path: Path) -> None:
+    marker = tmp_path / "loaded"
+    (tmp_path / "linecache.py").write_text(
+        "import os\n"
+        "with open(os.environ['TEST_MARKER'], 'w', encoding='utf-8') as output: output.write('loaded')\n"
+        "with open(os.environ['TEST_LINECACHE'], encoding='utf-8') as source: "
+        "exec(compile(source.read(), source.name, 'exec'))\n",
+        encoding="utf-8",
+    )
+    env = pip_wheel_env_run(
+        [],
+        session_app_data,
+        {
+            **os.environ,
+            "TEST_MARKER": str(marker),
+            "TEST_LINECACHE": str(Path(sysconfig.get_path("stdlib")) / "linecache.py"),
+        },
+    )
+    result = subprocess.run(
+        [Path(sysconfig.get_config_var("BINDIR")) / Path(sys.executable).name, "-c", PIP_RUN, "--version"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+        timeout=10,
+    )
+
+    assert (
+        get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").name in result.stdout,
+        marker.exists(),
+    ) == (
+        True,
+        False,
+    )
 
 
 def test_download_fails(

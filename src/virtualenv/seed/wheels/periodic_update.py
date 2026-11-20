@@ -173,7 +173,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
         "spec.loader.exec_module(package)\n"
         f"{code}"
     )
-    # drop the implicit working-directory entry before anything else is imported, as sys is built in
+    # Keep the -c filter for interpreters that ignore PYTHONSAFEPATH.
     cmd: Final[list[str]] = [
         sys.executable,
         "-c",
@@ -192,7 +192,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
     # kwargs mixes pipe and creationflags, which ty cannot match to one Popen overload
-    process = Popen(cmd, env=env, **kwargs)  # ty: ignore[no-matching-overload]
+    process = Popen(cmd, env={**env, "PYTHONSAFEPATH": "1"}, **kwargs)  # ty: ignore[no-matching-overload]
     LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,

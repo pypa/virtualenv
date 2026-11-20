@@ -495,7 +495,9 @@ def test_periodic_update_trigger(
         app_data.embed_update_log("setuptools", for_py_version).read(),
     ) == (None, UpdateLog(_UP_NOW, u_log.completed, [], True).to_dict())
     assert popen.call_count == 1
-    assert popen.call_args.kwargs == {True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[inline] | {"env": env}
+    assert popen.call_args.kwargs == {True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[inline] | {
+        "env": {**env, "PYTHONSAFEPATH": "1"}
+    }
     assert process.communicate.call_count == int(inline)
 
 
@@ -560,7 +562,7 @@ def test_trigger_update_command(
             "a",
             "b",
         ],
-        env=env,
+        env={**env, "PYTHONSAFEPATH": "1"},
         **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug],
     )
     assert process.return_value.communicate.call_count == int(debug)

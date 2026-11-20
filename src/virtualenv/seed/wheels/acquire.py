@@ -239,7 +239,13 @@ def pip_wheel_env_run(
 
     """
     env = env.copy()
-    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
+    env.update({
+        "PIP_USE_WHEEL": "1",
+        "PIP_USER": "0",
+        "PIP_NO_INPUT": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONSAFEPATH": "1",
+    })
     wheel = get_wheel(
         distribution="pip",
         version=None,
