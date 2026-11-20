@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import colorsys
 import os
 import subprocess
 import sys
@@ -120,6 +121,42 @@ def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:
     out = subprocess.check_output([sys.executable, "-S", "-c", code], text=True, encoding="utf-8")
     dest = str(activation_python.creator.dest)
     assert literal_eval(out) == (dest, dest, str(activation_python.creator.platlib))
+
+
+def test_python_activator_pth_import_precedence(activation_python: Session, tmp_path: Path) -> None:
+    purelib = activation_python.creator.purelib
+    pth = purelib / "activation_order.pth"
+    env_module = purelib / "activation_order_probe.py"
+    host_module = tmp_path / env_module.name
+    env_stdlib_module = purelib / "colorsys.py"
+    pth.write_text("import activation_order_probe, colorsys\n", encoding="utf-8")
+    env_module.write_text("", encoding="utf-8")
+    host_module.write_text("", encoding="utf-8")
+    env_stdlib_module.write_text("", encoding="utf-8")
+    script = activation_python.creator.bin_dir / "activate_this.py"
+    code = (
+        "import runpy, sys; "
+        "assert 'activation_order_probe' not in sys.modules and 'colorsys' not in sys.modules; "
+        f"runpy.run_path({str(script)!r}); "
+        "print(repr((sys.modules['activation_order_probe'].__file__, sys.modules['colorsys'].__file__)))"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+            check=False,
+        )
+    finally:
+        pth.unlink()
+        env_module.unlink()
+        host_module.unlink()
+        env_stdlib_module.unlink()
+    assert result.returncode == 0, result.stderr
+    assert (literal_eval(result.stdout), result.stderr) == ((str(env_module), colorsys.__file__), "")
 
 
 def test_python(raise_on_non_source_class, activation_tester) -> None:

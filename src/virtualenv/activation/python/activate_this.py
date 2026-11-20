@@ -40,14 +40,43 @@ if existing_pkg_config_path := os.environ.get("PKG_CONFIG_PATH", ""):
 else:
     os.environ["PKG_CONFIG_PATH"] = pkg_config_path
 
-# add the virtual environments libraries to the host python import mechanism
-prev_length = len(sys.path)  # simplint: ignore[module-variable-case, module-variable-prefix, missing-final, undocumented-public-api]  # runpy result  # fmt: skip
-# __LIB_FOLDERS__ is filled in when the script is written
-for lib in __LIB_FOLDERS__.split(os.pathsep):  # ty: ignore[unresolved-reference]
-    path = os.path.realpath(os.path.join(bin_dir, lib))  # simplint: ignore[module-variable-case, module-variable-prefix]  # runpy result  # fmt: skip
-    # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
-    site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
-sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]
+
+def _add_libraries() -> None:
+    original_paths = sys.path[:]
+    lib_paths = list(
+        dict.fromkeys(
+            os.path.realpath(os.path.join(bin_dir, lib))
+            for lib in __LIB_FOLDERS__.split(os.pathsep)  # ty: ignore[unresolved-reference]  # filled in during generation
+        )
+    )
+    stdlib_dir = os.path.dirname(os.path.realpath(os.__file__))
+    stdlib_candidates = {
+        os.path.realpath(path)
+        for path in (
+            stdlib_dir,
+            os.path.join(stdlib_dir, "lib-dynload"),
+            os.path.join(
+                os.path.dirname(stdlib_dir),
+                f"python{sys.version_info.major}{sys.version_info.minor}{'t' if sys.implementation.cache_tag.endswith('t') else ''}.zip",
+            ),
+            os.path.join(sys.base_prefix, "DLLs"),
+        )
+    }
+    stdlib_paths = [path for path in original_paths if path and os.path.realpath(path) in stdlib_candidates]
+    # .pth imports need the environment before host paths, with the standard library still first.
+    sys.path[:] = (
+        stdlib_paths
+        + lib_paths
+        + [path for path in original_paths if path not in stdlib_paths and path not in lib_paths]
+    )
+    prev_length = len(sys.path)
+    for path in lib_paths:
+        # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
+        site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
+    sys.path[:] = [path for path in lib_paths if path not in original_paths] + sys.path[prev_length:] + original_paths
+
+
+_add_libraries()
 
 # sys.real_prefix is a legacy attribute that older tools read
 sys.real_prefix = sys.prefix  # ty: ignore[missing-attribute]
