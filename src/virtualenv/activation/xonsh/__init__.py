@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = ["logging"]
 
 import logging  # isort: skip # fmt: skip
+import os  # isort: skip # fmt: skip
 import re  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 
 
 _GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")  # fmt: skip
+_UNSAFE_LITERAL_PATTERN: Final[re.Pattern[str]] = re.compile(r"[^ -~]|['\\+~%]")
 
 
 class XonshActivator(ViaTemplateActivator):  # fmt: skip
@@ -51,9 +53,11 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
 
         :param string: the value to quote
 
-        :returns: the ASCII-only literal representation of the string
+        :returns: an ASCII-only expression for the string
 
         """
+        if _UNSAFE_LITERAL_PATTERN.search(string):
+            return f"''.join(__import__('builtins').map(__import__('builtins').chr, {tuple(map(ord, string))!r}))"
         return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
@@ -67,9 +71,24 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
         """
         data = super().replacements(creator, dest_folder)
         data.update({
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
+            "__TCL_LIBRARY__": self._library_path(creator, "tcl_lib", b"TCL_LIBRARY"),
+            "__TK_LIBRARY__": self._library_path(creator, "tk_lib", b"TK_LIBRARY"),
         })
+        return data
+
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        """Embed non-ASCII POSIX paths as bytes for the script to decode with the active filesystem codec.
+
+        :param replacements: the raw placeholder values
+        :param creator: the creator of the environment
+
+        :returns: placeholder values safe for the active filesystem codec
+
+        """
+        data = super().substitutions(replacements, creator)
+        for name in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__"):
+            if os.name != "nt" and not replacements[name].isascii():
+                data[name] = f"__import__('builtins').bytes.fromhex('{replacements[name].encode('utf-8').hex()}')"
         return data
 
 

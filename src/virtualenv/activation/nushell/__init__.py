@@ -61,8 +61,8 @@ class NushellActivator(ViaTemplateActivator):  # fmt: skip
             "__VIRTUAL_ENV__": str(creator.dest),
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
+            "__TCL_LIBRARY__": self._library_path(creator, "tcl_lib", b"TCL_LIBRARY"),
+            "__TK_LIBRARY__": self._library_path(creator, "tk_lib", b"TK_LIBRARY"),
         }
 
 

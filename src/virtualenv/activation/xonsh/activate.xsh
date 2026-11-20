@@ -19,11 +19,11 @@ class _VirtualEnvActivator:
             # Values substituted by virtualenv's XonshActivator at generate-time.
             # If this file was sourced before template rendering, the bare
             # identifiers below resolve to NameError.
-            self.embedded_virtual_env = __VIRTUAL_ENV__
+            self.embedded_virtual_env = self._fs_path(__VIRTUAL_ENV__, required=True)
             self.embedded_virtual_prompt = __VIRTUAL_PROMPT__
             self.embedded_bin_name = __BIN_NAME__
-            self.embedded_tcl_library = __TCL_LIBRARY__
-            self.embedded_tk_library = __TK_LIBRARY__
+            self.embedded_tcl_library = self._fs_path(__TCL_LIBRARY__)
+            self.embedded_tk_library = self._fs_path(__TK_LIBRARY__)
         except NameError:
             print("virtualenv activate.xsh: template was not rendered")
             raise
@@ -31,6 +31,20 @@ class _VirtualEnvActivator:
         self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
         self.pydoc_registered = False
         self.saved_pydoc = None
+
+    @staticmethod
+    def _fs_path(value, required=False):
+        import builtins
+        import os
+
+        if not builtins.isinstance(value, builtins.bytes):
+            return value
+        decoded = os.fsdecode(value)
+        if os.fsencode(decoded) == value:
+            return decoded
+        if required:
+            raise builtins.ValueError(f"virtualenv activate.xsh: the filesystem codec cannot represent {value!r}")
+        return ""
 
     def _backup_name(self, name):
         return f"_OLD_VIRTUAL_{name}"
@@ -69,6 +83,9 @@ class _VirtualEnvActivator:
     def activate(self):
         from os.path import join, basename
 
+        if hasattr(__xonsh__.xontrib, "virtualenv"):
+            __xonsh__.xontrib.virtualenv.deactivate(["nondestructive"])
+        __xonsh__.xontrib.virtualenv = self
         aliases["deactivate"] = self.deactivate
         self.deactivate(["nondestructive"])  # wipe any stale state from a prior activation
 
@@ -107,7 +124,4 @@ class _VirtualEnvActivator:
 
 if not hasattr(__xonsh__, "xontrib"):
     __xonsh__.xontrib = __xonsh__.imp.types.SimpleNamespace()
-if hasattr(__xonsh__.xontrib, "virtualenv"):
-    __xonsh__.xontrib.virtualenv.deactivate(["nondestructive"])
-__xonsh__.xontrib.virtualenv = _VirtualEnvActivator()
-__xonsh__.xontrib.virtualenv.activate()
+_VirtualEnvActivator().activate()
