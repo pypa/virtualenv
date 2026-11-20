@@ -46,7 +46,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         # A blank override must not resolve to the working directory, which --reset-app-data could delete.
         folder = env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")
         if not folder.strip():
-            folder = cache_dir_with_migration()
+            folder = cache_dir_with_migration(read_only=read_only)
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
         # and --reset-app-data would delete it

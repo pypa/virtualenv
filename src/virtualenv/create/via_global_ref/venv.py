@@ -13,6 +13,8 @@ __lazy_modules__ = [
 ]
 
 import logging
+import os
+import sys
 from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Final
 
@@ -92,8 +94,21 @@ class Venv(ViaGlobalRefApi):
         # hard link would receive them outside the environment
         for directory in (self.bin_dir, self.purelib, self.platlib):
             ensure_within(self.dest, directory)
+        # CPython 3.14 adds the pi alias to stdlib venvs on UTF-8 filesystems.
+        interpreter_names = {
+            "python",
+            f"python{self.interpreter.version_info.major}",
+            f"python{self.interpreter.version_info.major}.{self.interpreter.version_info.minor}",
+        }
+        if (self.interpreter.version_info.major, self.interpreter.version_info.minor) == (
+            3,
+            14,
+        ) and sys.getfilesystemencoding() == "utf-8":
+            interpreter_names.add("𝜋thon")
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
-            if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
+            if path.is_symlink() or (
+                path.is_file() and (path.stat().st_nlink > 1 or (os.name == "posix" and path.name in interpreter_names))
+            ):
                 path.unlink()
         if self.can_be_inline:
             self.create_inline()

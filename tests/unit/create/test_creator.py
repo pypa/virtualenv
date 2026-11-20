@@ -11,6 +11,7 @@ import site
 import stat
 import subprocess
 import sys
+import sysconfig
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
@@ -942,6 +943,54 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.parametrize(
+    "alias",
+    [
+        "python",
+        pytest.param(
+            "𝜋thon",
+            id="pi",
+            marks=pytest.mark.skipif(
+                sys.version_info[:2] != (3, 14) or IS_PYPY or sys.getfilesystemencoding() != "utf-8",
+                reason="CPython 3.14 creates this alias on UTF-8 filesystems",
+            ),
+        ),
+    ],
+)
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    stale: Final[Path] = dest / "stale"
+    stale.write_bytes(b"stale")
+    stale.replace(dest / "bin" / alias)
+
+    cli_run(command)
+
+    assert subprocess.check_output([str(dest / "bin" / alias), "-c", "print(1)"], text=True).strip() == "1"
+
+
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.skipif(sys.version_info[:2] == (3, 14), reason="CPython 3.14 creates this alias")
+def test_venv_creator_keeps_unrelated_pi_file(tmp_path: Path) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    alias: Final[Path] = dest / "bin/𝜋thon"
+    alias.write_bytes(b"custom")
+
+    cli_run(command)
+
+    assert alias.read_bytes() == b"custom"
+
+
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
 def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
     args: Final[list[str]] = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
@@ -1082,6 +1131,38 @@ def list_files(path):
         for name in files:
             result += f"{sub}{name}\n"
     return result
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_from_zipped_stdlib(tmp_path: Path) -> None:
+    stdlib: Final[Path] = Path(sysconfig.get_path("stdlib"))
+    source: Final[Path] = stdlib / "distutils"
+    archive: Final[Path] = tmp_path / "stdlib.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for module in source.rglob("*.py"):
+            zip_file.write(module, module.relative_to(stdlib))
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils import dist
+                distribution = dist.Distribution()
+                distribution.parse_config_files(sys.argv[1:])
+                print(dist.__file__)
+                print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONPATH": str(archive)},
+    )
+    assert result.splitlines() == [str(archive / "distutils" / "dist.py"), "[]"]
 
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
@@ -1546,6 +1627,32 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     with pytest.raises(UnicodeEncodeError):
         config.write()
     assert config.path.read_bytes() == b"home = original\n"
+
+
+@pytest.mark.parametrize("version", ["3.11", "3.14"])
+def test_pyenv_cfg_rejects_oversized_cpython_config(tmp_path: Path, version: str) -> None:
+    config: Final[PyEnvCfg] = PyEnvCfg(
+        OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
+        tmp_path / "pyvenv.cfg",
+    )
+    config.path.write_bytes(b"home = original\n")
+
+    with pytest.raises(ValueError, match=r"pyvenv\.cfg must be smaller than 32 KiB"):
+        config.write()
+
+    assert config.path.read_bytes() == b"home = original\n"
+
+
+@pytest.mark.parametrize("version", ["3.9", "3.10"])
+def test_pyenv_cfg_allows_large_older_cpython_config(tmp_path: Path, version: str) -> None:
+    config: Final[PyEnvCfg] = PyEnvCfg(
+        OrderedDict({"implementation": "CPython", "python-version": version, "prompt": "é" * 16_384}),
+        tmp_path / "pyvenv.cfg",
+    )
+
+    config.write()
+
+    assert len(config.path.read_bytes()) >= 32_768
 
 
 def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
