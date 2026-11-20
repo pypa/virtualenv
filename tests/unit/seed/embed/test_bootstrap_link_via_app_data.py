@@ -7,15 +7,17 @@ import hashlib
 import io
 import logging
 import os
+import signal
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
+from concurrent.futures import Future, wait
 from importlib.metadata import PathDistribution
 from pathlib import Path
 from shutil import copy2
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
-from subprocess import Popen, check_call, run
-from threading import Thread
+from subprocess import PIPE, STDOUT, Popen, check_call, run
+from threading import Event, Thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -25,6 +27,7 @@ from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[im
 from virtualenv.app_data import ReadOnlyAppData
 from virtualenv.info import IS_GRAALPY, IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
@@ -88,6 +91,85 @@ def unusable_cache(tmp_path: Path) -> Path:
     blocked: Final[Path] = tmp_path / "blocked"
     blocked.touch()
     return blocked / "cache"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="SIGINT delivery differs on Windows")
+def test_interrupt_waits_for_seed_before_temp_cleanup(tmp_path: Path, unusable_cache: Path) -> None:
+    (tmp_path / "temp").mkdir()
+    process = Popen(
+        [sys.executable, "-m", "virtualenv", "--no-periodic-update", "-vvv", str(tmp_path / "env")],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "TMPDIR": str(tmp_path / "temp"),
+            "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
+        },
+        stdout=PIPE,
+        stderr=STDOUT,
+        text=True,
+        encoding="utf-8",
+    )
+    assert process.stdout is not None
+    lines: list[str] = []
+    interrupted = Event()
+
+    def interrupt_seed() -> None:
+        for line in process.stdout:
+            lines.append(line)
+            if "build install image for pip" in line and not interrupted.is_set():
+                process.send_signal(signal.SIGINT)
+                interrupted.set()
+
+    watcher = Thread(target=interrupt_seed)
+    watcher.start()
+    try:
+        process.wait(timeout=30)
+    finally:
+        process.kill()
+        process.wait(timeout=5)
+        watcher.join(timeout=5)
+
+    assert interrupted.is_set()
+    cache_line = next(line for line in lines if "created temporary app data folder" in line)
+    cache = Path(cache_line.split(" folder ", 1)[1].split(" [DEBUG", 1)[0])
+    cleanup_index = next(index for index, line in enumerate(lines) if "remove temporary app data folder" in line)
+    release_index = next(
+        index for index, line in enumerate(lines) if " released on " in line and "CopyPipInstall" in line
+    )
+    assert (release_index < cleanup_index, cache.exists()) == (True, False)
+
+
+def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache: Path, mocker: MockerFixture) -> None:
+    started, release, finished = Event(), Event(), Event()
+    original_build = PipInstall.build_image
+
+    def build_image(installer: PipInstall) -> None:
+        started.set()
+        assert release.wait(timeout=5)
+        original_build(installer)
+        finished.set()
+
+    mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
+    wait_calls = 0
+
+    def interrupt_wait(futures: list[Future[None]]) -> tuple[set[Future[None]], set[Future[None]]]:
+        nonlocal wait_calls
+        wait_calls += 1
+        if wait_calls == 1:
+            return wait(futures)
+        assert started.wait(timeout=5)
+        if wait_calls < 4:
+            raise KeyboardInterrupt
+        release.set()
+        return wait(futures)
+
+    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.wait", side_effect=interrupt_wait, autospec=True)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run(
+            [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+            env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
+        )
+    assert (wait_calls, finished.is_set()) == (4, True)
 
 
 @pytest.mark.parametrize(

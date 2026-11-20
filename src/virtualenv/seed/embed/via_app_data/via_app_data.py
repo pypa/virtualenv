@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "concurrent.futures",
     "pathlib",
     "subprocess",
     "threading",
@@ -16,10 +17,11 @@ __lazy_modules__ = [
 import logging
 import sys
 import traceback
-from contextlib import contextmanager
+from concurrent.futures import Future, ThreadPoolExecutor, wait
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from subprocess import CalledProcessError
-from threading import Lock, Thread
+from threading import Lock
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
@@ -120,11 +122,8 @@ class FromAppData(BaseEmbed):
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
-            threads = [Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items()]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
+            with ThreadPoolExecutor() as executor:
+                _wait_for_workers([executor.submit(_install, name, wheel) for name, wheel in name_to_whl.items()])
             if exceptions:
                 messages = [f"failed to build image {', '.join(exceptions.keys())} because:"]
                 for value in exceptions.values():
@@ -134,7 +133,7 @@ class FromAppData(BaseEmbed):
 
     @contextmanager
     # the wheel lookup and its image build share one context, splitting it passes the lock around
-    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
+    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:
         name_to_whl, lock, fail = {}, Lock(), {}
 
         def _get(distribution: str, version: str | None) -> None:
@@ -177,14 +176,11 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
-        threads = [
-            Thread(target=_get, args=(distribution, version))
-            for distribution, version in self.distribution_to_versions().items()
-        ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        with ThreadPoolExecutor() as executor:
+            _wait_for_workers([
+                executor.submit(_get, distribution, version)
+                for distribution, version in self.distribution_to_versions().items()
+            ])
         if fail:
             msg = f"seed failed due to failing to download wheels {', '.join(fail.keys())}"
             raise RuntimeError(msg)
@@ -207,6 +203,16 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
     with parent.non_reentrant_lock_for_key(name):
         if not installer.has_image():
             installer.build_image()
+
+
+def _wait_for_workers(futures: list[Future[None]]) -> None:
+    try:
+        wait(futures)
+    except KeyboardInterrupt:
+        while not all(future.done() for future in futures):
+            with suppress(KeyboardInterrupt):
+                wait(futures)
+        raise
 
 
 __all__ = [
