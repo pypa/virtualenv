@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from virtualenv import session_via_cli
+from virtualenv import cli_run, session_via_cli
 from virtualenv.activation import BatchActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.info import IS_WIN
@@ -66,34 +66,77 @@ def special_char_name():
     return result
 
 
-def test_batch_pydoc_bat_quoting(tmp_path) -> None:
-    # Test that pydoc.bat properly quotes python.exe path to handle spaces.
-    # GIVEN: A mock interpreter
-    class MockInterpreter:
-        os = "nt"
-        tcl_lib = None
-        tk_lib = None
+def test_batch_pydoc_bat_quoting(tmp_path: Path) -> None:
+    creator = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
 
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "Scripts"
-            self.bin_dir.mkdir(parents=True)
-            self.interpreter = MockInterpreter()
-            self.pyenv_cfg = {}
-            self.env_name = "test-env"
+    assert '"%_PYDOC_BIN%python.exe" -m pydoc %*' in (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
 
-    creator = MockCreator(tmp_path)
-    activator = BatchActivator(Namespace(prompt=None))
 
-    # WHEN: Generate activation scripts
-    activator.generate(creator)
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize(
+    ("pydoc_call", "path_prefix"),
+    [
+        pytest.param('call "{pydoc}" pydoc_probe', "", id="full-path"),
+        pytest.param("call pydoc pydoc_probe", "{script_dir}{sep}", id="call-name"),
+        pytest.param('call "pydoc" pydoc_probe', "{script_dir}{sep}", id="call-quoted-name"),
+        pytest.param('call "pydoc.bat" pydoc_probe', "{script_dir}{sep}", id="call-quoted-file"),
+        pytest.param('"pydoc" pydoc_probe', "{script_dir}{sep}", id="quoted-name"),
+        pytest.param('"pydoc.bat" pydoc_probe', "{script_dir}{sep}", id="quoted-file"),
+    ],
+)
+def test_batch_pydoc_uses_environment_python(tmp_path: Path, pydoc_call: str, path_prefix: str) -> None:
+    creator = cli_run([str(tmp_path / "env space"), "--no-seed"], setup_logging=False).creator
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    (tmp_path / "pydoc_driver.bat").write_text(
+        f"@echo off\n@{pydoc_call.format(pydoc=creator.bin_dir / 'pydoc.bat')}\n", encoding="utf-8"
+    )
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", "/C", "pydoc_driver.bat"],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "PATH": (
+                f"{path_prefix.format(script_dir=creator.bin_dir, sep=os.pathsep)}"
+                f"{os.path.dirname(sys.executable)}{os.pathsep}{os.environ['PATH']}"
+            ),
+        },
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
 
-    # THEN: pydoc.bat should quote python.exe to handle paths with spaces
-    pydoc_content = (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={creator.bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
-    # The python.exe should be quoted to handle paths with spaces like "C:\Program Files\Python39\python.exe"
-    assert '"python.exe"' in pydoc_content, f"python.exe should be quoted in pydoc.bat. Content:\n{pydoc_content}"
+
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize("pydoc_call", [pytest.param("pydoc", id="path"), pytest.param('"!launcher!"', id="full-path")])
+def test_batch_pydoc_moved_env_with_exclamation_mark(tmp_path: Path, pydoc_call: str) -> None:
+    created = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    bin_dir = created.dest.rename(tmp_path / "env !q!") / created.bin_dir.name
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    result = subprocess.run(
+        f'"{os.environ["COMSPEC"]}" /D /V:ON /S /C "{pydoc_call} pydoc_probe"',
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "q": "X",
+            "launcher": str(bin_dir / "pydoc.bat"),
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        },
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
 
 @pytest.mark.parametrize(
