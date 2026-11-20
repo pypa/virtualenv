@@ -791,6 +791,126 @@ def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
     )
 
 
+@pytest.mark.skipif(
+    os.name != "posix"
+    or _CURRENT.implementation != "CPython"
+    or is_mac_os_framework(_CURRENT)
+    or is_macos_brew(_CURRENT),
+    reason="requires POSIX CPython venv interpreter copies",
+)
+@pytest.mark.parametrize(
+    ("mask", "expected"),
+    [
+        pytest.param(0o022, 0o755, id="shared"),
+        pytest.param(0o027, 0o750, id="group"),
+        pytest.param(0o077, 0o700, id="private"),
+    ],
+)
+def test_venv_reused_interpreter_copy_keeps_umask(tmp_path: Path, mask: int, expected: int) -> None:
+    destination = tmp_path / "env"
+    cli_run([str(destination), "--creator", "venv", "--symlinks", "--no-seed"])
+    bin_dir = destination / "bin"
+    bin_dir.chmod(0o755)
+    marker = bin_dir / "keep"
+    marker.write_text("existing", encoding="utf-8")
+    marker.chmod(0o644)
+
+    previous = os.umask(mask)
+    try:
+        session = cli_run([str(destination), "--creator", "venv", "--copies", "--no-seed"])
+    finally:
+        os.umask(previous)
+
+    interpreter = session.creator.exe
+    assert (
+        stat.S_IMODE(bin_dir.stat().st_mode),
+        stat.S_IMODE(marker.stat().st_mode),
+        stat.S_IMODE(interpreter.stat().st_mode),
+        subprocess.run([str(interpreter), "-c", "print(1)"], capture_output=True, check=True).stdout,
+    ) == (0o755, 0o644, expected, b"1\n")
+
+
+@pytest.mark.skipif(
+    os.name != "posix"
+    or _CURRENT.implementation != "CPython"
+    or is_mac_os_framework(_CURRENT)
+    or is_macos_brew(_CURRENT)
+    or shutil.which("setfacl") is None,
+    reason="requires POSIX CPython venv copies and setfacl",
+)
+def test_venv_copy_respects_umask_with_default_acl(tmp_path: Path) -> None:
+    destination = tmp_path / "env"
+    cli_run([str(destination), "--creator", "venv", "--symlinks", "--no-seed"])
+    (destination / "bin").chmod(0o755)
+    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::rwx", str(destination)], check=True)
+
+    previous = os.umask(0o077)
+    try:
+        session = cli_run([str(destination), "--creator", "venv", "--copies", "--no-seed"])
+    finally:
+        os.umask(previous)
+
+    assert (
+        stat.S_IMODE(session.creator.bin_dir.stat().st_mode),
+        stat.S_IMODE(session.creator.exe.stat().st_mode),
+        subprocess.run([str(session.creator.exe), "-c", "print(1)"], capture_output=True, check=True).stdout,
+    ) == (0o755, 0o700, b"1\n")
+
+
+@pytest.mark.skipif(
+    os.name != "posix"
+    or _CURRENT.implementation != "CPython"
+    or is_mac_os_framework(_CURRENT)
+    or is_macos_brew(_CURRENT),
+    reason="requires POSIX CPython venv interpreter copies",
+)
+@pytest.mark.parametrize("method", ["create_inline", "create_via_sub_process"])
+@pytest.mark.parametrize("error", [RuntimeError, KeyboardInterrupt])
+@pytest.mark.parametrize("directory_mode", [0o755, 0o2755])
+def test_venv_restores_bin_mode_after_creation_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: type[BaseException], method: str, directory_mode: int
+) -> None:
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--copies", "--no-seed"])
+    session.creator.can_be_inline = method == "create_inline"
+    bin_dir = session.creator.bin_dir
+    bin_dir.mkdir(parents=True)
+    bin_dir.chmod(directory_mode)
+    copied = bin_dir / "python"
+
+    def fail_after_copy() -> None:
+        assert stat.S_IMODE(bin_dir.stat().st_mode) == directory_mode & 0o7700
+        copied.write_bytes(b"private interpreter")
+        copied.chmod(0o755)
+        raise error
+
+    monkeypatch.setattr(session.creator, method, fail_after_copy)
+    previous = os.umask(0o077)
+    try:
+        with pytest.raises(error):
+            session.run()
+    finally:
+        os.umask(previous)
+
+    assert (stat.S_IMODE(bin_dir.stat().st_mode), stat.S_IMODE(copied.stat().st_mode)) == (directory_mode, 0o700)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires POSIX permissions")
+def test_venv_concurrent_copy_preserves_restored_bin_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--copies", "--no-seed"])
+    session.creator.can_be_inline = True
+    bin_dir = session.creator.bin_dir
+    bin_dir.mkdir(parents=True)
+    bin_dir.chmod(0o700)
+    monkeypatch.setattr(session.creator, "create_inline", lambda: bin_dir.chmod(0o755))
+    previous = os.umask(0o077)
+    try:
+        session.creator._create_with_umask()  # ruff:ignore[private-member-access]  # simulate interleaved creators
+    finally:
+        os.umask(previous)
+
+    assert stat.S_IMODE(bin_dir.stat().st_mode) == 0o755
+
+
 @pytest.mark.skipif(not _CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "venv").mkdir()

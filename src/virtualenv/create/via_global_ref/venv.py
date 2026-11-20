@@ -2,7 +2,9 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "argparse",
+    "pathlib",
     "python_discovery",
+    "subprocess",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -15,7 +17,11 @@ __lazy_modules__ = [
 ]
 
 import logging
+import os
+import subprocess
 from argparse import ArgumentTypeError
+from pathlib import Path
+from stat import S_IMODE
 from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
@@ -105,13 +111,36 @@ class Venv(ViaGlobalRefApi):
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
-        if self.can_be_inline:
+        if os.name == "posix":
+            self._create_with_umask()
+        elif self.can_be_inline:
             self.create_inline()
         else:
             self.create_via_sub_process()
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
+
+    def _create_with_umask(self) -> None:
+        # A mode probe can inherit a default ACL that overrides the umask.
+        allowed = (0o777 & ~int(subprocess.check_output(["/bin/sh", "-c", "umask"], env={}), 8)) | 0o7000
+        mode = S_IMODE(self.bin_dir.stat().st_mode)
+        kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
+        # Hide copied bytes while stdlib venv temporarily sets their mode to 0755.
+        self.bin_dir.chmod(mode & allowed)
+        try:
+            if self.can_be_inline:
+                self.create_inline()
+            else:
+                self.create_via_sub_process()
+        finally:
+            try:
+                for path in self.bin_dir.iterdir():
+                    if path.name not in kept and path.is_file() and not path.is_symlink():
+                        path.chmod(S_IMODE(path.stat().st_mode) & allowed)
+            finally:
+                # Restore only bits removed here; another creator may have seen the narrowed mode.
+                self.bin_dir.chmod(S_IMODE(self.bin_dir.stat().st_mode) | (mode & ~allowed))
 
     def create_inline(self) -> None:
         """Create the environment with the stdlib ``venv`` module imported in this process."""
