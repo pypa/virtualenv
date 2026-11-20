@@ -39,6 +39,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     :returns: the app data store
 
     :raises ArgumentTypeError: when the folder is empty or whitespace
+    :raises RuntimeError: when read-only app-data has no default location
 
     """
     private: Final[bool] = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
@@ -47,6 +48,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         folder = env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")
         if not folder.strip():
             folder = cache_dir_with_migration(read_only=read_only)
+            if folder is None:
+                if read_only:
+                    reason: Final[str] = "read-only app data requires a cache path when no home directory exists"
+                    raise RuntimeError(reason)
+                _LOGGER.warning("using temporary app-data because no default cache location is available")
+                return TempAppData()
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
         # and --reset-app-data would delete it
@@ -57,22 +64,28 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     if read_only:
         return ReadOnlyAppData(folder)
 
+    if not _prepare_app_data_folder(folder, private):
+        return TempAppData()
+
+    if os.access(folder, os.W_OK):
+        return AppDataDiskFolder(folder)
+    _LOGGER.debug("app data folder %s has no write access", folder)
+    return TempAppData()
+
+
+def _prepare_app_data_folder(folder: str, private: bool) -> bool:
     try:
         if private:
             make_private_dirs(folder)
         else:
             os.makedirs(folder, mode=0o777, exist_ok=True)
         if private and os.name == "posix" and not _prepare_permissions(folder):
-            return TempAppData()
+            return False
     except OSError as exception:
         _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
     else:
         _LOGGER.debug("created app data folder %s", folder)
-
-    if os.access(folder, os.W_OK):
-        return AppDataDiskFolder(folder)
-    _LOGGER.debug("app data folder %s has no write access", folder)
-    return TempAppData()
+    return True
 
 
 def _prepare_permissions(folder: str) -> bool:

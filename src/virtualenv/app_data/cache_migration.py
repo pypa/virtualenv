@@ -8,6 +8,7 @@ __lazy_modules__ = [
     "tempfile",
     "typing",
     "virtualenv.util.lock",
+    "virtualenv.util.path",
 ]
 
 import logging
@@ -22,6 +23,7 @@ from typing import Final
 from platformdirs import user_cache_dir, user_data_dir
 
 from virtualenv.util.lock import ReentrantFileLock
+from virtualenv.util.path import user_dir
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _MIGRATION_MARKER: Final[str] = ".virtualenv-migration-incomplete"
@@ -29,16 +31,17 @@ _CONFIG_NAME: Final[str] = "virtualenv.ini"
 _CONFIG_MIGRATION_LOCK: Final[str] = ".virtualenv-migration"
 
 
-def cache_dir_with_migration(*, read_only: bool) -> str:
+def cache_dir_with_migration(*, read_only: bool) -> str | None:
     """Return the cache directory after migrating legacy app data when needed.
 
     :param read_only: whether the caller needs an existing directory
 
-    :returns: the cache directory path
+    :returns: the cache directory path, ``None`` when no default cache location is available
 
     """
-    new_dir: Final[str] = user_cache_dir(appname="virtualenv", appauthor="pypa")
-    old_dir: Final[str] = user_data_dir(appname="virtualenv", appauthor="pypa")
+    if (dirs := _default_dirs()) is None:
+        return None
+    new_dir, old_dir = dirs
     if new_dir == old_dir:
         return new_dir
     if os.path.lexists(os.path.join(old_dir, _CONFIG_NAME)):
@@ -66,6 +69,14 @@ def cache_dir_with_migration(*, read_only: bool) -> str:
             )
             return old_dir
     return new_dir
+
+
+def _default_dirs() -> tuple[str, str] | None:
+    new_dir = user_dir(lambda: user_cache_dir(appname="virtualenv", appauthor="pypa"))
+    if new_dir is None:
+        return None
+    old_dir = user_dir(lambda: user_data_dir(appname="virtualenv", appauthor="pypa"))
+    return new_dir, new_dir if old_dir is None else old_dir
 
 
 def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
