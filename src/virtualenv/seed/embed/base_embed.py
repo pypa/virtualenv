@@ -176,7 +176,7 @@ class BaseEmbed(Seeder, ABC):
         parser.add_argument(
             "--extra-search-dir",
             metavar="d",
-            type=Path,
+            type=cls._search_dir,
             nargs="+",
             action=ExtendAction,
             help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
@@ -217,6 +217,13 @@ class BaseEmbed(Seeder, ABC):
             help="disable the periodic (once every 14 days) update of the embedded wheels",
             default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
         )
+
+    @staticmethod
+    def _search_dir(value: str) -> Path:
+        if not value.strip():
+            msg = "extra search directory cannot be empty"
+            raise ArgumentTypeError(msg)
+        return Path(value)
 
 
 def _seed_version(value: str) -> str:
