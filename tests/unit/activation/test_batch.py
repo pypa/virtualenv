@@ -85,7 +85,7 @@ def test_batch_pydoc_uses_environment_python(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert f"INTERPRETER={creator.exe}" in result.stdout.splitlines()
+    assert f"INTERPRETER={creator.bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
 
 @pytest.mark.parametrize(
