@@ -64,22 +64,28 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     if read_only:
         return ReadOnlyAppData(folder)
 
+    if not _prepare_app_data_folder(folder, private):
+        return TempAppData()
+
+    if os.access(folder, os.W_OK):
+        return AppDataDiskFolder(folder)
+    _LOGGER.debug("app data folder %s has no write access", folder)
+    return TempAppData()
+
+
+def _prepare_app_data_folder(folder: str, private: bool) -> bool:
     try:
         if private:
             make_private_dirs(folder)
         else:
             os.makedirs(folder, mode=0o777, exist_ok=True)
         if private and os.name == "posix" and not _prepare_permissions(folder):
-            return TempAppData()
+            return False
     except OSError as exception:
         _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
     else:
         _LOGGER.debug("created app data folder %s", folder)
-
-    if os.access(folder, os.W_OK):
-        return AppDataDiskFolder(folder)
-    _LOGGER.debug("app data folder %s has no write access", folder)
-    return TempAppData()
+    return True
 
 
 def _prepare_permissions(folder: str) -> bool:
