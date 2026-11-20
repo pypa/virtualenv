@@ -1016,9 +1016,9 @@ def test_seed_image_failed_short_path_on_reuse(tmp_path: Path, mocker: MockerFix
     wheel: Final[Path] = tmp_path / "pkg.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr("f" * (260 - len(str(image))), "payload")
-    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, side_effect=FileNotFoundError("short path"))
+    mocker.patch("ctypes.windll.kernel32.GetShortPathNameW", autospec=True, return_value=0)
 
-    with pytest.raises(FileNotFoundError, match="short path"):
+    with pytest.raises(OSError, match=r"\[WinError \d+\]"):
         CopyPipInstall(wheel, no_seed_session.creator, image).has_image()
 
     assert (image / "content").is_file()
