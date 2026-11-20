@@ -641,6 +641,38 @@ def test_bash_relocation_stops_when_unavailable(
     assert result.stdout == f"1|{path}|unset"
 
 
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    ("name", "expected_output", "error"),
+    [
+        pytest.param("moved%func", "1|/usr/bin:/bin|unset", "shell PATH option", id="option"),
+        pytest.param("moved:split", "1|/usr/bin:/bin|unset", "PATH separator", id="separator"),
+        pytest.param("moved%20", "0|{env}/bin:/usr/bin:/bin|{env}", "does not exist!", id="literal-percent"),
+    ],
+)
+def test_bash_relocation_handles_shell_path_option(
+    tmp_path: Path, moved_bash_activate: Path, name: str, expected_output: str, error: str
+) -> None:
+    relocated: Final[Path] = tmp_path / name
+    moved_bash_activate.parents[1].rename(relocated)
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            _BASH,
+            "-c",
+            '. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${VIRTUAL_ENV-unset}"',
+            "activate",
+            str(relocated / "bin" / "activate"),
+        ],
+        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == expected_output.format(env=relocated)
+    assert error in result.stderr
+
+
 @pytest.fixture
 def git_bash() -> Path:
     if (git := shutil.which("git")) is None or not (bash := Path(git).parents[1] / "bin" / "bash.exe").exists():
@@ -658,7 +690,7 @@ def test_bash_relocation_resolves_under_git_bash(git_bash: Path, moved_bash_acti
         check=False,
     )
 
-    assert (result.returncode, result.stdout.strip()) == (0, str(moved_bash_activate.parents[1]))
+    assert (result.returncode, result.stdout.strip()) == (0, str(moved_bash_activate.parents[1])), result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")

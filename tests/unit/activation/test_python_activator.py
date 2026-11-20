@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from virtualenv.activation import PythonActivator
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_WIN, fs_supports_symlink
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -109,6 +109,32 @@ def test_python_activator_adds_no_empty_path_entry(
     env = {key: value for key, value in os.environ.items() if key != "PATH"} | path_env
     out = subprocess.check_output([sys.executable, "-c", code], env=env, text=True, encoding="utf-8")
     assert literal_eval(out) == f"{activation_python.creator.bin_dir}{expected_suffix}"
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires a directory symlink")
+@pytest.mark.parametrize(
+    ("alias_name", "error"),
+    [
+        pytest.param("alias%func", "shell PATH option", id="option"),
+        pytest.param(f"alias{os.pathsep}split", "PATH separator", id="separator"),
+        pytest.param("alias%20", "", id="literal-percent"),
+    ],
+)
+def test_python_activator_handles_alias_path(
+    activation_python: Session, tmp_path: Path, alias_name: str, error: str
+) -> None:
+    alias = tmp_path / alias_name
+    alias.symlink_to(activation_python.creator.dest, target_is_directory=True)
+    script = alias / activation_python.creator.bin_dir.name / "activate_this.py"
+    result = subprocess.run(
+        [sys.executable, "-c", f"import runpy; runpy.run_path({str(script)!r})"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert result.returncode == int(bool(error)), result.stderr
+    assert result.stderr.rstrip().endswith(error)
 
 
 def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:

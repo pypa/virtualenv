@@ -327,6 +327,33 @@ def test_symlinked_destination_rejects_path_separator(tmp_path: Path, monkeypatc
         Creator.validate_dest("link/env")
 
 
+@pytest.mark.parametrize("name", ["env%func", "env%functools", "env%builtin"])
+def test_destination_rejects_shell_path_option(tmp_path: Path, name: str) -> None:
+    with pytest.raises(ArgumentTypeError, match="shell PATH option"):
+        Creator.validate_dest(str(tmp_path / name))
+
+
+def test_resolved_destination_rejects_shell_path_option(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    parent: Final[Path] = tmp_path / "parent%func"
+    parent.mkdir()
+    monkeypatch.chdir(parent)
+    with pytest.raises(ArgumentTypeError, match="shell PATH option"):
+        Creator.validate_dest("env")
+
+
+@pytest.mark.parametrize("name", ["100%", "env%20", "first%/second%func"])
+def test_destination_accepts_literal_percent(tmp_path: Path, name: str) -> None:
+    assert Creator.validate_dest(str(tmp_path / name)) == str(tmp_path / name)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires a directory symlink")
+def test_destination_accepts_shell_option_in_resolved_alias(tmp_path: Path) -> None:
+    target: Final[Path] = tmp_path / "target"
+    target.mkdir()
+    (tmp_path / "alias%func").symlink_to(target, target_is_directory=True)
+    assert Creator.validate_dest(str(tmp_path / "alias%func" / "env")) == str(target / "env")
+
+
 _LEGACY_DESTINATIONS: Final[list[tuple[str, str]]] = [
     pytest.param("latin-1", "café", id="latin1"),
     pytest.param("koi8-r", "тест", id="koi8r"),
