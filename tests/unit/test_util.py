@@ -208,6 +208,23 @@ def test_app_data_default_reset_after_external_removal(app_data_default: Path) -
     assert app_data_default.stat().st_mode & 0o777 == 0o700
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_default_reset_recreates_private_parent(tmp_path: Path, mocker: MockerFixture) -> None:
+    parent: Final[Path] = tmp_path / "cache-home"
+    folder: Final[Path] = parent / "cache"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    data: Final[AppDataDiskFolder] = make_app_data(None, read_only=False, env={})
+    folder.rmdir()
+    parent.rmdir()
+    previous: Final[int] = os.umask(0)
+    try:
+        data.reset()
+    finally:
+        os.umask(previous)
+    assert (parent.stat().st_mode & 0o777, folder.stat().st_mode & 0o777) == (0o700, 0o700)
+
+
 @pytest.mark.skipif(os.name != "posix", reason="POSIX group permissions")
 def test_app_data_default_reset_preserves_setgid_group(app_data_default: Path) -> None:
     app_data_default.mkdir()

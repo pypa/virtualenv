@@ -34,6 +34,7 @@ __lazy_modules__ = [
     "virtualenv.util.path",
     "virtualenv.util.zipapp",
     "virtualenv.version",
+    f"{__spec__.parent}.cache_migration",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
 import json
@@ -51,6 +52,7 @@ from virtualenv.util.zipapp import extract
 from virtualenv.version import __version__
 
 from .base import AppData, ContentStore
+from .cache_migration import make_private_dirs
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -100,7 +102,7 @@ class AppDataDiskFolder(AppData):
                 info = os.stat(self.lock.path)
         safe_delete(self.lock.path)
         if self._private:
-            os.makedirs(self.lock.path, mode=0o700, exist_ok=True)
+            make_private_dirs(str(self.lock.path))
             if info is not None and info.st_mode & S_ISGID:
                 os.chown(self.lock.path, -1, info.st_gid)
                 os.chmod(self.lock.path, S_IMODE(info.st_mode))
