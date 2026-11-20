@@ -283,6 +283,7 @@ def test_seed_metadata_keeps_bytecode_of_dotted_module(tmp_path: Path) -> None:
     assert (other.exists(), [path.exists() for path in own]) == (True, [False, False])
 
 
+@pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.parametrize(
     ("install_args", "run_args"),
     [
