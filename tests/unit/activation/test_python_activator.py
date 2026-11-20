@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import colorsys
 import os
+import shutil
 import subprocess
 import sys
 from argparse import Namespace
@@ -130,6 +131,20 @@ def test_python_activator_handles_shell_path_option(
         check=False,
     )
     assert (result.returncode != 0, "shell PATH option" in result.stderr) == (rejected, rejected)
+
+
+def test_python_activator_rejects_separator_in_activation_path(activation_python: Session, tmp_path: Path) -> None:
+    script = tmp_path / f"alias{os.pathsep}split" / activation_python.creator.bin_dir.name / "activate_this.py"
+    script.parent.mkdir(parents=True)
+    shutil.copyfile(activation_python.creator.bin_dir / "activate_this.py", script)
+    result = subprocess.run(
+        [sys.executable, "-c", f"import runpy; runpy.run_path({str(script)!r})"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert (result.returncode != 0, "PATH separator" in result.stderr) == (True, True)
 
 
 def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:

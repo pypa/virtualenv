@@ -413,14 +413,15 @@ def test_bash_relocation_stops_when_unavailable(
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 @pytest.mark.parametrize(
-    ("name", "expected_output", "rejected"),
+    ("name", "expected_output", "error"),
     [
-        pytest.param("moved%func", "1|/usr/bin:/bin|unset", True, id="option"),
-        pytest.param("moved%20", "0|{env}/bin:/usr/bin:/bin|{env}", False, id="literal-percent"),
+        pytest.param("moved%func", "1|/usr/bin:/bin|unset", "shell PATH option", id="option"),
+        pytest.param("moved:split", "1|/usr/bin:/bin|unset", "PATH separator", id="separator"),
+        pytest.param("moved%20", "0|{env}/bin:/usr/bin:/bin|{env}", "shell PATH option", id="literal-percent"),
     ],
 )
-def test_bash_relocation_handles_shell_path_option(
-    tmp_path: Path, moved_bash_activate: Path, name: str, expected_output: str, rejected: bool
+def test_bash_relocation_checks_path(
+    tmp_path: Path, moved_bash_activate: Path, name: str, expected_output: str, error: str
 ) -> None:
     relocated: Final[Path] = tmp_path / name
     moved_bash_activate.parents[1].rename(relocated)
@@ -438,7 +439,10 @@ def test_bash_relocation_handles_shell_path_option(
         encoding="utf-8",
         check=True,
     )
-    assert (result.stdout, "shell PATH option" in result.stderr) == (expected_output.format(env=relocated), rejected)
+    assert (result.stdout, error in result.stderr) == (
+        expected_output.format(env=relocated),
+        expected_output.startswith("1|"),
+    )
 
 
 @pytest.fixture
