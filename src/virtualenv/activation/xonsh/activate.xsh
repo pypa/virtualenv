@@ -29,7 +29,6 @@ class _VirtualEnvActivator:
             raise
         # Variables this activator may save+override; deactivate walks this list.
         self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
-        # The user's own pydoc alias, put back on deactivate; only set while ours is registered.
         self.pydoc_registered = False
         self.saved_pydoc = None
 
@@ -53,7 +52,7 @@ class _VirtualEnvActivator:
         self.env.pop(name, None)
 
     def register_pydoc(self):
-        self.saved_pydoc = aliases.get("pydoc")
+        self.saved_pydoc = aliases["pydoc"] if "pydoc" in aliases else None
         aliases["pydoc"] = ["python", "-m", "pydoc"]
         self.pydoc_registered = True
 
