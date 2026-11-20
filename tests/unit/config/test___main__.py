@@ -20,7 +20,7 @@ from virtualenv.util.error import ProcessCallFailedError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pytest_mock import MockerFixture, MockType
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -125,14 +125,17 @@ def test_success_exit_not_reported(
     assert (context.value.code, capsys.readouterr()) == (code, ("", ""))
 
 
-def test_upgrade_embed_wheels_exits_without_error(
-    mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize(
+    ("error", "status"),
+    [pytest.param(None, 0, id="upgraded"), pytest.param(OSError("download unavailable"), 1, id="failed")],
+)
+def test_upgrade_embed_wheels_exit_status(
+    mocker: MockerFixture, tmp_path: Path, error: OSError | None, status: int
 ) -> None:
-    # manual_upgrade returns None, so a finished upgrade exits with SystemExit(None)
-    upgrade: Final[MockType] = mocker.patch("virtualenv.run.manual_upgrade", return_value=None, autospec=True)
+    mocker.patch("virtualenv.seed.wheels.periodic_update.do_update", side_effect=error, return_value=[], autospec=True)
     with pytest.raises(SystemExit) as context:
         run_with_catch(["--upgrade-embed-wheels", "--app-data", str(tmp_path)])
-    assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (None, 1, ("", ""))
+    assert context.value.code == status
 
 
 @pytest.mark.usefixtures("session_app_data")
