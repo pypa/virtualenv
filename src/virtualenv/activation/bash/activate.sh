@@ -105,29 +105,38 @@ else
         VIRTUAL_ENV=__VIRTUAL_ENV__
     fi
 
+    _VIRTUAL_PATH="$VIRTUAL_ENV"
     case "$(uname)" in
         CYGWIN*|MSYS*|MINGW*)
             VIRTUAL_ENV=$(cygpath "$VIRTUAL_ENV")
+            _VIRTUAL_PATH="$VIRTUAL_ENV"
+            case "${VIRTUAL_ENV#*%}" in
+                func*) _VIRTUAL_PATH="${VIRTUAL_ENV%%\%*}%Func${VIRTUAL_ENV#*%func}" ;;
+                builtin*) _VIRTUAL_PATH="${VIRTUAL_ENV%%\%*}%Builtin${VIRTUAL_ENV#*%builtin}" ;;
+            esac
             ;;
     esac
     case "$VIRTUAL_ENV" in
         *:*)
             echo "Virtual environment directory $VIRTUAL_ENV contains the PATH separator." >&2
-            unset VIRTUAL_ENV
+            unset VIRTUAL_ENV _VIRTUAL_PATH
             return 1
             ;;
     esac
     case "${VIRTUAL_ENV#*%}" in
         func*|builtin*)
-            echo "Virtual environment directory $VIRTUAL_ENV contains a shell PATH option." >&2
-            unset VIRTUAL_ENV
-            return 1
+            if [ "$_VIRTUAL_PATH" = "$VIRTUAL_ENV" ] || [ ! "$_VIRTUAL_PATH" -ef "$VIRTUAL_ENV" ]; then
+                echo "Virtual environment directory $VIRTUAL_ENV contains a shell PATH option." >&2
+                unset VIRTUAL_ENV _VIRTUAL_PATH
+                return 1
+            fi
             ;;
     esac
     export VIRTUAL_ENV
 
     _OLD_VIRTUAL_PATH="$PATH"
-    PATH="$VIRTUAL_ENV/"__BIN_NAME__"${PATH:+:$PATH}"
+    PATH="$_VIRTUAL_PATH/"__BIN_NAME__"${PATH:+:$PATH}"
+    unset _VIRTUAL_PATH
     export PATH
 
     _OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"

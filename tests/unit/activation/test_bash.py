@@ -452,6 +452,61 @@ def git_bash() -> Path:
     return bash
 
 
+@pytest.fixture
+def git_dash(git_bash: Path) -> Path:
+    dash: Final[Path] = git_bash.parents[1] / "usr" / "bin" / "dash.exe"
+    if not dash.exists():
+        pytest.skip("needs dash from Git for Windows")
+    return dash
+
+
+@pytest.mark.skipif(not IS_WIN, reason="needs Git for Windows")
+@pytest.mark.parametrize(
+    ("name", "path_name"),
+    [
+        pytest.param("env%func", "env%Func", id="function"),
+        pytest.param("env%builtin", "env%Builtin", id="builtin"),
+        pytest.param("env%func%builtin", "env%Func%builtin", id="first-option"),
+        pytest.param("env%20%func", "env%20%func", id="later-percent"),
+    ],
+)
+def test_git_bash_activates_percent_path(
+    tmp_path: Path, git_bash: Path, git_dash: Path, name: str, path_name: str
+) -> None:
+    session: Final[Session] = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / name)])
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            str(git_bash),
+            "-c",
+            (
+                '. "$1" || exit; cygpath -w "$VIRTUAL_ENV"; cygpath -w "${PATH%%:*}"; '
+                'python -c "import sys; print(sys.executable)"; "$2" -c \'python -c "import sys; print(sys.executable)"\''
+            ),
+            "shell",
+            str(session.creator.dest / "Scripts" / "activate"),
+            str(git_dash),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    virtual_env, path_entry, bash_python, dash_python = result.stdout.splitlines()
+    assert (
+        virtual_env,
+        path_entry,
+        Path(bash_python).samefile(session.creator.exe),
+        Path(dash_python).samefile(session.creator.exe),
+    ) == (
+        str(session.creator.dest),
+        str(tmp_path / path_name / "Scripts"),
+        True,
+        True,
+    )
+
+
 @pytest.mark.skipif(not IS_WIN, reason="needs Git Bash and a Scripts directory")
 def test_bash_relocation_resolves_under_git_bash(git_bash: Path, moved_bash_activate: Path) -> None:
     result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
