@@ -29,6 +29,8 @@ class _VirtualEnvActivator:
             raise
         # Variables this activator may save+override; deactivate walks this list.
         self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
+        self.pydoc_registered = False
+        self.saved_pydoc = None
 
     def _backup_name(self, name):
         return f"_OLD_VIRTUAL_{name}"
@@ -50,10 +52,19 @@ class _VirtualEnvActivator:
         self.env.pop(name, None)
 
     def register_pydoc(self):
+        self.saved_pydoc = aliases["pydoc"] if "pydoc" in aliases else None
         aliases["pydoc"] = ["python", "-m", "pydoc"]
+        self.pydoc_registered = True
 
     def unregister_pydoc(self):
-        aliases.pop("pydoc", None)
+        if not self.pydoc_registered:
+            return
+        if self.saved_pydoc is None:
+            aliases.pop("pydoc", None)
+        else:
+            aliases["pydoc"] = self.saved_pydoc
+        self.pydoc_registered = False
+        self.saved_pydoc = None
 
     def activate(self):
         from os.path import join, basename

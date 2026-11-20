@@ -206,3 +206,41 @@ def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding:
         "import json\nprint(json.dumps([$VIRTUAL_ENV, $VIRTUAL_ENV_PROMPT]))"
     )
     assert json.loads(xonsh(script, XONSH_ENCODING=encoding)) == [str(destination), prompt]
+
+
+@_NEEDS_XONSH
+@pytest.mark.parametrize(
+    ("prelude", "envs", "expected"),
+    [
+        pytest.param("", ("first",), "None", id="no-alias"),
+        pytest.param('aliases["pydoc"] = "echo mine"\n', ("first",), "['echo', 'mine']", id="own-alias"),
+        pytest.param('aliases["pydoc"] = "echo mine"\n', ("first", "second"), "['echo', 'mine']", id="switch"),
+    ],
+)
+def test_xonsh_deactivate_restores_pydoc_alias(
+    tmp_path: Path, xonsh: _Xonsh, prelude: str, envs: tuple[str, ...], expected: str
+) -> None:
+    activations: Final[list[Path]] = [
+        cli_run([str(tmp_path / env), "--no-seed", "--activators", "xonsh"]).creator.bin_dir / "activate.xsh"
+        for env in envs
+    ]
+    script: Final[str] = (
+        prelude + "".join(f'source "{path}"\n' for path in activations) + 'deactivate\nprint(aliases.get("pydoc"))\n'
+    )
+
+    assert xonsh(script).strip() == expected
+
+
+@_NEEDS_XONSH
+def test_xonsh_deactivate_keeps_chained_pydoc_alias(tmp_path: Path, xonsh: _Xonsh) -> None:
+    session = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    script = (
+        'aliases["viewer"] = ["echo", "before"]\n'
+        'aliases["pydoc"] = ["viewer", "docs"]\n'
+        f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
+        "deactivate\n"
+        'aliases["viewer"] = ["echo", "after"]\n'
+        "pydoc\n"
+    )
+
+    assert xonsh(script).strip() == "after docs"
