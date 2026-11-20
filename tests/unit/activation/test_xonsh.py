@@ -145,13 +145,34 @@ def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, expected_li
     "value",
     [
         pytest.param("hello", id="plain"),
-        pytest.param("it's", id="apostrophe"),
         pytest.param("", id="empty"),
-        pytest.param("中'\\name", id="unicode-and-quotes"),
     ],
 )
 def test_xonsh_quote(value: str) -> None:
     assert literal_eval(XonshActivator.quote(value).encode("ascii").decode("gbk")) == value
+
+
+@_NEEDS_XONSH
+@pytest.mark.parametrize(
+    ("prompt", "name", "encoding"),
+    [
+        pytest.param("it's", "env", "gbk", id="apostrophe-gbk"),
+        pytest.param("中'\\name", "env", "gbk", id="unicode-and-quotes-gbk"),
+        pytest.param("prefix+ACc-suffix", "env", "utf-7", id="encoded-quote-utf7"),
+        pytest.param("café", "env", "utf-7", id="unicode-utf7"),
+        pytest.param("label", "env+ACc-tail", "utf-7", id="encoded-quote-destination"),
+    ],
+)
+def test_xonsh_keeps_prompt_with_source_encoding(
+    tmp_path: Path, xonsh: _Xonsh, prompt: str, name: str, encoding: str
+) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / name), "--no-seed", "--activators", "xonsh", "--prompt", prompt])
+    activate: Final[Path] = session.creator.bin_dir / "activate.xsh"
+    assert xonsh(
+        f'source "{activate}"\nprint($VIRTUAL_ENV.encode("utf-8").hex())\n'
+        'print($VIRTUAL_ENV_PROMPT.encode("utf-8").hex())',
+        XONSH_ENCODING=encoding,
+    ) == (f"{str(session.creator.dest).encode('utf-8').hex()}\n{prompt.encode('utf-8').hex()}\n")
 
 
 @_NEEDS_XONSH
@@ -178,6 +199,9 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
 
         def activate_call(self, script):
             return f"source {self.quote(str(script))}"
+
+        def quote(self, string):
+            return f"@({self.of_class.quote(string)})"
 
     activation_tester(Xonsh)
 

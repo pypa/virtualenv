@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 _GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")  # fmt: skip
+_UNSAFE_LITERAL_PATTERN: Final[re.Pattern[str]] = re.compile(r"[^ -~]|['\\+~%]")
 
 
 class XonshActivator(ViaTemplateActivator):  # fmt: skip
@@ -52,10 +53,12 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
 
         :param string: the value to quote
 
-        :returns: the ASCII-only literal representation of the string
+        :returns: an ASCII-only expression for the string
 
         """
-        return ascii(string)
+        if _UNSAFE_LITERAL_PATTERN.search(string):
+            return f"''.join(map(chr, {tuple(map(ord, string))!r}))"
+        return repr(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         """The raw placeholder values, including the Tcl and Tk library paths.
