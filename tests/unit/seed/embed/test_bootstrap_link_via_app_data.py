@@ -1540,3 +1540,32 @@ def test_shell_launcher_runs_interpreter_with_non_utf8_path(tmp_path: Path) -> N
     result: Final[CompletedProcess[bytes]] = run([launcher], capture_output=True, check=True)
     assert (header.isascii(), result.stdout) == (True, os.fsencode(interpreter) + b"\n")
     compile(header + b"pass\n", str(launcher), "exec")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("line\nunused_variable", id="interpreter-header"),
+        pytest.param(f"{'x' * 120}\nx\nunused_variable", id="long-shell-header"),
+        pytest.param("two words\nx\nunused_variable", id="shell-header"),
+    ],
+)
+def test_pip_launcher_keeps_line_feed_path_in_header(tmp_path: Path, name: str) -> None:
+    session: Final[Session] = cli_run([
+        str(tmp_path / name),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ])
+    result: Final[CompletedProcess[str]] = run(
+        [str(session.creator.script_dir / "pip"), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=False,
+    )
+    assert (result.returncode, result.stdout.startswith("pip ")) == (0, True)
