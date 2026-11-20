@@ -43,7 +43,7 @@ from virtualenv.util.path import write_file
 from virtualenv.util.subprocess import LogCmd
 
 from .base_embed import BaseEmbed
-from .via_app_data.pip_install.base import EntryPointConfig, shell_shebang
+from .via_app_data.pip_install.base import EntryPointConfig, encodes_as_utf8, shell_shebang
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -198,6 +198,7 @@ class PipInvoke(BaseEmbed):
     def _rewrite_launchers(self, creator: Creator) -> None:
         selected: Final[dict[str, str]] = self.distribution_to_versions()
         exe: Final[bytes] = str(creator.exe).encode("utf-8")
+        via_shell: Final[bool] = len(exe.split()) > 1 or not encodes_as_utf8(str(creator.exe))
         for distribution in distributions(path=sorted({str(creator.purelib), str(creator.platlib)})):
             if distribution.metadata["Name"].lower().replace("-", "_") not in selected:
                 continue
@@ -210,7 +211,7 @@ class PipInvoke(BaseEmbed):
                 content = path.read_bytes()
                 if content.startswith(b"#!/bin/sh\n'''exec' "):
                     body = content.split(b"\n", 3)[3]
-                elif content.startswith(b"#!" + exe + b"\n") and len(exe.split()) > 1:
+                elif content.startswith(b"#!" + exe + b"\n") and via_shell:
                     body = content.split(b"\n", 1)[1]
                 else:
                     continue

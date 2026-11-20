@@ -1841,6 +1841,40 @@ def test_default_activators_allow_legacy_locale(tmp_path: Path, latin1_locale: s
     assert not os.path.exists(parent + b"/env/bin/activate")
 
 
+@pytest.mark.skipif(IS_WIN, reason="POSIX locales")
+@pytest.mark.usefixtures("_no_coverage")
+@pytest.mark.parametrize("seeder", [pytest.param("app-data", id="app-data"), pytest.param("pip", id="pip")])
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param(b"calf\xe9", id="plain"),
+        pytest.param(b"calf\xe9 x", id="space"),
+        pytest.param(b"calf\xe9'\"%$", id="shell-syntax"),
+    ],
+)
+def test_seeded_pip_runs_in_legacy_locale(tmp_path: Path, latin1_locale: str, seeder: str, name: bytes) -> None:
+    parent: Final[bytes] = os.fsencode(tmp_path) + b"/" + name
+    os.mkdir(parent)
+    env: Final[dict[str, str]] = {
+        **os.environ,
+        "LC_ALL": latin1_locale,
+        "PYTHONUTF8": "0",
+        "PYTHONCOERCECLOCALE": "0",
+    }
+    subprocess.run(
+        [sys.executable, "-m", "virtualenv", "env", "--seeder", seeder, "--no-periodic-update", "--activators="],
+        cwd=parent,
+        env=env,
+        capture_output=True,
+        check=True,
+    )
+    result: Final[subprocess.CompletedProcess[bytes]] = subprocess.run(
+        [parent + b"/env/bin/pip", "--version"], env=env, capture_output=True, check=True
+    )
+    assert result.stdout.startswith(b"pip ")
+    assert b"/env/lib/" in result.stdout
+
+
 def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     config: Final[PyEnvCfg] = PyEnvCfg(OrderedDict({"prompt": "\udcff"}), tmp_path / "pyvenv.cfg")
     config.path.write_bytes(b"home = original\n")
