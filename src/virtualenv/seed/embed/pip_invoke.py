@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
+    from virtualenv.seed.wheels.util import Wheel
 
 
 class PipInvoke(BaseEmbed):
@@ -69,7 +70,7 @@ class PipInvoke(BaseEmbed):
         """
         if not self.enabled:
             return
-        for_py_version: Final = creator.interpreter.version_release_str
+        for_py_version: Final[str] = creator.interpreter.version_release_str
         with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
             record_names: Final[list[str]] = self._detach_links(creator)
             # pip runs under the interpreter of the environment, so it must be a pip that supports that version
@@ -90,7 +91,7 @@ class PipInvoke(BaseEmbed):
 
         """
         self._wheels.clear()
-        cmd: Final = [
+        cmd: Final[list[str]] = [
             str(exe),
             "-c",
             PIP_RUN,
@@ -106,7 +107,7 @@ class PipInvoke(BaseEmbed):
         with TemporaryDirectory(prefix="virtualenv-seed-") as folder:
             cmd.extend(["--find-links", folder])
             for dist, version in self.distribution_to_versions().items():
-                wheel: Final = get_wheel(
+                wheel: Final[Wheel | None] = get_wheel(
                     distribution=dist,
                     version=version,
                     for_py_version=for_py_version,
@@ -117,7 +118,7 @@ class PipInvoke(BaseEmbed):
                     env=self.env,
                 )
                 if wheel is None:
-                    msg: Final = f"could not get wheel for distribution {dist}"
+                    msg: Final[str] = f"could not get wheel for distribution {dist}"
                     raise RuntimeError(msg)
                 self._wheels.append(wheel.path)
                 copyfile(wheel.path, Path(folder) / wheel.name)
@@ -128,11 +129,11 @@ class PipInvoke(BaseEmbed):
         record_names: Final[list[str]] = []
         for wheel in self._wheels:
             with ZipFile(wheel) as archive:
-                names: Final = archive.namelist()
+                names: Final[list[str]] = archive.namelist()
                 for root in {creator.purelib, creator.platlib}:
                     for name in {entry.partition("/")[0] for entry in names}:
                         if Path(name).name != name or name in {"", ".", ".."}:
-                            msg: Final = f"invalid seed wheel entry {name!r}"
+                            msg: Final[str] = f"invalid seed wheel entry {name!r}"
                             raise RuntimeError(msg)
                         self._detach_tree(root / name)
                 for name in names:
@@ -160,7 +161,7 @@ class PipInvoke(BaseEmbed):
                         entry.unlink()
 
     def _detach_entry_points(self, creator: Creator, content: str) -> None:
-        entries: Final = EntryPointConfig(interpolation=None, strict=False)
+        entries: Final[EntryPointConfig] = EntryPointConfig(interpolation=None, strict=False)
         entries.read_string(content)
         for section in ("console_scripts", "gui_scripts"):
             if entries.has_section(section):
@@ -170,9 +171,9 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _detach_script(creator: Creator, name: str) -> None:
         if Path(name).name != name or name in {"", ".", ".."}:
-            msg: Final = f"invalid seed wheel script {name!r}"
+            msg: Final[str] = f"invalid seed wheel script {name!r}"
             raise RuntimeError(msg)
-        scripts: Final = {name}
+        scripts: Final[set[str]] = {name}
         if name == "pip" or (name.startswith("pip") and name[3:4].isdigit()):
             scripts.update({
                 "pip",
@@ -194,10 +195,10 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _execute(cmd: list[str], env: dict[str, str]) -> Popen[bytes]:
         logging.getLogger(__name__).debug("pip seed by running: %s", LogCmd(cmd, env))
-        process: Final = Popen(cmd, env=env)
+        process: Final[Popen[bytes]] = Popen(cmd, env=env)
         process.communicate()
         if process.returncode != 0:
-            msg: Final = f"failed seed with code {process.returncode}"
+            msg: Final[str] = f"failed seed with code {process.returncode}"
             raise RuntimeError(msg)
         return process
 
