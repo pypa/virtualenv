@@ -1196,6 +1196,23 @@ def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+def test_seed_image_failed_short_path_cleans_staging(
+    tmp_path: Path, mocker: MockerFixture, no_seed_session: Session
+) -> None:
+    image: Final[Path] = tmp_path / "image" / "CopyPipInstall" / "pkg"
+    staging: Final[Path] = image.parent.with_name(f"{image.parent.name}-{image.name}")
+    wheel: Final[Path] = tmp_path / "pkg.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("f" * (260 - len(str(staging))), "payload")
+    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, side_effect=FileNotFoundError("short path"))
+
+    with pytest.raises(FileNotFoundError, match="short path"):
+        CopyPipInstall(wheel, no_seed_session.creator, image).build_image()
+
+    assert not staging.exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
 @pytest.mark.parametrize(
     ("entry", "shortened"),
     [
