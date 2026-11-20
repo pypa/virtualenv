@@ -303,8 +303,8 @@ When no default cache path is available, virtualenv uses temporary app-data and 
 ``VIRTUALENV_OVERRIDE_APP_DATA`` or ``--app-data`` to use a persistent cache. ``--read-only-app-data`` needs an explicit
 cache path in this case.
 
-An unresolved or relative home or XDG-derived cache path is not used as a default. If the path provider falls back to
-an absolute home-based location, that location remains usable.
+An unresolved or relative home or XDG-derived cache path is not used as a default. If the path provider falls back to an
+absolute home-based location, that location remains usable.
 
 On POSIX, a writable default cache owned by the current user is restricted to owner access. When its mode changes,
 virtualenv warns. Set the cache directory's setgid bit to retain group sharing, or select an explicit ``--app-data``
