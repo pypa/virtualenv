@@ -45,7 +45,6 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from types import SimpleNamespace
 
     from pytest_mock import MockerFixture
 
