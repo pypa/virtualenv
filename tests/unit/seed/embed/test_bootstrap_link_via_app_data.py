@@ -438,6 +438,28 @@ def test_seed_metadata_removes_checked_path(
     assert (inside.exists(), outside.exists()) == (False, True)
 
 
+@pytest.mark.skipif(sys.platform != "linux" or not fs_supports_symlink(), reason="requires Linux path limits")
+def test_seed_metadata_skips_unresolvable_parent_link(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    env: Final[Path] = tmp_path / "env"
+    purelib: Final[Path] = env / "lib" / "site-packages"
+    dist_info: Final[Path] = purelib / "seed-0.dist-info"
+    dist_info.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "notes").write_text("keep", encoding="utf-8")
+    deep = purelib
+    # The expanded out path must exceed Linux's 4095-byte limit.
+    while (remaining := 4093 - len(str(deep))) > 1:
+        deep /= "d" * min(200, remaining - 1)
+        deep.mkdir()
+    (purelib / "hop").symlink_to(deep.relative_to(purelib), target_is_directory=True)
+    (purelib / "hop" / "out").symlink_to(os.path.relpath(outside, deep), target_is_directory=True)
+    (dist_info / "RECORD").write_text("hop/out/notes,,\n", encoding="utf-8")
+    assert env.resolve() in (purelib / "hop" / "out" / "notes").resolve().parents
+    CopyPipInstall._uninstall_dist(dist_info, env)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert ((outside / "notes").read_text(encoding="utf-8"), "cannot resolve it" in caplog.text) == ("keep", True)
+
+
 @pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
 def test_seed_metadata_removes_junction_without_following(tmp_path: Path) -> None:
     env: Final[Path] = tmp_path / "env"
