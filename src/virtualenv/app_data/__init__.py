@@ -12,7 +12,7 @@ __lazy_modules__ = [
 import logging
 import os
 from argparse import ArgumentTypeError
-from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
+from stat import S_IMODE, S_IRWXG, S_IRWXO, S_ISGID
 from typing import TYPE_CHECKING, Final
 
 from .cache_migration import cache_dir_with_migration, make_private_dirs
@@ -68,7 +68,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         return TempAppData()
 
     if os.access(folder, os.W_OK):
-        return AppDataDiskFolder(folder)
+        return AppDataDiskFolder(folder, private=private)
     _LOGGER.debug("app data folder %s has no write access", folder)
     return TempAppData()
 
@@ -93,8 +93,8 @@ def _prepare_permissions(folder: str) -> bool:
     if info.st_uid != os.geteuid():
         _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
         return True
-    # setgid marks a deliberately group-shared cache, so only other-write is dropped there
-    loose: Final[int] = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
+    # setgid marks intentional group sharing; other users must not reach descendants created under a loose umask
+    loose: Final[int] = info.st_mode & (S_IRWXO if info.st_mode & S_ISGID else S_IRWXG | S_IRWXO)
     if loose:
         try:
             os.chmod(folder, S_IMODE(info.st_mode) & ~loose)
