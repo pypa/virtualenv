@@ -249,6 +249,44 @@ def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
     assert not result.stderr
 
 
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize(
+    ("delayed", "before_deactivate"),
+    [
+        pytest.param("OFF", "", id="normal"),
+        pytest.param("ON", "", id="delayed-expansion"),
+        pytest.param("OFF", "@setlocal EnableDelayedExpansion\n", id="enable-delayed-before-deactivate"),
+    ],
+)
+@pytest.mark.parametrize("replacement", [pytest.param("", id="empty"), pytest.param("expanded", id="defined")])
+def test_batch_path_keeps_exclamation_marks(
+    tmp_path: Path, delayed: str, before_deactivate: str, replacement: str
+) -> None:
+    creator = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
+    (creator.bin_dir / "check.bat").write_text(
+        "@echo off\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PATH_UNSET=\n"
+        f"@call activate.bat\n@set PATH\n{before_deactivate}@call deactivate.bat\n@set PATH\n",
+        encoding="utf-8",
+    )
+    original = rf"C:\Test!q!\bin;{os.environ['SYSTEMROOT']}\System32"
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
+        cwd=creator.bin_dir,
+        env={**os.environ, "PATH": original, "q": replacement},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert ([line for line in result.stdout.splitlines() if line.startswith("PATH=")], result.stderr) == (
+        [f"PATH={creator.bin_dir};{original}", f"PATH={original}"],
+        "",
+    )
+
+
 def test_batch_quote_replaces_end_of_file() -> None:
     assert BatchActivator.quote("before\x1aafter") == "before after"
 
