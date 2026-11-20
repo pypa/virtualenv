@@ -7,6 +7,11 @@ if [ "${BASH_SOURCE-}" = "$0" ]; then
     exit 33
 fi
 
+# A new shell can inherit the Windows PATH backup from batch activation.
+if [ "$(command -v deactivate)" != deactivate ]; then
+    unset _OLD_VIRTUAL_PATH
+fi
+
 deactivate () {
     unset -f pydoc >/dev/null 2>&1 || true
 
