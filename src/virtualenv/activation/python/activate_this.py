@@ -23,7 +23,10 @@ bin_dir = os.path.dirname(abs_file)  # simplint: ignore[module-variable-case, mo
 # __BIN_NAME__ is filled in when the script is written
 base = bin_dir[: -len(__BIN_NAME__) - 1]  # ty: ignore[unresolved-reference]  # simplint: ignore[module-variable-case, module-variable-prefix, undocumented-public-api]  # runpy result
 
-if os.pathsep == ":" and base.partition("%")[2].startswith(("func", "builtin")):
+if os.pathsep in base:
+    _path_error = "environment directory contains the PATH separator"
+    raise ValueError(_path_error)
+if base.partition("%")[2].startswith(("func", "builtin")):
     _msg = "environment directory contains a shell PATH option"
     raise ValueError(_msg)
 

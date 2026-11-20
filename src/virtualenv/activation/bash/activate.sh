@@ -99,6 +99,13 @@ else
             unset CURRENT_ENV
             return 1
         fi
+        case "$CURRENT_ENV" in
+            *:*)
+                echo "Virtual environment directory $CURRENT_ENV contains the PATH separator." >&2
+                unset CURRENT_ENV
+                return 1
+                ;;
+        esac
         case "${CURRENT_ENV#*%}" in
             func*|builtin*)
                 echo "Virtual environment directory $CURRENT_ENV contains a shell PATH option." >&2

@@ -409,7 +409,7 @@ def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
-@pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires a directory symlink")
 @pytest.mark.parametrize(
     ("alias_name", "returncode"),
     [
@@ -430,6 +430,8 @@ def test_powershell_handles_shell_path_option_in_activation_path(
             powershell,
             "-NoProfile",
             "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
             "-Command",
             f". {PowerShellActivator.quote(str(alias / _VENV_BIN_DIR / 'activate.ps1'))}",
         ],
@@ -440,7 +442,7 @@ def test_powershell_handles_shell_path_option_in_activation_path(
         check=False,
     )
 
-    assert (result.returncode, "shell PATH option" in result.stderr) == (returncode, returncode == 1)
+    assert (result.returncode, "shell PATH option" in result.stderr) == (returncode, returncode == 1), result.stderr
 
 
 @pytest.mark.skipif(not IS_WIN, reason="Windows registry provider")

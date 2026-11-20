@@ -186,7 +186,7 @@ if ($VenvDir) {
 
 $pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
 
-if ([IO.Path]::PathSeparator -eq ':' -and $VenvDir.Contains('%')) {
+if ($VenvDir.Contains('%')) {
     $PathOption = $VenvDir.Substring($VenvDir.IndexOf('%') + 1)
     if (
         $PathOption.StartsWith('func', [StringComparison]::Ordinal) -or

@@ -109,17 +109,21 @@ def test_python_activator_adds_no_empty_path_entry(
     assert literal_eval(out) == f"{activation_python.creator.bin_dir}{expected_suffix}"
 
 
-@pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires a directory symlink")
 @pytest.mark.parametrize(
-    ("alias_name", "rejected"),
-    [pytest.param("alias%func", True, id="option"), pytest.param("alias%20", False, id="literal-percent")],
+    ("alias_name", "error"),
+    [
+        pytest.param("alias%func", "shell PATH option", id="option"),
+        pytest.param(f"alias{os.pathsep}split", "PATH separator", id="separator"),
+        pytest.param("alias%20", "", id="literal-percent"),
+    ],
 )
-def test_python_activator_handles_shell_path_option(
-    activation_python: Session, tmp_path: Path, alias_name: str, rejected: bool
+def test_python_activator_handles_alias_path(
+    activation_python: Session, tmp_path: Path, alias_name: str, error: str
 ) -> None:
     alias = tmp_path / alias_name
     alias.symlink_to(activation_python.creator.dest, target_is_directory=True)
-    script = alias / "bin" / "activate_this.py"
+    script = alias / activation_python.creator.bin_dir.name / "activate_this.py"
     result = subprocess.run(
         [sys.executable, "-c", f"import runpy; runpy.run_path({str(script)!r})"],
         capture_output=True,
@@ -127,7 +131,8 @@ def test_python_activator_handles_shell_path_option(
         encoding="utf-8",
         check=False,
     )
-    assert (result.returncode != 0, "shell PATH option" in result.stderr) == (rejected, rejected)
+    assert result.returncode == int(bool(error)), result.stderr
+    assert result.stderr.rstrip().endswith(error)
 
 
 def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:

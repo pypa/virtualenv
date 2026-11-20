@@ -314,7 +314,8 @@ class Creator(ABC):
                 )
                 raise ArgumentTypeError(msg)
         # dash reads the first percent sign in a PATH entry as an option delimiter.
-        if os.pathsep == ":" and resolved.partition("%")[2].startswith(("func", "builtin")):
+        # Git for Windows ships dash too, and MSYS keeps the % in the converted PATH entry.
+        if resolved.partition("%")[2].startswith(("func", "builtin")):
             msg = f"destination {resolved!r} must not contain a shell PATH option (%func or %builtin)"
             raise ArgumentTypeError(msg)
 
