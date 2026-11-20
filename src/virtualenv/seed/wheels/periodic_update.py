@@ -154,31 +154,38 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
     :param periodic: ``True`` when the update is a periodic check rather than a manual one
 
     """
-    wheel_path = None if wheel is None else str(wheel.path)
-    code = (
-        dedent(
-            """\
+    code = dedent(
+        """\
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
+        distribution, for_py_version, wheel_path, app_data, periodic, *search_dirs = sys.argv[2:]
+        do_update(distribution, for_py_version, wheel_path or None, app_data, search_dirs, periodic == 'True')
         """
-        )
-        .strip()
-        .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic)
-    )
+    ).strip()
     code = (
-        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(code, '    ')}"
+        f"import runpy\nwith runpy.run_path(sys.argv[1], run_name='__loader__')['VersionedFindLoad']():\n{indent(code, '    ')}"
         if IS_ZIPAPP
         else "import importlib.util\n"
-        f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
+        "spec = importlib.util.spec_from_file_location('virtualenv', sys.argv[1])\n"
         "package = importlib.util.module_from_spec(spec)\n"
         "sys.modules['virtualenv'] = package\n"
         "spec.loader.exec_module(package)\n"
         f"{code}"
     )
     # drop the implicit working-directory entry before anything else is imported, as sys is built in
-    cmd: Final[list[str]] = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
+    cmd: Final[list[str]] = [
+        sys.executable,
+        "-c",
+        f"import sys\nsys.path = [p for p in sys.path if p]\n{code}",
+        ROOT if IS_ZIPAPP else str(Path(ROOT) / "virtualenv" / "__init__.py"),
+        distribution,
+        for_py_version,
+        "" if wheel is None else str(wheel.path),
+        str(app_data),
+        str(periodic),
+        *(str(path) for path in search_dirs),
+    ]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}
