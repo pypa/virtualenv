@@ -90,7 +90,12 @@ class Venv(ViaGlobalRefApi):
         """Create the environment, first checking the destination paths stay within it."""
         # stdlib venv writes interpreter files, configuration and activation scripts in place, so a planted symlink or
         # hard link would receive them outside the environment
-        for directory in (self.bin_dir, self.purelib, self.platlib):
+        for directory in (
+            self.bin_dir,
+            self.purelib,
+            self.platlib,
+            self.dest / ("Include" if self.interpreter.os == "nt" else "include"),
+        ):
             ensure_within(self.dest, directory)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
