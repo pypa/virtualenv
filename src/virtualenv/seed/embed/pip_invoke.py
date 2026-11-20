@@ -236,20 +236,21 @@ class PipInvoke(BaseEmbed):
     def _rewrite_record_launchers(record: Path, root: Path, creator: Creator) -> None:
         rows: Final[list[list[str]]] = list(csv.reader(io.StringIO(record.read_text(encoding="utf-8"))))
         exe: Final[bytes] = str(creator.exe).encode("utf-8")
-        via_shell: Final[bool] = len(exe.split()) > 1 or not encodes_as_utf8(str(creator.exe))
+        # Match the complete header because the interpreter path may contain line feeds.
+        headers: Final[list[bytes]] = [
+            b"#!/bin/sh\n'''exec' " + quoted + b' "$0" "$@"\n' + b"' '''\n" for quoted in (exe, b'"' + exe + b'"')
+        ]
+        if len(exe.split()) > 1 or not encodes_as_utf8(str(creator.exe)):
+            headers.append(b"#!" + exe + b"\n")
         changed = False
         for row in rows:
             path: Final[Path] = Path(os.path.abspath(str(root / row[0])))
             if path.parent != creator.script_dir or not path.is_file():
                 continue
             content = path.read_bytes()
-            if content.startswith(b"#!/bin/sh\n'''exec' "):
-                body = content.split(b"\n", 3)[3]
-            elif content.startswith(b"#!" + exe + b"\n") and via_shell:
-                body = content.split(b"\n", 1)[1]
-            else:
+            if (header := next((candidate for candidate in headers if content.startswith(candidate)), None)) is None:
                 continue
-            content = shell_shebang(str(creator.exe)) + body
+            content = shell_shebang(str(creator.exe)) + content[len(header) :]
             mode: Final[int] = S_IMODE(path.stat().st_mode) & 0o755
             path.unlink()
             with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode), "wb") as stream:
