@@ -913,14 +913,15 @@ def test_zipapp_extract_uses_destination_name(fake_zipapp_root: Path, tmp_path: 
     assert dest.read_text(encoding="utf-8") == "hello zipapp"
 
 
-def test_zipapp_extract_keeps_previous_file_on_copy_error(
-    fake_zipapp_root: Path, tmp_path: Path, mocker: MockerFixture
+@pytest.mark.parametrize("operation", ["shutil.copyfileobj", "os.fsync"])
+def test_zipapp_extract_keeps_previous_file_on_write_error(
+    fake_zipapp_root: Path, tmp_path: Path, mocker: MockerFixture, operation: str
 ) -> None:
     dest: Final[Path] = tmp_path / "extracted.txt"
     dest.write_text("previous", encoding="utf-8")
-    mocker.patch("zipfile.shutil.copyfileobj", autospec=True, side_effect=OSError(EACCES, "copy failed"))
+    mocker.patch(operation, autospec=True, side_effect=OSError(EACCES, "write failed"))
 
-    with pytest.raises(OSError, match="copy failed"):
+    with pytest.raises(OSError, match="write failed"):
         zipapp.extract(fake_zipapp_root / "virtualenv" / "payload.txt", dest)
 
     assert (dest.read_text(encoding="utf-8"), set(tmp_path.iterdir())) == ("previous", {dest, fake_zipapp_root})

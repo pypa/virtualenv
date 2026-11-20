@@ -4,6 +4,7 @@ __lazy_modules__ = [
     "pathlib",
     "shutil",
     f"{__spec__.parent}._win",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.windows",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
 import logging
@@ -13,6 +14,8 @@ import sys
 from pathlib import Path
 from stat import S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
+
+from .windows import windows_extended_path
 
 if os.name == "nt":
     from stat import IO_REPARSE_TAG_MOUNT_POINT
@@ -154,12 +157,7 @@ def safe_delete(dest: Path) -> None:
 
     target = str(dest)
     if os.name == "nt":
-        # without long path support Windows refuses paths past MAX_PATH, and a seed image built through its 8.3 short
-        # path holds files past it; the \\?\ form lifts the limit but skips normalization, so normalize the path first
-        target = os.path.abspath(target)
-        # the UNC form would turn a \\.\ device path into a server named "."
-        if not target.startswith(("\\\\?\\", "\\\\.\\")):
-            target = f"\\\\?\\UNC\\{target[2:]}" if target.startswith("\\\\") else f"\\\\?\\{target}"
+        target = windows_extended_path(target)
     if sys.version_info >= (3, 12):
         shutil.rmtree(target, onexc=onerror)
     else:

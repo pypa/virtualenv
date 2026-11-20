@@ -72,6 +72,8 @@ def extract(full_path: str | Path, dest: Path) -> None:
         try:
             with output, zip_file.open(info) as source:
                 shutil.copyfileobj(source, output)
+                output.flush()
+                os.fsync(output.fileno())
             os.replace(temp, dest)
         finally:
             temp.unlink(missing_ok=True)
