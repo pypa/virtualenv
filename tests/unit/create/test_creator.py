@@ -956,15 +956,46 @@ def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None
     assert [path.name for path in executables if not os.access(path, os.W_OK)] == []
 
 
-@pytest.mark.skipif(
+_REQUIRES_SHARED_COPY_CREATOR: Final[pytest.MarkDecorator] = pytest.mark.skipif(
     IS_WIN
     or IS_PYPY
     or IS_GRAALPY
-    or sys.version_info < (3, 14)
+    or sys.version_info < (3, 11)
+    or not _CURRENT.sysconfig_vars.get("Py_ENABLE_SHARED")
     or is_macos_brew(_CURRENT)
     or is_mac_os_framework(_CURRENT),
-    reason="requires a POSIX CPython 3.14+ copy creator",
+    reason="requires a POSIX CPython 3.11+ copy creator",
 )
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.parametrize(
+    ("mode", "candidate_lib", "warn"),
+    [(0o777, True, True), (0o1777, False, True), (0o1777, True, False)],
+    indirect=["candidate_lib"],
+)
+def test_copy_warns_for_replaceable_search_directory(
+    creator: str, mode: int, candidate_lib: Path, warn: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    candidate_lib.parent.chmod(mode)
+    dest = candidate_lib.parent / "env"
+
+    cli_run([str(dest), "--creator", creator, "--copies", "--no-seed"], setup_logging=False)
+
+    assert (dest / "pyvenv.cfg").is_file()
+    assert (f"{candidate_lib} (parent mode {mode:o}); use --symlinks" in caplog.text) is warn
+
+
+@pytest.fixture
+def candidate_lib(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    lib_dir = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    if request.param:
+        lib_dir.mkdir()
+    return lib_dir
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_rejects_writable_sibling_lib(tmp_path: Path, creator: str) -> None:
     sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
@@ -975,15 +1006,7 @@ def test_copy_rejects_writable_sibling_lib(tmp_path: Path, creator: str) -> None
         cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT),
-    reason="requires a POSIX CPython 3.14+ copy creator",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_rejects_unsafe_sibling_before_clear_without_libpython(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
@@ -1005,15 +1028,7 @@ def test_copy_rejects_unsafe_sibling_before_clear_without_libpython(
     assert marker.read_text(encoding="utf-8") == "keep"
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT),
-    reason="requires a POSIX CPython 3.14+ copy creator",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_accepts_private_group_writable_sibling(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
@@ -1023,22 +1038,16 @@ def test_copy_accepts_private_group_writable_sibling(
     sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
     sibling_lib.mkdir()
     sibling_lib.chmod(0o775)
-    monkeypatch.setattr(grp, "getgrgid", lambda _: SimpleNamespace(gr_mem=()))
+    monkeypatch.setattr(
+        grp, "getgrgid", lambda _: SimpleNamespace(gr_name=pwd.getpwuid(os.geteuid()).pw_name, gr_mem=())
+    )
     monkeypatch.setattr(pwd, "getpwall", lambda: [pwd.getpwuid(os.geteuid())])
 
     cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
     assert (tmp_path / "env" / "pyvenv.cfg").is_file()
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT),
-    reason="requires a POSIX CPython 3.14+ copy creator",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_rejects_shared_group_writable_sibling(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
@@ -1047,64 +1056,41 @@ def test_copy_rejects_shared_group_writable_sibling(
     sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
     sibling_lib.mkdir()
     sibling_lib.chmod(0o775)
-    monkeypatch.setattr(grp, "getgrgid", lambda _: SimpleNamespace(gr_mem=("other",)))
+    monkeypatch.setattr(grp, "getgrgid", lambda _: SimpleNamespace(gr_name="staff", gr_mem=()))
+    monkeypatch.setattr(pytest.importorskip("pwd"), "getpwall", list)
 
     with pytest.raises(ValueError, match=rf"{sibling_lib} \(mode 775\); use --symlinks"):
         cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT),
-    reason="requires a POSIX CPython 3.14+ copy creator",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_rejects_sibling_stdlib_zip(tmp_path: Path, creator: str) -> None:
     sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
     sibling_lib.mkdir()
-    with zipfile.ZipFile(
-        sibling_lib
-        / f"python{sys.version_info.major}{sys.version_info.minor}{'t' * bool(_CURRENT.sysconfig_vars.get('Py_GIL_DISABLED'))}.zip",
-        "w",
-    ):
-        pass
+    zip_name = next(
+        Path(entry).name for entry in sys.path if entry.endswith(".zip") and Path(entry).name.startswith("python")
+    )
+    landmark = sibling_lib / zip_name
+    landmark.touch(mode=0o600)
 
-    with pytest.raises(ValueError, match="standard-library search path"):
+    with pytest.raises(ValueError, match=rf"{landmark} \(mode 600\); use --symlinks"):
         cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT)
-    or not fs_supports_symlink(),
-    reason="requires a POSIX CPython 3.14+ copy creator with symlinks",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None:
-    (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(tmp_path / "future-lib")
+    lib_dir = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    lib_dir.symlink_to(tmp_path / "future-lib")
 
-    with pytest.raises(ValueError, match="standard-library search path"):
+    with pytest.raises(ValueError, match=rf"{lib_dir} \(mode {lib_dir.lstat().st_mode & 0o7777:o}\); use --symlinks"):
         cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT)
-    or not fs_supports_symlink(),
-    reason="requires a POSIX CPython 3.14+ copy creator with symlinks",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 @pytest.mark.parametrize("target", ["link", "link/../safe"])
 def test_copy_rejects_replaceable_link_in_sibling_target(
@@ -1132,16 +1118,7 @@ def test_copy_rejects_replaceable_link_in_sibling_target(
             cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
 
 
-@pytest.mark.skipif(
-    IS_WIN
-    or IS_PYPY
-    or IS_GRAALPY
-    or sys.version_info < (3, 14)
-    or is_macos_brew(_CURRENT)
-    or is_mac_os_framework(_CURRENT)
-    or not _CURRENT.sysconfig_vars.get("Py_ENABLE_SHARED"),
-    reason="requires a shared-library POSIX CPython 3.14+ copy creator",
-)
+@_REQUIRES_SHARED_COPY_CREATOR
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
 @pytest.mark.usefixtures("trusted_sibling_lib")
 def test_copy_keeps_shared_library_with_trusted_sibling(tmp_path: Path, creator: str) -> None:

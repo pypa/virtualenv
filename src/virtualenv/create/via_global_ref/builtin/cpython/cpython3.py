@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = [
     "collections",
     "fnmatch",
+    "logging",
     "operator",
     "pathlib",
     "virtualenv.create.via_global_ref.builtin.ref",
@@ -12,6 +13,7 @@ __lazy_modules__ = [
 
 import abc
 import fnmatch
+import logging
 import os
 from collections import deque
 from operator import methodcaller as method
@@ -98,12 +100,12 @@ class CPython3Posix(CPythonPosix, CPython3):
     @staticmethod
     def _check_shared_libpython_search(creator: CPython3Posix | Venv) -> None:
         interpreter = creator.interpreter
-        # CPython 3.14 searches above the loaded library for a stdlib zip before using pyvenv.cfg's home.
-        if interpreter.version_info < (3, 14) or not interpreter.sysconfig_vars.get("Py_ENABLE_SHARED"):
+        # CPython 3.11+ searches above the loaded library for a stdlib zip before using pyvenv.cfg's home.
+        if interpreter.version_info < (3, 11) or not interpreter.sysconfig_vars.get("Py_ENABLE_SHARED"):
             return
         zip_name = (
             f"python{interpreter.version_info.major}{interpreter.version_info.minor}"
-            f"{'t' if interpreter.sysconfig_vars.get('Py_GIL_DISABLED') else ''}.zip"
+            f"{'t' if interpreter.free_threaded else ''}.zip"
         )
         host_prefix = Path(interpreter.system_prefix).resolve()
         platlibdir = interpreter.sysconfig_vars.get("platlibdir")
@@ -116,11 +118,25 @@ class CPython3Posix(CPythonPosix, CPython3):
 
     @staticmethod
     def _check_candidate_stdlib(lib_dir: Path, zip_name: str) -> None:
+        try:
+            parent_stat = lib_dir.parent.stat()
+        except FileNotFoundError:
+            return
+        try:
+            entry_stat = lib_dir.lstat()
+        except FileNotFoundError:
+            entry_stat = None
+        if CPython3Posix._can_replace_entry(parent_stat, entry_stat):
+            logging.getLogger(__name__).warning(
+                "another account can change the copied Python standard-library search path %s (parent mode %o); "
+                "use --symlinks or choose a private parent directory",
+                lib_dir,
+                parent_stat.st_mode & 0o7777,
+            )
         resolved = CPython3Posix._resolve_candidate_lib(lib_dir)
         if not resolved.is_dir():
-            if lib_dir.is_symlink():
-                msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
-                raise ValueError(msg)
+            if entry_stat and S_ISLNK(entry_stat.st_mode):
+                raise CPython3Posix._unsafe_search_path(lib_dir, entry_stat)
             return
         for depth, path in enumerate((resolved, *resolved.parents) if resolved != lib_dir else (lib_dir,)):
             path_stat = path.lstat()
@@ -128,15 +144,18 @@ class CPython3Posix(CPythonPosix, CPython3):
                 (path_stat.st_mode & S_IWOTH or CPython3Posix._shared_group_can_replace(path_stat))
                 and (depth == 0 or not path_stat.st_mode & S_ISVTX)
             ):
-                msg = (
-                    f"copied Python library has an unsafe standard-library search path: {path} "
-                    f"(mode {path_stat.st_mode & 0o7777:o}); use --symlinks"
-                )
-                raise ValueError(msg)
+                raise CPython3Posix._unsafe_search_path(path, path_stat)
         zip_path = lib_dir / zip_name
         if zip_path.is_file() or zip_path.is_symlink():
-            msg = f"copied Python library has an unsafe standard-library search path: {zip_path}"
-            raise ValueError(msg)
+            raise CPython3Posix._unsafe_search_path(zip_path, zip_path.lstat())
+
+    @staticmethod
+    def _can_replace_entry(parent_stat: os.stat_result, entry_stat: os.stat_result | None) -> bool:
+        # A sticky directory still lets others add a missing entry or replace an entry they own.
+        return parent_stat.st_uid not in {os.geteuid(), 0} or (
+            (bool(parent_stat.st_mode & S_IWOTH) or CPython3Posix._shared_group_can_replace(parent_stat))
+            and (not parent_stat.st_mode & S_ISVTX or entry_stat is None or entry_stat.st_uid not in {os.geteuid(), 0})
+        )
 
     @staticmethod
     def _resolve_candidate_lib(lib_dir: Path) -> Path:
@@ -157,10 +176,10 @@ class CPython3Posix(CPythonPosix, CPython3):
             if not S_ISLNK(path_stat.st_mode):
                 continue
             if candidate in seen:
-                msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
-                raise ValueError(msg)
+                raise CPython3Posix._unsafe_search_path(candidate, path_stat)
             seen.add(candidate)
-            CPython3Posix._check_replaceable_link(candidate, path_stat)
+            if CPython3Posix._can_replace_entry(candidate.parent.stat(), path_stat):
+                raise CPython3Posix._unsafe_search_path(candidate, path_stat)
             target = candidate.readlink()
             absolute_target = target.is_absolute()
             candidate = Path(target.anchor) if absolute_target else candidate.parent
@@ -168,15 +187,11 @@ class CPython3Posix(CPythonPosix, CPython3):
         return candidate
 
     @staticmethod
-    def _check_replaceable_link(path: Path, link_stat: os.stat_result) -> None:
-        parent_stat = path.parent.stat()
-        # In a sticky shared directory, the symlink owner can replace its entry after this check.
-        if parent_stat.st_uid not in {os.geteuid(), 0} or (
-            (parent_stat.st_mode & S_IWOTH or CPython3Posix._shared_group_can_replace(parent_stat))
-            and (not parent_stat.st_mode & S_ISVTX or link_stat.st_uid not in {os.geteuid(), 0})
-        ):
-            msg = f"copied Python library has an unsafe standard-library search path: {path}"
-            raise ValueError(msg)
+    def _unsafe_search_path(path: Path, path_stat: os.stat_result) -> ValueError:
+        return ValueError(
+            f"copied Python library has an unsafe standard-library search path: {path} "
+            f"(mode {path_stat.st_mode & 0o7777:o}); use --symlinks"
+        )
 
     @staticmethod
     def _shared_group_can_replace(path_stat: os.stat_result) -> bool:
@@ -189,11 +204,15 @@ class CPython3Posix(CPythonPosix, CPython3):
 
         try:
             user = pwd.getpwuid(os.geteuid()).pw_name
-            return any(member != user for member in grp.getgrgid(path_stat.st_gid).gr_mem) or any(
-                account.pw_gid == path_stat.st_gid and account.pw_name != user for account in pwd.getpwall()
-            )
+            group = grp.getgrgid(path_stat.st_gid)
         except KeyError:
             return True
+        # Directory services often do not enumerate accounts, so only a group named after the user counts as private.
+        return (
+            group.gr_name != user
+            or any(member != user for member in group.gr_mem)
+            or any(account.pw_gid == path_stat.st_gid and account.pw_name != user for account in pwd.getpwall())
+        )
 
     def install_venv_shared_libs(self, venv_creator: Venv) -> None:
         """Copy the shared ``libpython`` next to the environment when it does not link the host's copy.

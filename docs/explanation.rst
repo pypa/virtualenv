@@ -344,6 +344,12 @@ the versioned name - and an environment offering only one of them would break th
 version-bearing names from the target interpreter and add the host executable's own file name, so a host called
 ``pypy3.11`` or ``python_d.exe`` stays reachable under the name its callers already use.
 
+On POSIX, CPython 3.11 and later can search above a copied shared library for its standard library. Both creators check
+those search directories before clearing or creating an environment. An unsafe library directory or unexpected
+standard-library zip stops creation. A warning means another account could change a search directory after creation,
+even if the directory does not exist yet. Use ``--symlinks`` or choose a destination whose parents only you or the
+administrator can change.
+
 Windows copies rather than symlinks, because symlinking the interpreter there is unreliable (`bpo-42013
 <https://bugs.python.org/issue42013>`_). From CPython 3.13 the file copied is the ``venvlauncher.exe`` redirector out of
 the host's standard library rather than the interpreter itself. The redirector reads ``pyvenv.cfg`` and hands off to the
