@@ -426,6 +426,9 @@ Repeat the option to search more than one directory, in the given order:
 
     $ virtualenv venv --extra-search-dir /path/to/wheels --extra-search-dir /path/to/other/wheels
 
+Wheel search uses only existing directories. Empty entries in ``VIRTUALENV_EXTRA_SEARCH_DIR`` are ignored; use ``.``
+explicitly to search the current directory.
+
 Download latest from PyPI
 =========================
 

@@ -179,7 +179,7 @@ class BaseEmbed(Seeder, ABC):
             type=cls._search_dir,
             nargs="+",
             action=ExtendAction,
-            help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
+            help="a directory containing wheels to extend the internal wheel list (can be set 1+ times)",
             default=[],
         )
         for distribution, default in cls.distributions().items():
