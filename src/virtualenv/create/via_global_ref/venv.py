@@ -11,6 +11,7 @@ __lazy_modules__ = [
     f"{__spec__.parent}.builtin.cpython.cpython3",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.mac_os",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.store",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.venv_copied",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
 import logging
@@ -29,6 +30,7 @@ from .builtin.cpython.common import is_mac_os_framework
 from .builtin.cpython.cpython3 import CPython3Posix
 from .builtin.cpython.mac_os import CPython3macOsBrew
 from .store import handle_store_python
+from .venv_copied import remove_copied_interpreters
 
 if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
@@ -99,6 +101,7 @@ class Venv(ViaGlobalRefApi):
             self.dest / ("Include" if self.interpreter.os == "nt" else "include"),
         ):
             ensure_within(self.dest, directory)
+        remove_copied_interpreters(self.bin_dir, self.interpreter)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()

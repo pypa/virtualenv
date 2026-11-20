@@ -50,6 +50,10 @@ if TYPE_CHECKING:
     from virtualenv.run.session import Session
 
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
+_PYPY_LIBRARY: Final[Path] = Path(_CURRENT.system_executable).parent / (
+    f"libpypy{_CURRENT.version_info.major}.{_CURRENT.version_info.minor}-c"
+    f"{'.dylib' if sys.platform == 'darwin' else '.so'}"
+)
 
 
 @pytest.mark.skipif(
@@ -997,6 +1001,80 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     cli_run([str(destination), "--creator", "builtin", "--no-seed", mode])
 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
+
+
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.parametrize(
+    ("alias", "runner"),
+    [
+        pytest.param("python", "python", id="python"),
+        pytest.param(
+            "𝜋thon",
+            "𝜋thon",
+            id="pi",
+            marks=pytest.mark.skipif(
+                sys.version_info[:2] != (3, 14) or IS_PYPY or sys.getfilesystemencoding() != "utf-8",
+                reason="CPython 3.14 creates this alias on UTF-8 filesystems",
+            ),
+        ),
+        pytest.param("pypy", "pypy", id="pypy", marks=pytest.mark.skipif(not IS_PYPY, reason="PyPy alias")),
+        pytest.param("pypy3", "pypy3", id="pypy3", marks=pytest.mark.skipif(not IS_PYPY, reason="PyPy alias")),
+    ],
+)
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str, runner: str) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    stale: Final[Path] = dest / "stale"
+    stale.write_bytes(b"stale")
+    stale.replace(dest / "bin" / alias)
+
+    cli_run(command)
+
+    assert (
+        subprocess.check_output([str(dest / "bin" / runner), "-c", "print(1)"], text=True, encoding="utf-8").strip()
+        == "1"
+    )
+
+
+@pytest.mark.skipif(
+    not IS_PYPY or IS_WIN or not _PYPY_LIBRARY.is_file(), reason="requires a copied PyPy shared library"
+)
+def test_venv_creator_replaces_copied_pypy_library(tmp_path: Path) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    library: Final[Path] = dest / "bin" / _PYPY_LIBRARY.name
+    assert library.is_file()
+    library.unlink()
+    library.write_bytes(b"stale")
+
+    cli_run(command)
+
+    assert (
+        subprocess.check_output([str(dest / "bin/python"), "-c", "print(1)"], text=True, encoding="utf-8").strip()
+        == "1"
+    )
+
+
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.skipif(sys.version_info[:2] == (3, 14), reason="CPython 3.14 creates this alias")
+def test_venv_creator_keeps_unrelated_pi_file(tmp_path: Path) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    alias: Final[Path] = dest / "bin/𝜋thon"
+    alias.write_bytes(b"custom")
+
+    cli_run(command)
+
+    assert alias.read_bytes() == b"custom"
 
 
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
