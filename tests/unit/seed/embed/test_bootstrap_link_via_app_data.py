@@ -254,7 +254,7 @@ def test_seed_metadata_keeps_reseeding_supported(
     )
 
 
-@pytest.mark.skipif(os.name == "nt", reason="requires POSIX FIFOs")
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires FIFOs")
 @pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
 def test_seed_metadata_skips_fifo(no_seed_session: Session, tmp_path: Path, metadata_file: str) -> None:
     dist_info: Final[Path] = no_seed_session.creator.purelib / "pip-0.dist-info"
