@@ -311,9 +311,9 @@ Creators are responsible for constructing the virtual environment structure. vir
 **venv creator**
     This creator delegates environment construction to the standard library's ``venv`` module, following `PEP 405
     <https://www.python.org/dev/peps/pep-0405/>`_. On POSIX, virtualenv applies the current umask to copied interpreters
-    and limits access to an existing ``bin`` directory while the standard library writes them. A short child shell reads
-    the current umask without changing the process setting. The venv module itself runs in a subprocess unless
-    virtualenv is installed in the system Python.
+    and limits access to ``bin`` while the standard library writes them. A short child shell reads the current umask
+    without changing the process setting. The venv module itself runs in a subprocess unless virtualenv is installed in
+    the system Python.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 
