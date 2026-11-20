@@ -18,7 +18,7 @@ __lazy_modules__ = [
 
 import logging
 import os
-from argparse import ArgumentParser
+from argparse import SUPPRESS, ArgumentParser
 from functools import partial
 from typing import TYPE_CHECKING, Final
 
@@ -168,7 +168,8 @@ def build_parser(
 
 def _validate_option_values(args: list[str] | None) -> None:
     # Staged parsing can act on later options before noticing that an earlier option lacks its value.
-    parser: Final[ArgumentParser] = ArgumentParser(prog="virtualenv", add_help=False)
+    # This parser covers only early options, so its usage text would misdescribe the command.
+    parser: Final[ArgumentParser] = ArgumentParser(prog="virtualenv", add_help=False, usage=SUPPRESS)
     parser.add_argument("-v", "-q", action="count")
     for option in (
         "--app-data",
