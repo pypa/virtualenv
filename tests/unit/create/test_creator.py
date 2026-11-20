@@ -1009,10 +1009,10 @@ def test_venv_creator_replaces_copied_pypy_library(tmp_path: Path) -> None:
 )
 @pytest.mark.skipif(sys.version_info[:2] == (3, 14), reason="CPython 3.14 creates this alias")
 def test_venv_creator_keeps_unrelated_pi_file(tmp_path: Path) -> None:
-    dest: Final = tmp_path / "env"
-    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
     cli_run(command)
-    alias: Final = dest / "bin/𝜋thon"
+    alias: Final[Path] = dest / "bin/𝜋thon"
     alias.write_bytes(b"custom")
 
     cli_run(command)
