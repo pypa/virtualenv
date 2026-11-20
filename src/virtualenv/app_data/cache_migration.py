@@ -95,6 +95,7 @@ def make_private_dirs(folder: str) -> None:
 
     :param folder: target directory, including any missing parents
 
+    :raises FileNotFoundError: if the filesystem root does not exist
     :raises NotADirectoryError: if a missing component becomes a file during creation
 
     """
@@ -102,7 +103,10 @@ def make_private_dirs(folder: str) -> None:
     path = os.path.abspath(folder)
     while not os.path.exists(path):
         missing.append(path)
-        path = os.path.dirname(path)
+        parent = os.path.dirname(path)
+        if parent == path:
+            raise FileNotFoundError(path)
+        path = parent
     for path in reversed(missing):
         with suppress(FileExistsError):
             os.mkdir(path, 0o700)
@@ -165,9 +169,14 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: bool = False) -> None:
     marker: Final[pathlib.Path] = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
-    if not nested:
+    if nested:
+        if os.stat(old_dir).st_mode & stat.S_ISGID:
+            os.makedirs(new_dir, exist_ok=True)
+        else:
+            make_private_dirs(new_dir)
+    else:
         _prepare_cache_parent(old_dir, new_dir)
-    os.makedirs(new_dir, mode=0o777 if nested else 0o700, exist_ok=True)
+        os.makedirs(new_dir, mode=0o700, exist_ok=True)
     skipped_entries: Final[set[str]] = {_MIGRATION_MARKER}
     if nested:
         skipped_entries.add(os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0])
