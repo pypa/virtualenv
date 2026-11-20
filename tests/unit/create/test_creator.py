@@ -808,7 +808,9 @@ def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
             0o100,
             0o755,
             id="owner-execute-masked",
-            marks=pytest.mark.skipif(sys.platform != "linux", reason="POSIX ACLs"),
+            marks=pytest.mark.skipif(
+                sys.platform != "linux" or not hasattr(os, "getxattr"), reason="default ACL lookup unavailable"
+            ),
         ),
     ],
 )

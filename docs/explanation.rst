@@ -319,8 +319,8 @@ Creators are responsible for constructing the virtual environment structure. vir
     permissions when the policy already allows read and execute access. If a shared directory needs restricting, its
     owner must create the environment.
 
-    On Linux, the owner can still execute the copy when the umask alone removes owner execute. If the directory's policy
-    withholds owner execute and virtualenv cannot attribute that to the umask, use ``--symlinks``.
+    On Linux, virtualenv restores owner execute when it can verify that the directory has no default ACL. Otherwise, if
+    the owner execute bit is missing, creation stops before copying. Use ``--symlinks`` in that directory.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 

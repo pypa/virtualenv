@@ -24,7 +24,7 @@ def owner_executable_mode(directory: Path, mode: int) -> int:
     """
     if mode & S_IXUSR:
         return mode
-    if sys.platform == "linux":
+    if sys.platform == "linux" and hasattr(os, "getxattr"):
         try:
             os.getxattr(directory, "system.posix_acl_default")
         except OSError as exc:
