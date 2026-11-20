@@ -1530,6 +1530,7 @@ def test_pip_launcher_keeps_line_feed_path_in_header(tmp_path: Path, name: str) 
         [str(session.creator.script_dir / "pip"), "--version"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=30,
         check=False,
     )
