@@ -1165,14 +1165,13 @@ def test_legacy_cache_migration_preserves_setgid_group(tmp_path: Path, mocker: M
 
 @pytest.mark.skipif(os.name != "posix" or not (set(os.getgroups()) - {os.getgid()}), reason="POSIX second group")
 def test_cross_device_shared_cache_keeps_group_during_copy(tmp_path: Path, mocker: MockerFixture) -> None:
-    other_groups = set(os.getgroups()) - {os.getgid()}
     old_dir = tmp_path / "data"
     old_dir.mkdir()
     old_dir.chmod(0o2775)
     (old_dir / "wheel.txt").write_text("cached", encoding="utf-8")
     new_dir = tmp_path / "cache" / "virtualenv"
     new_dir.parent.mkdir()
-    os.chown(new_dir.parent, -1, other_groups.pop())
+    os.chown(new_dir.parent, -1, (set(os.getgroups()) - {os.getgid()}).pop())
     new_dir.parent.chmod(0o2770)
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
