@@ -53,6 +53,9 @@ Three keys carry the version, and they differ in precision and in who should rea
 ``prompt`` appears as an extra key when you pass ``--prompt``. The ``base-*`` keys come from the creator and vary by
 creation method.
 
+For CPython 3.11 and later, virtualenv rejects a ``pyvenv.cfg`` of 32 KiB or more because the interpreter cannot read it
+at startup. A long ``--prompt`` value can reach this limit.
+
 ``CACHEDIR.TAG``
 ================
 
