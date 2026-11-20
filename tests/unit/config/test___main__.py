@@ -173,7 +173,7 @@ def test_session_report_minimal(tmp_path, capsys) -> None:
 @pytest.mark.skipif(os.name != "posix", reason="Windows filenames cannot contain a newline")
 @pytest.mark.usefixtures("session_app_data")
 def test_session_report_escapes_line_break_in_destination(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    dest: Final = tmp_path / "env\ncontinued"
+    dest: Final[Path] = tmp_path / "env\ncontinued"
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "example"\n', encoding="utf-8")
 
     run_with_catch([str(dest), "--activators", "", "--without-pip"])
