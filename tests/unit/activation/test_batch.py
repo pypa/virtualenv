@@ -106,7 +106,7 @@ def test_batch_pydoc_bat_quoting(tmp_path) -> None:
                 '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"',
                 '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"',
             ],
-            ["if defined _OLD_VIRTUAL_TCL_LIBRARY", "if defined _OLD_VIRTUAL_TK_LIBRARY"],
+            ["call :assign TCL_LIBRARY _OLD_VIRTUAL_TCL_LIBRARY", "call :assign TK_LIBRARY _OLD_VIRTUAL_TK_LIBRARY"],
             id="windows",
         ),
         pytest.param(
@@ -145,12 +145,6 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, activate_lines, dea
     deactivate_content = (creator.bin_dir / "deactivate.bat").read_text(encoding="utf-8")
 
     # THEN
-    # PKG_CONFIG_PATH is always set
-    assert '@if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"' in activate_content
-    assert '@set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\\lib\\pkgconfig;%PKG_CONFIG_PATH%"' in activate_content
-    assert '@if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"' in deactivate_content
-    assert "@if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
-    assert "@set _OLD_PKG_CONFIG_PATH=" in deactivate_content
     assert [line for line in activate_lines if line not in activate_content] == []
     assert [line for line in deactivate_lines if line not in deactivate_content] == []
 
@@ -264,6 +258,7 @@ def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
         pytest.param("OFF", "", id="normal"),
         pytest.param("ON", "", id="delayed-expansion"),
         pytest.param("OFF", "@setlocal EnableDelayedExpansion\n", id="enable-delayed-before-deactivate"),
+        pytest.param("ON", "@setlocal DisableDelayedExpansion\n", id="disable-delayed-before-deactivate"),
     ],
 )
 @pytest.mark.parametrize("replacement", [pytest.param("", id="empty"), pytest.param("expanded", id="defined")])
@@ -278,7 +273,7 @@ def test_batch_path_keeps_exclamation_marks(
         f"@call activate.bat\n@set PATH\n{before_deactivate}@call deactivate.bat\n@set PATH\n",
         encoding="utf-8",
     )
-    original = rf"C:\Test!q!\bin;{os.environ['SYSTEMROOT']}\System32"
+    original = rf'"C:\Build ^ tools!q!\bin";{os.environ["SYSTEMROOT"]}\System32'
     result = subprocess.run(
         [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
         cwd=creator.bin_dir,
@@ -297,17 +292,17 @@ def test_batch_path_keeps_exclamation_marks(
 
 @pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
 @pytest.mark.parametrize("delayed", [pytest.param("OFF", id="normal"), pytest.param("ON", id="delayed-expansion")])
-def test_batch_restores_values_with_exclamation_marks(tmp_path: Path, delayed: str) -> None:
+def test_batch_restores_inherited_values(tmp_path: Path, delayed: str) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
     BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
     names: Final[tuple[str, ...]] = ("PROMPT", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY", "PKG_CONFIG_PATH")
     inherited: Final[dict[str, str]] = {
-        "PROMPT": "p!q!$G",
-        "PYTHONHOME": r"C:\ph!q!",
-        "TCL_LIBRARY": r"C:\tcl!q!",
-        "TK_LIBRARY": r"C:\tk!q!",
-        "PKG_CONFIG_PATH": r"C:\pkg!q!",
+        "PROMPT": '"Build ^ tools!q!"$G',
+        "PYTHONHOME": r'"C:\Build ^ tools!q!\Python"',
+        "TCL_LIBRARY": r'"C:\Build ^ tools!q!\tcl"',
+        "TK_LIBRARY": r'"C:\Build ^ tools!q!\tk"',
+        "PKG_CONFIG_PATH": r'"C:\Build ^ tools!q!\pkg"',
     }
     snapshot: Final[str] = (
         f'@"{sys.executable}" -I -c "import json,os; print(json.dumps({{k:os.environ.get(k) for k in {names!r}}}))"'

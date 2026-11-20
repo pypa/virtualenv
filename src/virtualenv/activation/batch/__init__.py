@@ -7,7 +7,7 @@ import os  # isort: skip # fmt: skip
 from types import MappingProxyType  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator, read_binary  # isort: skip # fmt: skip
 from virtualenv.util.text import collapse_line_boundaries  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
@@ -120,6 +120,7 @@ class BatchActivator(ViaTemplateActivator):  # fmt: skip
         """
         return {
             **super().substitutions(replacements, creator),
+            "__BATCH_ASSIGN__": "\n".join(read_binary(__name__, "_assign.bat").decode("ascii").splitlines()),
             "__VIRTUAL_ENV_CALL__": self.quote(replacements["__VIRTUAL_ENV__"]).replace("%", "%%"),
         }
 

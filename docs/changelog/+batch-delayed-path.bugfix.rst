@@ -1,2 +1,3 @@
-Preserve exclamation marks in inherited PATH, PROMPT, PYTHONHOME, Tcl library paths and PKG_CONFIG_PATH when batch
-activation or deactivation runs with delayed expansion enabled.
+Preserve literal exclamation marks and carets in inherited values when Windows batch activation saves and restores
+``PATH``, ``PROMPT``, ``PYTHONHOME``, the Tcl and Tk library paths, and ``PKG_CONFIG_PATH``. Quoted path entries retain
+their punctuation with delayed expansion on or off.
