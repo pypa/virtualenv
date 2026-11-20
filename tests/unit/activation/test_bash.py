@@ -497,8 +497,8 @@ def test_git_bash_activates_percent_path(
     assert (
         virtual_env,
         path_entry,
-        Path(bash_python).samefile(session.creator.exe),
-        Path(dash_python).samefile(session.creator.exe),
+        Path(bash_python).samefile(session.creator.bin_dir / "python.exe"),
+        Path(dash_python).samefile(session.creator.bin_dir / "python.exe"),
     ) == (
         str(session.creator.dest),
         str(tmp_path / path_name / "Scripts"),
