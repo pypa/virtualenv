@@ -92,7 +92,12 @@ class Venv(ViaGlobalRefApi):
         """Create the environment, first checking the destination paths stay within it."""
         # stdlib venv writes interpreter files, configuration and activation scripts in place, so a planted symlink or
         # hard link would receive them outside the environment
-        for directory in (self.bin_dir, self.purelib, self.platlib):
+        for directory in (
+            self.bin_dir,
+            self.purelib,
+            self.platlib,
+            self.dest / ("Include" if self.interpreter.os == "nt" else "include"),
+        ):
             ensure_within(self.dest, directory)
         # CPython 3.14 adds the pi alias to stdlib venvs on UTF-8 filesystems.
         interpreter_names = {
