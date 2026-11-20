@@ -56,7 +56,8 @@ class BaseEmbed(Seeder, ABC):
         super().__init__(options, enabled=options.no_seed is False)
 
         self.download = options.download is True  # unset means no download
-        self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
+        # a path that is missing or not a directory (e.g. a wheel file) has no wheels to search
+        self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.is_dir()]
 
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
