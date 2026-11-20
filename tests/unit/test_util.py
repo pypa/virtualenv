@@ -23,7 +23,7 @@ from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock, Timeout
-from virtualenv.util.path import copy, ensure_within, get_short_path_name, safe_delete, symlink, write_file
+from virtualenv.util.path import copy, ensure_within, get_short_path_name, safe_delete, set_tree, symlink, write_file
 from virtualenv.util.subprocess import LogCmd, run_cmd
 
 if os.name == "nt":
@@ -356,6 +356,27 @@ def test_copy_uses_current_umask(
         os.umask(previous)
     result: Final[Path] = destination / result_rel
     assert (result.read_bytes(), result.stat().st_mode & 0o777) == (b"copied bytes", expected)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX file permission bits")
+@pytest.mark.parametrize(
+    ("original", "expected"),
+    [
+        pytest.param(0o600, 0o400, id="private"),
+        pytest.param(0o660, 0o440, id="group-private"),
+        pytest.param(0o644, 0o444, id="readable"),
+    ],
+)
+def test_set_tree_keeps_existing_read_restrictions(tmp_path: Path, original: int, expected: int) -> None:
+    package: Final[Path] = tmp_path / "package"
+    package.mkdir()
+    image: Final[Path] = package / "image.py"
+    image.write_text("private image", encoding="utf-8")
+    image.chmod(original)
+
+    set_tree(tmp_path, 0o444)
+
+    assert (image.stat().st_mode & 0o777, image.read_text(encoding="utf-8")) == (expected, "private image")
 
 
 @pytest.mark.parametrize("layout", [pytest.param(("entry", ""), id="file"), pytest.param(("", "entry"), id="tree")])
