@@ -35,7 +35,7 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embe
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from importlib.metadata import PackagePath
     from subprocess import CompletedProcess
 
@@ -1131,6 +1131,40 @@ def test_seed_uninstall_reads_quoted_record_paths(
     installer.install(no_seed_session.interpreter.version_info)
 
     assert (installed.exists(), dist_info.exists(), unrelated.read_text(encoding="utf-8")) == (False, False, "keep")
+
+
+def test_seed_uninstall_does_not_look_up_outside_metadata_paths(
+    tmp_path: Path, no_seed_session: Session, mocker: MockerFixture
+) -> None:
+    env_dir = no_seed_session.creator.dest
+    purelib = no_seed_session.creator.purelib
+    dist_info = purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    inside = env_dir / "old.py"
+    inside.write_text("old", encoding="utf-8")
+    outside = tmp_path / "outside.py"
+    outside.write_text("keep", encoding="utf-8")
+    outside_relative = os.path.relpath(outside, purelib)
+    (dist_info / "RECORD").write_text(
+        f"{outside},,\n{outside_relative},,\n{os.path.relpath(inside, purelib)},,\n", encoding="utf-8"
+    )
+    (dist_info / "top_level.txt").write_text(f"{outside}\n{outside_relative}\n", encoding="utf-8")
+    exists = Path.exists
+    glob = Path.glob
+
+    def checked_exists(path: Path) -> bool:
+        assert Path(os.path.abspath(path)) != outside
+        return exists(path)
+
+    def checked_glob(path: Path, pattern: str) -> Iterator[Path]:
+        assert Path(os.path.abspath(path)) != outside.parent / "__pycache__"
+        return glob(path, pattern)
+
+    mocker.patch.object(Path, "exists", checked_exists)
+    mocker.patch.object(Path, "glob", checked_glob)
+    cli_run([str(env_dir), "--no-periodic-update", "--no-setuptools"], setup_logging=False)
+
+    assert (inside.exists(), outside.read_text(encoding="utf-8"), dist_info.exists()) == (False, "keep", False)
 
 
 @pytest.fixture
