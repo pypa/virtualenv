@@ -20,8 +20,10 @@ from functools import partial
 from operator import attrgetter
 from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 from threading import Thread
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
@@ -1007,6 +1009,195 @@ def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None
     cli_run(args)
 
     assert [path.name for path in executables if not os.access(path, os.W_OK)] == []
+
+
+_REQUIRES_SHARED_COPY_CREATOR: Final[pytest.MarkDecorator] = pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 11)
+    or not _CURRENT.sysconfig_vars.get("Py_ENABLE_SHARED")
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX CPython 3.11+ copy creator",
+)
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.parametrize(
+    ("mode", "candidate_lib", "warn"),
+    [(0o777, True, True), (0o1777, False, True), (0o1777, True, False)],
+    indirect=["candidate_lib"],
+)
+def test_copy_warns_for_replaceable_search_directory(
+    creator: str, mode: int, candidate_lib: Path, warn: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    candidate_lib.parent.chmod(mode)
+    dest = candidate_lib.parent / "env"
+
+    cli_run([str(dest), "--creator", creator, "--copies", "--no-seed"], setup_logging=False)
+
+    assert (dest / "pyvenv.cfg").is_file()
+    assert (f"{candidate_lib} (parent mode {mode:o}); use --symlinks" in caplog.text) is warn
+
+
+@pytest.fixture
+def candidate_lib(tmp_path: Path, request: pytest.FixtureRequest) -> Path:
+    lib_dir = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    if request.param:
+        lib_dir.mkdir()
+    return lib_dir
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_writable_sibling_lib(tmp_path: Path, creator: str) -> None:
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    sibling_lib.chmod(0o777)
+
+    with pytest.raises(ValueError, match="standard-library search path"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_unsafe_sibling_before_clear_without_libpython(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
+) -> None:
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    sibling_lib.chmod(0o777)
+    dest = tmp_path / "env"
+    dest.mkdir()
+    marker = dest / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    monkeypatch.setattr(
+        "virtualenv.create.via_global_ref.builtin.cpython.cpython3.CPython3Posix._shared_libpython", lambda _: None
+    )
+
+    with pytest.raises(ValueError, match=rf"{sibling_lib} \(mode 777\); use --symlinks"):
+        cli_run([str(dest), "--creator", creator, "--copies", "--clear", "--no-seed"])
+
+    assert marker.read_text(encoding="utf-8") == "keep"
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_accepts_private_group_writable_sibling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
+) -> None:
+    grp = pytest.importorskip("grp")
+    pwd = pytest.importorskip("pwd")
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    sibling_lib.chmod(0o775)
+    monkeypatch.setattr(
+        grp, "getgrgid", lambda _: SimpleNamespace(gr_name=pwd.getpwuid(os.geteuid()).pw_name, gr_mem=())
+    )
+    monkeypatch.setattr(pwd, "getpwall", lambda: [pwd.getpwuid(os.geteuid())])
+
+    cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+    assert (tmp_path / "env" / "pyvenv.cfg").is_file()
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_shared_group_writable_sibling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
+) -> None:
+    grp = pytest.importorskip("grp")
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    sibling_lib.chmod(0o775)
+    monkeypatch.setattr(grp, "getgrgid", lambda _: SimpleNamespace(gr_name="staff", gr_mem=()))
+    monkeypatch.setattr(pytest.importorskip("pwd"), "getpwall", list)
+
+    with pytest.raises(ValueError, match=rf"{sibling_lib} \(mode 775\); use --symlinks"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_sibling_stdlib_zip(tmp_path: Path, creator: str) -> None:
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    zip_name = next(
+        Path(entry).name for entry in sys.path if entry.endswith(".zip") and Path(entry).name.startswith("python")
+    )
+    landmark = sibling_lib / zip_name
+    landmark.touch(mode=0o600)
+
+    with pytest.raises(ValueError, match=rf"{landmark} \(mode 600\); use --symlinks"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None:
+    lib_dir = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    lib_dir.symlink_to(tmp_path / "future-lib")
+
+    with pytest.raises(ValueError, match=rf"{lib_dir} \(mode {lib_dir.lstat().st_mode & 0o7777:o}\); use --symlinks"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.parametrize("target", ["link", "link/../safe"])
+def test_copy_rejects_replaceable_link_in_sibling_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str, target: str
+) -> None:
+    with TemporaryDirectory() as folder:
+        shared = Path(folder)
+        shared.chmod(0o1777)
+        (shared / "child").mkdir()
+        (shared / "safe").mkdir()
+        link = shared / "link"
+        link.symlink_to(shared / "child")
+        (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(shared / target)
+        original_lstat = Path.lstat
+
+        def attacker_owned_link(path: Path) -> os.stat_result:
+            found = original_lstat(path)
+            if path != link:
+                return found
+            return os.stat_result((*found[:4], os.geteuid() + 1, *found[5:]))
+
+        monkeypatch.setattr(Path, "lstat", attacker_owned_link)
+
+        with pytest.raises(ValueError, match="standard-library search path"):
+            cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@_REQUIRES_SHARED_COPY_CREATOR
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.usefixtures("trusted_sibling_lib")
+def test_copy_keeps_shared_library_with_trusted_sibling(tmp_path: Path, creator: str) -> None:
+    dest = tmp_path / "env"
+    cli_run([str(dest), "--creator", creator, "--copies", "--no-seed"])
+
+    libpython = dest / "lib" / str(_CURRENT.sysconfig_vars["INSTSONAME"])
+    base_prefix = subprocess.check_output(
+        [str(dest / "bin/python"), "-I", "-S", "-c", "import sys; print(sys.base_prefix)"], text=True, encoding="utf-8"
+    ).strip()
+    assert (libpython.is_file(), Path(base_prefix).resolve()) == (True, Path(_CURRENT.system_prefix).resolve())
+
+
+@pytest.fixture(params=["directory", "symlink"])
+def trusted_sibling_lib(tmp_path: Path, request: pytest.FixtureRequest) -> None:
+    sibling = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    if request.param == "symlink":
+        if not fs_supports_symlink():
+            pytest.skip("requires symlinks")
+        trusted = tmp_path / "trusted-lib"
+        trusted.mkdir()
+        sibling.symlink_to(trusted)
+    else:
+        sibling.mkdir()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
