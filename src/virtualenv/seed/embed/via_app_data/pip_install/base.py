@@ -376,6 +376,10 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
     ) -> None:
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         for name in names:
+            # A separator can route the script through a linked directory.
+            if Path(name).name != name or name in {"", ".", ".."}:
+                msg: Final[str] = f"invalid seed wheel script {name!r}"
+                raise RuntimeError(msg)
             path: Final[Path] = Path(self.target_dir) / (f"{name}.exe" if os.name == "nt" else name)
             if path.is_symlink():
                 path.unlink()
