@@ -23,6 +23,77 @@ if TYPE_CHECKING:
 
 
 _BASH: Final[str | None] = shutil.which("bash")
+_GIT_BASH: Final[Path] = Path(os.environ.get("PROGRAMFILES", "")) / "Git/bin/bash.exe"
+
+
+@pytest.mark.skipif(not IS_WIN or not _GIT_BASH.is_file(), reason="requires Git Bash on Windows")
+def test_bash_activation_after_batch_keeps_path(tmp_path: Path) -> None:
+    session = cli_run(["--no-seed", "--no-periodic-update", str(tmp_path / "env")])
+    probe = tmp_path / "probe.sh"
+    probe.write_text(
+        "original=$PATH\n"
+        '[[ "$_OLD_VIRTUAL_PATH" == *";"* ]] || exit 1\n'
+        '. "$(cygpath -u "$1")" || exit 2\n'
+        "command -v uname >/dev/null || exit 3\n"
+        "command -v basename >/dev/null || exit 4\n"
+        "deactivate\n"
+        '[[ "$PATH" == "$original" ]] || exit 5\n',
+        encoding="utf-8",
+    )
+    launcher = tmp_path / "launch.cmd"
+    launcher.write_text(
+        f'@echo off\ncall "{session.creator.bin_dir / "activate.bat"}"\n'
+        f'"{_GIT_BASH}" --norc --noprofile "{probe}" "{session.creator.bin_dir / "activate"}"\n',
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        ["cmd", "/d", "/c", str(launcher)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+    assert (result.returncode, result.stderr) == (0, "")
+
+
+@pytest.mark.parametrize(
+    ("shell", "source"),
+    [
+        pytest.param(
+            "bash", '. "$1"', id="bash", marks=pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires bash")
+        ),
+        pytest.param(
+            "dash",
+            '. "$1"',
+            id="dash",
+            marks=pytest.mark.skipif(IS_WIN or shutil.which("dash") is None, reason="requires dash"),
+        ),
+        pytest.param(
+            _GIT_BASH,
+            '. "$(cygpath -u "$1")"',
+            id="git-bash",
+            marks=pytest.mark.skipif(not IS_WIN or not _GIT_BASH.is_file(), reason="requires Git Bash"),
+        ),
+    ],
+)
+def test_bash_reactivation_restores_path(tmp_path: Path, shell: str | Path, source: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / "env")])
+    result = subprocess.run(
+        [
+            shell,
+            "-c",
+            f'original=$PATH; {source}; {source}; deactivate; [ "$PATH" = "$original" ]',
+            "test",
+            str(session.creator.bin_dir / "activate"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+    assert (result.returncode, result.stderr) == (0, "")
 
 
 @pytest.fixture(params=[pytest.param("C", id="c"), pytest.param("utf8", id="utf8")])
