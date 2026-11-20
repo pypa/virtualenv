@@ -309,6 +309,9 @@ do not control. The variable accepts the standard boolean values: ``1``, ``true`
 fallback; ``0``, ``false``, ``no``, and ``off`` disable it. Values are case-insensitive. This setting is read from the
 environment, not the ini configuration file.
 
+Seed wheel downloads and periodic updates wait up to 60 seconds for PyPI metadata, including redirects. A connection
+that goes idle for 15 seconds times out sooner.
+
 Configuration priority
 ======================
 

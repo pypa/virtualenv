@@ -11,14 +11,17 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from http.client import HTTPException
-from io import StringIO
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from textwrap import dedent, indent
+from threading import Event, Thread
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
+from urllib.request import ProxyHandler, build_opener
 
 import pytest
 
@@ -44,6 +47,8 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from http.client import HTTPResponse
+    from ssl import SSLContext
 
     from pytest_mock import MockerFixture, MockType
 
@@ -653,10 +658,9 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     pypi_release = json.dumps({"releases": releases})
 
     @contextmanager
-    def _release(of, context):
-        assert of == "https://pypi.org/pypi/pip/json"
-        assert context is None
-        yield StringIO(pypi_release)
+    def _release(url: str, *, timeout: int, context: None) -> Generator[BytesIO, None, None]:
+        assert (url, timeout, context) == ("https://pypi.org/pypi/pip/json", 15, None)
+        yield BytesIO(pypi_release.encode())
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release, autospec=True)
 
@@ -761,13 +765,13 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", "1")
 
     @contextmanager
-    def _release(of, context):
-        assert of == "https://pypi.org/pypi/pip/json"
+    def _release(url: str, *, timeout: int, context: SSLContext | None) -> Generator[BytesIO, None, None]:
+        assert (url, timeout) == ("https://pypi.org/pypi/pip/json", 15)
         if context is None:
             msg = "insecure"
             raise URLError(msg)
         assert context
-        yield StringIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}))
+        yield BytesIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}).encode())
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release, autospec=True)
 
@@ -777,6 +781,55 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     assert url_o.call_count == 2
     assert "insecure" in caplog.text
     assert " failed " in caplog.text
+
+
+@pytest.mark.parametrize("stall", ["headers", "redirect-body", "body"])
+def test_pypi_metadata_request_deadline(stall: str, mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+    release, finished = Event(), Event()
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            if stall == "headers":
+                release.wait(5)
+            if self.path == "/redirect" and stall == "redirect-body":
+                self.send_response(302)
+                self.send_header("Location", "/metadata")
+                self.end_headers()
+                release.wait(5)
+                return
+            self.send_response(200)
+            self.end_headers()
+            if stall == "body":
+                release.wait(5)
+            self.wfile.write(b'{"releases":{"20.1":[{"upload_time":"2020-12-22T12:12:12"}]}}')
+
+    with HTTPServer(("127.0.0.1", 0), Handler) as server:
+
+        @contextmanager
+        def local_response(
+            _url: str, *, timeout: int, context: SSLContext | None
+        ) -> Generator[HTTPResponse, None, None]:
+            assert context is None
+            try:
+                with build_opener(ProxyHandler({})).open(
+                    f"http://127.0.0.1:{server.server_port}/redirect", timeout=timeout
+                ) as response:
+                    yield response
+            finally:
+                finished.set()
+
+        mocker.patch("virtualenv.seed.wheels.periodic_update._PYPI_DEADLINE", 0.1)
+        mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=local_response)
+        Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
+        try:
+            assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
+            assert "timed out waiting 0.1 seconds for https://pypi.org/pypi/pip/json" in caplog.text
+        finally:
+            release.set()
+            try:
+                assert finished.wait(5)
+            finally:
+                server.shutdown()
 
 
 @pytest.mark.parametrize(
@@ -804,7 +857,7 @@ def _assert_release_lookup_verifies_certificate(mocker: MockerFixture) -> None:
         "virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=URLError("certificate failure")
     )
     assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
-    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", context=None)]
+    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", timeout=15, context=None)]
 
 
 def test_unset_update_option_keeps_certificate_verification(
@@ -835,7 +888,9 @@ def test_verify_wheel_digest_matches(tmp_path, mocker) -> None:
 
 def _pypi_release_response(mocker, filename, digests, version="20.1"):
     body = json.dumps({"releases": {version: [{"filename": filename, "digests": digests}]}})
-    return mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body), autospec=True)
+    return mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.urlopen", return_value=BytesIO(body.encode()), autospec=True
+    )
 
 
 def test_verify_wheel_digest_mismatch(tmp_path, mocker) -> None:
@@ -885,7 +940,7 @@ def test_verify_wheel_digest_recovers_on_retry(tmp_path, mocker) -> None:
     body = json.dumps({"releases": {"20.1": [{"filename": wheel.name, "digests": {"sha256": "0" * 64}}]}})
     mocker.patch(
         "virtualenv.seed.wheels.periodic_update.urlopen",
-        side_effect=[URLError("offline"), StringIO(body)],
+        side_effect=[URLError("offline"), BytesIO(body.encode())],
         autospec=True,
     )
 

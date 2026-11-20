@@ -295,7 +295,7 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadPro
         }
     }).encode()
 
-    def metadata_response(*_args: str, **_kwargs: SSLContext | None) -> BytesIO:
+    def metadata_response(*_args: str, **_kwargs: SSLContext | int | None) -> BytesIO:
         return BytesIO(metadata)
 
     mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=metadata_response)
