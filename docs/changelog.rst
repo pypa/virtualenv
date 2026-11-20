@@ -6,6 +6,177 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-10:
+
+***********************
+ 21.15.10 (2026-11-20)
+***********************
+
+.. _release-21-15-10-fixed:
+
+Fixed
+-----
+
+- Warn when recreating a POSIX environment with the :mod:`venv` creator leaves files named for the previous interpreter
+  (:pr:`3753`) by :user:`gaborbernat`. (:pr:`3751`)
+- Apply file-creation permissions, including default ACLs, to interpreters copied by the stdlib ``venv`` creator. Shared
+  directories retain their mode unless the copy needs temporary protection. Linux runtimes with default ACL lookup can
+  restore owner execute when the umask alone removes it (:pr:`3710`) by :user:`gaborbernat`.
+- Apply the Python 3.9 distutils path filter when the standard library is loaded from a ZIP archive (:pr:`3707`) by
+  :user:`gaborbernat`.
+- Both POSIX creators check the standard-library search paths of shared CPython 3.11+ builds when using ``--copies``.
+  They reject unsafe library directories and unexpected standard-library zips, and warn when another account could
+  change a search directory after creation. Use ``--symlinks`` or a private parent directory to avoid that risk
+  (:pr:`3721`) by :user:`gaborbernat`.
+- Create missing default app-data cache parents with owner-only permissions, even under a permissive umask (:pr:`3742`)
+  by :user:`gaborbernat`.
+- Do not read default configuration or app-data from unresolved or relative home and XDG paths in the working tree. Use
+  temporary app-data when no absolute default cache path is available; explicit paths still work (:pr:`3742`) by
+  :user:`gaborbernat`.
+- Escape control characters in the destination path in the creation summary (:pr:`3712`) by :user:`gaborbernat`.
+- Keep Bash prompt text literal after a locale change and avoid slow activation with long prompts (:pr:`3725`) by
+  :user:`gaborbernat`.
+- Keep Git Bash command lookup working when Bash activation follows batch activation in ``cmd.exe`` (:pr:`3719`) by
+  :user:`gaborbernat`.
+- Keep Tcl and Tk library path bytes stable when Xonsh sources an activation script under UTF-7 (:pr:`3743`) by
+  :user:`gaborbernat`.
+- Keep Xonsh activation on the created environment when the sourcing session uses a different filesystem codec. For
+  non-ASCII POSIX destinations, the script now records UTF-8 path bytes and decodes them in the sourcing session, so
+  ``VIRTUAL_ENV``, ``PATH``, and ``PKG_CONFIG_PATH`` retain the original path bytes. If the codec cannot represent the
+  new environment, the current environment stays active (:pr:`3743`) by :user:`gaborbernat`.
+- Keep Xonsh activation values intact when UTF-7 source decoding would turn prompt or path text into Python syntax.
+  Recreate existing environments to regenerate their activation scripts (:pr:`3743`) by :user:`gaborbernat`.
+- Keep ``TCL_LIBRARY`` and ``TK_LIBRARY`` from pointing at different directories when the activation script cannot
+  reproduce the interpreter's library path bytes. Non-ASCII paths from the current UTF-8 environment still work
+  (:pr:`3743`) by :user:`gaborbernat`.
+- Keep ``virtualenv.ini`` in the configuration directory when migrating app data to the cache on macOS and Windows
+  (:pr:`3742`) by :user:`gaborbernat`.
+- Keep filtering distutils install paths on Python 3.9 after a configuration file fails to decode (:pr:`3696`) by
+  :user:`gaborbernat`.
+- Keep incomplete zipapp extractions out of the app-data cache so the next run can retry them (:pr:`3735`) by
+  :user:`gaborbernat`.
+- Keep line feeds in pip seeder interpreter paths out of the generated launcher's Python body (:pr:`3699`) by
+  :user:`gaborbernat`.
+- Keep non-ASCII csh activation values byte-exact across shell locale changes. ``tcsh`` could misread quotes after
+  prompt text in Big5-HKSCS or turn a destination character into a ``PATH`` separator after switching to the C locale.
+  BSD csh now displays a single backslash in non-ASCII prompts. Generated ``.csh`` files with non-ASCII values may
+  contain raw bytes rather than valid UTF-8 (:pr:`3687`) by :user:`gaborbernat`.
+- Keep non-ASCII values in Bash activation scripts from changing shell syntax under legacy locales (:pr:`3695`) by
+  :user:`gaborbernat`.
+- Keep selected pip wheel paths intact when they contain a `PYTHONPATH` separator (:pr:`3716`) by :user:`gaborbernat`.
+- Keep the first configured import path in the target debug report (``-vv`` and ``Creator.debug``) when the interpreter
+  uses ``PYTHONSAFEPATH`` or an isolated ``._pth`` file (:pr:`3748`) by :user:`gaborbernat`.
+- Keep the pip seeder on its selected wheel regardless of `PIP_*` settings or pip configuration. The seed install
+  ignores `PIP_*`; later pip commands still use them (:pr:`3728`) by :user:`gaborbernat`.
+- Keep the read-only attribute of surviving Windows hard links when replacing or clearing an environment. On filesystems
+  that reject attribute-preserving deletion, refuse to remove a read-only hard link. Restore Windows support for PyPy
+  3.9, where importing the directory junction tag from :mod:`stat` failed (:pr:`3691`) by :user:`gaborbernat`.
+- Limit pip-seeder launcher and RECORD rewrites to wheels selected for the current seed run (:pr:`3699`) by
+  :user:`gaborbernat`.
+- Make ``virtualenv --upgrade-embed-wheels`` exit with status ``1`` and log one ``could not upgrade`` error per
+  distribution when an upgrade fails, instead of printing a thread traceback for each and exiting with ``0``
+  (:pr:`3747`) by :user:`gaborbernat`.
+- Make existing default app-data cache roots owner-only on POSIX. Setgid roots keep their group permissions but lose
+  other access. Restore those modes after ``--reset-app-data``. Skip default caches owned by another non-root user,
+  including during migration and in read-only mode. An explicit ``--app-data`` path keeps its own ownership policy
+  (:pr:`3742`) by :user:`gaborbernat`.
+- Make seeded pip launchers use the environment's filesystem path bytes in legacy POSIX locales. Both seeders now use a
+  shell wrapper when that path differs from its UTF-8 spelling. Launchers created by later pip installs are unaffected
+  (:pr:`3699`) by :user:`gaborbernat`.
+- Make the xonsh activator put back the user's own ``pydoc`` alias on ``deactivate``, also after switching between
+  environments, instead of removing it (:pr:`3750`) by :user:`gaborbernat`.
+- On Ctrl+C, cancel queued seed work and let running workers finish before removing temporary app-data. Press Ctrl+C
+  again to exit the CLI immediately. Rerun creation to finish an interrupted environment (:pr:`3699`) by
+  :user:`gaborbernat`.
+- On POSIX, the builtin creator honors the destination directory's default ACL when copying interpreters and aliases.
+  Without a default ACL the umask controls group and other access. If the copy lacks owner execute permission,
+  virtualenv restores it when the runtime can verify that the directory has no default ACL. Otherwise creation fails
+  with a hint to use ``--symlinks`` (:pr:`3702`) by :user:`gaborbernat`.
+- On Python 3.9, ignore distutils configuration that redirects packages, headers, scripts, data or ``.egg-info``
+  metadata outside the virtual environment (:pr:`3696`) by :user:`gaborbernat`.
+- Preserve custom ``histchars`` when sourcing ``activate.csh``. The script now reads its generated literals with the
+  default history character, so a custom setting cannot reinterpret a prompt or path as shell syntax (:pr:`3687`) by
+  :user:`gaborbernat`.
+- Preserve literal exclamation marks and carets in inherited values when Windows batch activation saves and restores
+  ``PATH``, ``PROMPT``, ``PYTHONHOME``, the Tcl and Tk library paths, and ``PKG_CONFIG_PATH``. Quoted path entries
+  retain their punctuation with delayed expansion on or off (:pr:`3731`) by :user:`gaborbernat`.
+- Preserve non-ASCII Tcl and Tk library path bytes when Xonsh activates an environment under a different locale. Retain
+  Unicode library paths on Windows, and keep Tk paths derived from a verified Tcl source when ``TK_LIBRARY`` is unset
+  (:pr:`3743`) by :user:`gaborbernat`.
+- Prevent early imports from the invoking directory in virtualenv's child Python processes (:pr:`3716`) by
+  :user:`gaborbernat`.
+- Protect missing nested cache migration parents and fall back when a Windows cache drive is unavailable (:pr:`3742`) by
+  :user:`gaborbernat`.
+- Reject PowerShell activation paths containing the PATH separator before changing the shell environment (:pr:`3711`) by
+  :user:`gaborbernat`.
+- Reject a CPython 3.11+ configuration of 32 KiB or more before writing it because the interpreter cannot start with it
+  (:pr:`3740`) by :user:`gaborbernat`.
+- Reject seed-wheel console script names that escape the script directory before unlinking a matching symlink.
+  :issue:`3630` (:pr:`3733`) by :user:`gaborbernat`.
+- Reject selected interpreter paths that ``pyvenv.cfg`` cannot record without changing their location, before modifying
+  an existing environment (:pr:`3740`) by :user:`gaborbernat`.
+- Reject shell PATH options in environment paths before creation or activation, including moved environments
+  (:pr:`3734`) by :user:`gaborbernat`.
+- Replace a linked include directory before the stdlib creator writes to a reused environment (:pr:`3730`) by
+  :user:`gaborbernat`.
+- Replace an existing copied POSIX interpreter when the standard library creator reuses an environment (:pr:`3692`) by
+  :user:`gaborbernat`.
+- Report failed Windows short-path lookups and remove the seed staging directory when one fails (:pr:`3697`) by
+  :user:`gaborbernat`.
+- Resolve directory symlinks before parent components when the zipapp opens its own archive (:pr:`3718`) by
+  :user:`gaborbernat`.
+- Resolve imports in environment ``.pth`` files against the environment before the host paths when using
+  ``activate_this.py``, while keeping the standard library ahead of site-packages during those imports (:pr:`3727`) by
+  :user:`gaborbernat`.
+- Run periodic wheel updates when an app-data path contains non-ASCII characters and quotes under a GB18030 locale with
+  Python UTF-8 mode enabled in the parent process. :issue:`3639` (:pr:`3716`) by :user:`gaborbernat`.
+- Skip an ``--extra-search-dir`` entry that is a file, such as a wheel, the same way a missing path is skipped. Seeding
+  used to fail with ``NotADirectoryError``, reported as a failure to download wheels (:pr:`3737`) by
+  :user:`gaborbernat`.
+- Skip empty configured search directory entries instead of searching the current working directory. Reject an empty
+  ``--extra-search-dir`` command-line value. Empty ``--python`` and ``--try-first-with`` items from environment
+  variables or the config file are skipped too, so they no longer select the running interpreter (:pr:`3737`) by
+  :user:`gaborbernat`.
+- Skip filesystem lookups outside the environment when a previous seeded distribution lists an outside path in its
+  metadata (:pr:`3699`) by :user:`gaborbernat`.
+- Skip non-regular ``RECORD`` and ``top_level.txt`` files when replacing seed packages in an existing environment
+  (:pr:`3699`) by :user:`gaborbernat`.
+- Stop a missing option value, such as ``virtualenv env -p``, from printing a usage line that lists only a few options,
+  including the deprecated ``--wheel``. The error message is now printed on its own (:pr:`3749`) by :user:`gaborbernat`.
+- Stop the pip seeder's child process before removing its temporary wheel directory when environment creation is
+  interrupted (:pr:`3728`) by :user:`gaborbernat`.
+- Under `--seeder pip`, unreadable package directories now fail and outside hard-linked files remain unchanged
+  (:pr:`3728`) by :user:`gaborbernat`.
+- Use the checked metadata path when replacing seed packages. Install packages one at a time within each seeder process
+  so its own workers cannot redirect each other's cleanup (:pr:`3699`) by :user:`gaborbernat`.
+- Use the environment's Python for Windows ``pydoc.bat`` when the batch file is called by path without activation, even
+  if another Python is first on ``PATH``. The launcher preserves literal ``!`` characters in its own directory name when
+  delayed expansion is enabled (:pr:`3732`) by :user:`gaborbernat`.
+- Wait at most 60 seconds for PyPI metadata during seed wheel downloads and periodic updates, including redirects. Each
+  socket operation has a 15-second timeout (:pr:`3705`) by :user:`gaborbernat`.
+- With ``--creator venv``, install only the selected activation scripts. Remove stale standard-library activators when
+  reusing an environment (:pr:`3744`) by :user:`gaborbernat`.
+- Wrap seeded scripts when interpreter paths contain shell quoting syntax so xonsh runs the environment's Python
+  (:pr:`3699`) by :user:`gaborbernat`.
+
+.. _release-21-15-10-security:
+
+Security
+--------
+
+- Close a legacy default app-data cache before moving it out of a private parent, including when migration copies across
+  filesystems. Keep caches marked for setgid group sharing accessible to that group (:pr:`3742`) by :user:`gaborbernat`.
+- Keep private seed-wheel files unreadable to other users when ``--symlink-app-data`` makes a cached image read-only
+  (:pr:`3697`) by :user:`gaborbernat`.
+
+.. _release-21-15-10-performance:
+
+Performance
+-----------
+
+- Reseeding an environment after pip has replaced itself spends less time finding empty package directories (:pr:`3726`)
+  by :user:`gaborbernat`.
+
 .. _release-21-15-9:
 
 **********************
