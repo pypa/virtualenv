@@ -14,7 +14,7 @@ import fnmatch
 import os
 from operator import methodcaller as method
 from pathlib import Path
-from stat import S_IWGRP, S_IWOTH
+from stat import S_ISLNK, S_ISVTX, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import Python3Supports
@@ -109,19 +109,60 @@ class CPython3Posix(CPythonPosix, CPython3):
 
     @staticmethod
     def _check_candidate_stdlib(lib_dir: Path, zip_name: str) -> None:
-        if lib_dir.is_symlink() and not lib_dir.is_dir():
-            msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
-            raise ValueError(msg)
-        if not lib_dir.is_dir():
+        resolved = CPython3Posix._resolve_candidate_lib(lib_dir)
+        if not resolved.is_dir():
+            if lib_dir.is_symlink():
+                msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
+                raise ValueError(msg)
             return
-        for path in (lib_dir.resolve(), *lib_dir.resolve().parents) if lib_dir.is_symlink() else (lib_dir,):
-            path_stat = path.stat()
-            if path_stat.st_uid not in {os.geteuid(), 0} or path_stat.st_mode & (S_IWGRP | S_IWOTH):
+        for depth, path in enumerate((resolved, *resolved.parents) if resolved != lib_dir else (lib_dir,)):
+            path_stat = path.lstat()
+            if path_stat.st_uid not in {os.geteuid(), 0} or (
+                path_stat.st_mode & (S_IWGRP | S_IWOTH) and (depth == 0 or not path_stat.st_mode & S_ISVTX)
+            ):
                 msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
                 raise ValueError(msg)
         zip_path = lib_dir / zip_name
         if zip_path.is_file() or zip_path.is_symlink():
             msg = f"copied Python library has an unsafe standard-library search path: {zip_path}"
+            raise ValueError(msg)
+
+    @staticmethod
+    def _resolve_candidate_lib(lib_dir: Path) -> Path:
+        candidate = lib_dir
+        seen: set[Path] = set()
+        while True:
+            for path in reversed((candidate, *candidate.parents)):
+                try:
+                    path_stat = path.lstat()
+                except FileNotFoundError:
+                    return candidate
+                if not S_ISLNK(path_stat.st_mode):
+                    continue
+                if path in seen:
+                    msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
+                    raise ValueError(msg)
+                seen.add(path)
+                CPython3Posix._check_replaceable_link(path, path_stat)
+                target = path.readlink()
+                candidate = Path(
+                    os.path.abspath(
+                        (target if target.is_absolute() else path.parent / target) / candidate.relative_to(path)
+                    )
+                )
+                break
+            else:
+                return candidate
+
+    @staticmethod
+    def _check_replaceable_link(path: Path, link_stat: os.stat_result) -> None:
+        parent_stat = path.parent.stat()
+        # In a sticky shared directory, the symlink owner can replace its entry after this check.
+        if parent_stat.st_uid not in {os.geteuid(), 0} or (
+            parent_stat.st_mode & (S_IWGRP | S_IWOTH)
+            and (not parent_stat.st_mode & S_ISVTX or link_stat.st_uid not in {os.geteuid(), 0})
+        ):
+            msg = f"copied Python library has an unsafe standard-library search path: {path}"
             raise ValueError(msg)
 
     def install_venv_shared_libs(self, venv_creator: Venv) -> None:

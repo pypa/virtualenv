@@ -12,6 +12,7 @@ import stat
 import subprocess
 import sys
 import sysconfig
+import tempfile
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
@@ -1062,12 +1063,46 @@ def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None
     or sys.version_info < (3, 14)
     or is_macos_brew(_CURRENT)
     or is_mac_os_framework(_CURRENT)
+    or not fs_supports_symlink(),
+    reason="requires a POSIX CPython 3.14+ copy creator with symlinks",
+)
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_replaceable_link_in_sibling_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
+) -> None:
+    with tempfile.TemporaryDirectory() as folder:
+        shared = Path(folder)
+        shared.chmod(0o1770)
+        link = shared / "link"
+        link.symlink_to(Path("/usr/lib"))
+        (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(link)
+        original_lstat = Path.lstat
+
+        def attacker_owned_link(path: Path) -> os.stat_result:
+            found = original_lstat(path)
+            if path != link:
+                return found
+            return os.stat_result((*found[:4], os.geteuid() + 1, *found[5:]))
+
+        monkeypatch.setattr(Path, "lstat", attacker_owned_link)
+
+        with pytest.raises(ValueError, match="standard-library search path"):
+            cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 14)
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT)
     or not _CURRENT.sysconfig_vars.get("Py_ENABLE_SHARED"),
     reason="requires a shared-library POSIX CPython 3.14+ copy creator",
 )
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.usefixtures("trusted_sibling_lib")
 def test_copy_keeps_shared_library_with_trusted_sibling(tmp_path: Path, creator: str) -> None:
-    (tmp_path / Path(_CURRENT.system_stdlib).parent.name).mkdir()
     dest = tmp_path / "env"
     cli_run([str(dest), "--creator", creator, "--copies", "--no-seed"])
 
@@ -1076,6 +1111,19 @@ def test_copy_keeps_shared_library_with_trusted_sibling(tmp_path: Path, creator:
         [str(dest / "bin/python"), "-I", "-S", "-c", "import sys; print(sys.base_prefix)"], text=True, encoding="utf-8"
     ).strip()
     assert (libpython.is_file(), Path(base_prefix).resolve()) == (True, Path(_CURRENT.system_prefix).resolve())
+
+
+@pytest.fixture(params=["directory", "symlink"])
+def trusted_sibling_lib(tmp_path: Path, request: pytest.FixtureRequest) -> None:
+    sibling = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    if request.param == "symlink":
+        if not fs_supports_symlink():
+            pytest.skip("requires symlinks")
+        trusted = tmp_path / "trusted-lib"
+        trusted.mkdir()
+        sibling.symlink_to(trusted)
+    else:
+        sibling.mkdir()
 
 
 @pytest.mark.skipif(
