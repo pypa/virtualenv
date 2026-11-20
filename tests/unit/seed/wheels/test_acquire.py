@@ -48,15 +48,14 @@ def test_pip_wheel_env_run_uses_pip_for_target_version(session_app_data, for_py_
     )
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX path separator")
-def test_pip_helper_keeps_wheel_path_with_colon(tmp_path: Path) -> None:
+def test_pip_helper_keeps_wheel_path_with_separator(tmp_path: Path) -> None:
     prefix = tmp_path / "date"
     prefix.mkdir()
     marker = tmp_path / "sitecustomize-ran"
     (prefix / "sitecustomize.py").write_text(
         f"from pathlib import Path\nPath({str(marker)!r}).write_text('ran')\n", encoding="utf-8"
     )
-    search_dir = tmp_path / "date:time" / "wheels"
+    search_dir = tmp_path / f"date{os.pathsep}time" / "wheels"
     search_dir.mkdir(parents=True)
     wheel = search_dir / "pip-99.0-py3-none-any.whl"
     embedded = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}")
