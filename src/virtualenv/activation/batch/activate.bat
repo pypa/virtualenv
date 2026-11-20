@@ -16,50 +16,42 @@
     @for %%d in ("%VIRTUAL_ENV%") do @set "VIRTUAL_ENV_PROMPT=%%~nxd"
 )
 
-@REM cmd expands a block before running it, so default an undefined PROMPT before the block saves it
 @if not defined PROMPT @set "PROMPT=$P$G"
-@if defined _OLD_VIRTUAL_PROMPT (
-    @set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
-) else (
-    @if not defined VIRTUAL_ENV_DISABLE_PROMPT (
-        @set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
-    )
-)
+@if defined _OLD_VIRTUAL_PROMPT @call :assign PROMPT _OLD_VIRTUAL_PROMPT
 @if not defined VIRTUAL_ENV_DISABLE_PROMPT (
-    @set "PROMPT=(%VIRTUAL_ENV_PROMPT:$=$$%) %PROMPT%"
+    @call :assign _OLD_VIRTUAL_PROMPT PROMPT
+    @set "PROMPT=(%VIRTUAL_ENV_PROMPT:$=$$%) "
+    @call :assign PROMPT PROMPT _OLD_VIRTUAL_PROMPT
 )
 
-@REM Don't use () to avoid problems with them in %PATH%
-@if defined _OLD_VIRTUAL_PYTHONHOME @goto ENDIFVHOME
-    @set "_OLD_VIRTUAL_PYTHONHOME=%PYTHONHOME%"
-:ENDIFVHOME
-
+@if not defined _OLD_VIRTUAL_PYTHONHOME @call :assign _OLD_VIRTUAL_PYTHONHOME PYTHONHOME
 @set PYTHONHOME=
 
-@if defined TCL_LIBRARY @set "_OLD_VIRTUAL_TCL_LIBRARY=%TCL_LIBRARY%"
+@if defined TCL_LIBRARY @call :assign _OLD_VIRTUAL_TCL_LIBRARY TCL_LIBRARY
 @if NOT "__TCL_LIBRARY__"=="" @set "TCL_LIBRARY=__TCL_LIBRARY__"
 
-@if defined TK_LIBRARY @set "_OLD_VIRTUAL_TK_LIBRARY=%TK_LIBRARY%"
+@if defined TK_LIBRARY @call :assign _OLD_VIRTUAL_TK_LIBRARY TK_LIBRARY
 @if NOT "__TK_LIBRARY__"=="" @set "TK_LIBRARY=__TK_LIBRARY__"
 
-@if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"
-@if defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;%PKG_CONFIG_PATH%"
-@if not defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig"
+@if defined PKG_CONFIG_PATH (
+    @call :assign _OLD_PKG_CONFIG_PATH PKG_CONFIG_PATH
+    @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;"
+    @call :assign PKG_CONFIG_PATH PKG_CONFIG_PATH _OLD_PKG_CONFIG_PATH
+) else (
+    @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig"
+)
 
-@REM if defined _OLD_VIRTUAL_PATH (
-@if not defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH1
-    @set "PATH=%_OLD_VIRTUAL_PATH%"
-:ENDIFVPATH1
-@REM ) else (
-@if defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH2
-    @set "_OLD_VIRTUAL_PATH=%PATH%"
-    @REM An undefined PATH leaves _OLD_VIRTUAL_PATH undefined too, so record it for deactivate.bat
+@if not defined _OLD_VIRTUAL_PATH (
+    @call :assign _OLD_VIRTUAL_PATH PATH
     @if not defined PATH @set _OLD_VIRTUAL_PATH_UNSET=1
-:ENDIFVPATH2
-
-@set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
+)
+@set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;"
+@call :assign PATH PATH _OLD_VIRTUAL_PATH
 
 @if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" %_OLD_CODEPAGE% > nul
     @set _OLD_CODEPAGE=
 )
+@exit /b
+
+__BATCH_ASSIGN__
