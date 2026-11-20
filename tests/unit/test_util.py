@@ -850,7 +850,7 @@ def test_cache_migration_linked_missing_parent_private(tmp_path: Path, mocker: M
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
-def test_cache_migration_shared_parent_keeps_umask(tmp_path: Path, mocker: MockerFixture) -> None:
+def test_cache_migration_shared_parent_preserves_group(tmp_path: Path, mocker: MockerFixture) -> None:
     old_dir: Final[Path] = tmp_path / "old"
     old_dir.mkdir()
     old_dir.chmod(0o2775)
@@ -865,7 +865,7 @@ def test_cache_migration_shared_parent_keeps_umask(tmp_path: Path, mocker: Mocke
         os.umask(previous)
     assert (parent.stat().st_mode & 0o777, new_dir.stat().st_mode & 0o7777, str(data)) == (
         0o775,
-        0o2775,
+        0o2770,
         str(new_dir),
     )
 
@@ -1342,6 +1342,31 @@ def test_linked_cache_migration_closes_existing_target(tmp_path: Path, mocker: M
         (new_dir / "wheel.txt").read_text(encoding="utf-8"),
         (target / "virtualenv.ini").read_text(encoding="utf-8"),
     ) == (0o700, "cached", "[virtualenv]\n")
+
+
+@pytest.mark.skipif(os.name != "posix" or not fs_supports_symlink(), reason="POSIX symlinks and modes")
+def test_linked_cache_migration_keeps_safe_shared_target(tmp_path: Path, mocker: MockerFixture) -> None:
+    target = tmp_path / "target"
+    target.mkdir()
+    (target / "virtualenv.ini").touch()
+    (target / "wheel.txt").write_text("cached", encoding="utf-8")
+    old_dir = tmp_path / "data"
+    old_dir.symlink_to(target, target_is_directory=True)
+    new_dir = tmp_path / "cache"
+    new_dir.mkdir()
+    new_dir.chmod(0o2770)
+    (new_dir / ".virtualenv-migration-incomplete").touch()
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    chmod = mocker.patch("virtualenv.app_data.cache_migration.os.chmod", autospec=True, wraps=os.chmod)
+
+    make_app_data(None, read_only=False, env={})
+
+    assert (new_dir.stat().st_mode & 0o7777, (new_dir / "wheel.txt").read_text(encoding="utf-8")) == (
+        0o2770,
+        "cached",
+    )
+    assert all(call.args[0] != str(new_dir) for call in chmod.call_args_list)
 
 
 @pytest.mark.parametrize(

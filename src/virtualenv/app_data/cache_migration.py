@@ -84,6 +84,15 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
         return True
 
 
+def _prepare_linked_cache(old_dir: str, new_dir: str) -> None:
+    _prepare_cache_parent(old_dir, new_dir)
+    os.makedirs(new_dir, mode=0o700, exist_ok=True)
+    if os.name == "posix":
+        info = os.stat(new_dir)
+        if (mode := _migrated_cache_mode(info)) != stat.S_IMODE(info.st_mode):
+            os.chmod(new_dir, mode)
+
+
 def _prepare_cache_parent(old_dir: str, new_dir: str) -> None:
     if not os.stat(old_dir).st_mode & stat.S_ISGID:
         make_private_dirs(os.path.dirname(new_dir))
@@ -115,13 +124,6 @@ def _missing_dirs(folder: str) -> list[str]:
             raise FileNotFoundError(path)
         path = parent
     return missing[::-1]
-
-
-def _prepare_linked_cache(old_dir: str, new_dir: str) -> None:
-    _prepare_cache_parent(old_dir, new_dir)
-    os.makedirs(new_dir, mode=0o700, exist_ok=True)
-    if os.name == "posix":
-        os.chmod(new_dir, _migrated_cache_mode(os.stat(new_dir)))
 
 
 def _migrated_cache_mode(info: os.stat_result) -> int:
