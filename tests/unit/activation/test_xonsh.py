@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 from argparse import Namespace
 from ast import literal_eval
 from shutil import which
@@ -90,30 +91,19 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "expected_lines"),
+    ("tcl_lib", "tk_lib"),
     [
-        pytest.param(
-            "/path/to/tcl",
-            "/path/to/tk",
-            ["self.embedded_tcl_library = '/path/to/tcl'", "self.embedded_tk_library = '/path/to/tk'"],
-            id="present",
-        ),
-        pytest.param(
-            None,
-            None,
-            ["self.embedded_tcl_library = ''", "self.embedded_tk_library = ''"],
-            id="missing",
-        ),
+        pytest.param("/path/to/tcl", "/path/to/tk", id="present"),
+        pytest.param(None, None, id="missing"),
         pytest.param(
             "C:/andré/tcl",
             "C:/andré/tk",
-            ["self.embedded_tcl_library = 'C:/andr\\xe9/tcl'", "self.embedded_tk_library = 'C:/andr\\xe9/tk'"],
             id="windows-unicode",
             marks=pytest.mark.skipif(not IS_WIN, reason="requires Windows path encoding"),
         ),
     ],
 )
-def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, expected_lines) -> None:
+def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib) -> None:
     # GIVEN
     interpreter = mocker.create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
 
@@ -137,21 +127,54 @@ def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, expected_li
     assert '"TCL_LIBRARY"' in content
     assert '"TK_LIBRARY"' in content
 
-    # Paths are embedded in __init__ as Python string literals; empty strings are falsy, so the override loop is skipped
-    assert [line for line in expected_lines if line not in content] == []
+    assignments = "\n".join(
+        line.strip()
+        for line in content.splitlines()
+        if line.strip().startswith(("self.embedded_tcl_library = ", "self.embedded_tk_library = "))
+    )
+    code = (
+        "import json\nfrom types import SimpleNamespace\nself = SimpleNamespace()\n"
+        f"{assignments}\n"
+        "print(json.dumps((self.embedded_tcl_library, self.embedded_tk_library)))"
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, encoding="utf-8", check=True)
+    assert json.loads(result.stdout) == [tcl_lib or "", tk_lib or ""]
 
 
 @pytest.mark.parametrize(
     "value",
     [
         pytest.param("hello", id="plain"),
-        pytest.param("it's", id="apostrophe"),
         pytest.param("", id="empty"),
-        pytest.param("中'\\name", id="unicode-and-quotes"),
     ],
 )
 def test_xonsh_quote(value: str) -> None:
     assert literal_eval(XonshActivator.quote(value).encode("ascii").decode("gbk")) == value
+
+
+@_NEEDS_XONSH
+@pytest.mark.parametrize(
+    "case",
+    [
+        pytest.param(("it's", "env", "gbk", ""), id="apostrophe-gbk"),
+        pytest.param(("中'\\name", "env", "gbk", ""), id="unicode-and-quotes-gbk"),
+        pytest.param(("prefix+ACc-suffix", "env", "utf-7", ""), id="encoded-quote-utf7"),
+        pytest.param(("café", "env", "utf-7", ""), id="unicode-utf7"),
+        pytest.param(("label", "env+ACc-tail", "utf-7", ""), id="encoded-quote-destination"),
+        pytest.param(("it's", "env", "utf-7", "chr = 'shadow'\nmap = 'shadow'\n"), id="shadowed-builtins"),
+    ],
+)
+def test_xonsh_keeps_prompt_with_source_encoding(
+    tmp_path: Path, xonsh: _Xonsh, case: tuple[str, str, str, str]
+) -> None:
+    prompt, name, encoding, prelude = case
+    session: Final[Session] = cli_run([str(tmp_path / name), "--no-seed", "--activators", "xonsh", "--prompt", prompt])
+    activate: Final[Path] = session.creator.bin_dir / "activate.xsh"
+    assert xonsh(
+        f"{prelude}source @({str(activate)!a})\nprint($VIRTUAL_ENV.encode('utf-8').hex())\n"
+        'print($VIRTUAL_ENV_PROMPT.encode("utf-8").hex())',
+        XONSH_ENCODING=encoding,
+    ) == (f"{str(session.creator.dest).encode('utf-8').hex()}\n{prompt.encode('utf-8').hex()}\n")
 
 
 @_NEEDS_XONSH
@@ -178,6 +201,9 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
 
         def activate_call(self, script):
             return f"source {self.quote(str(script))}"
+
+        def quote(self, string):
+            return f"@({self.of_class.quote(string)})"
 
     activation_tester(Xonsh)
 
