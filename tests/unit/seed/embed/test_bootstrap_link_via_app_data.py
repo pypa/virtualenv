@@ -27,7 +27,7 @@ from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[im
 from virtualenv.app_data import ReadOnlyAppData
 from virtualenv.info import IS_GRAALPY, IS_PYPY, fs_supports_symlink
 from virtualenv.run import cli_run
-from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall, shell_shebang
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
@@ -1424,3 +1424,18 @@ def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_she
         f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
         str(len(content)),
     ]
+
+
+@pytest.mark.skipif(os.name != "posix" or sys.platform == "darwin", reason="requires raw POSIX filename bytes")
+def test_shell_launcher_runs_interpreter_with_non_utf8_path(tmp_path: Path) -> None:
+    interpreter: Final[Path] = Path(os.fsdecode(os.fsencode(tmp_path) + b"/\xff/python"))
+    interpreter.parent.mkdir()
+    interpreter.write_bytes(b"#!/bin/sh\nprintf '%s\\n' \"$0\"\n")
+    interpreter.chmod(0o755)
+    header: Final[bytes] = shell_shebang(str(interpreter))
+    launcher: Final[Path] = tmp_path / "launcher"
+    launcher.write_bytes(header)
+    launcher.chmod(0o755)
+    result: Final[CompletedProcess[bytes]] = run([launcher], capture_output=True, check=True)
+    assert (header.isascii(), result.stdout) == (True, os.fsencode(interpreter) + b"\n")
+    compile(header + b"pass\n", str(launcher), "exec")

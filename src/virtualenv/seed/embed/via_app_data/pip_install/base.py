@@ -375,7 +375,7 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
 
     def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
         shebang: Final[bytes] = super()._build_shebang(executable, post_interp)
-        if os.name != "posix" or len(shebang.split()) == 1:
+        if os.name != "posix" or (len(shebang.split()) == 1 and encodes_as_utf8(self._raw_executable)):
             return shebang
         return shell_shebang(self._raw_executable, post_interp)
 
@@ -390,6 +390,20 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 
+def encodes_as_utf8(path: str) -> bool:
+    """Check whether a path has the same filesystem and UTF-8 bytes.
+
+    :param path: the path to compare
+
+    :returns: whether its filesystem bytes equal its UTF-8 bytes
+
+    """
+    try:
+        return os.fsencode(path) == path.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+
+
 def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     # The exec line is read by both sh and Python; double-quoted backslashes survive both readers.
     """Build a shebang that runs the executable through ``sh`` and then Python.
@@ -400,12 +414,18 @@ def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     :returns: the shebang and the wrapper lines, as bytes
 
     """
-    quoted: Final[str] = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
-    return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
+    if encodes_as_utf8(executable):
+        quoted = shlex.quote(executable).replace("\\", "'\"\\\\\"'").encode("utf-8")
+    else:
+        # The shell must use filesystem bytes while Python reads this header as UTF-8.
+        escaped: Final[bytes] = b"".join(f"\\{byte:03o}".encode("ascii") for byte in os.fsencode(executable))
+        quoted = b"\"$(printf '" + escaped + b"')\""
+    return b"#!/bin/sh\n'''exec' " + quoted + post_interp + b' "$0" "$@"\n' + b"' '''\n"
 
 
 __all__ = [
     "EntryPointConfig",
     "PipInstall",
+    "encodes_as_utf8",
     "shell_shebang",
 ]
