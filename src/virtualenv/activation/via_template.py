@@ -139,9 +139,20 @@ class ViaTemplateActivator(Activator, ABC):
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
             "__PATH_SEP__": os.pathsep,
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
+            "__TCL_LIBRARY__": self._library_path(creator, "tcl_lib", b"TCL_LIBRARY"),
+            "__TK_LIBRARY__": self._library_path(creator, "tk_lib", b"TK_LIBRARY"),
         }
+
+    @staticmethod
+    def _library_path(creator: Creator, attribute: str, environment_name: bytes) -> str:
+        path = getattr(creator.interpreter, attribute, None) or ""
+        if os.name == "nt" or path.isascii():
+            return path
+        # Tcl may decode the raw environment path with a different codec than the activation script uses.
+        try:
+            return path if os.environb.get(environment_name) == path.encode("utf-8") else ""
+        except UnicodeEncodeError:
+            return ""
 
     @abstractmethod
     def templates(self) -> Iterator[str]:
