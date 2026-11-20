@@ -254,6 +254,78 @@ def test_seed_metadata_keeps_reseeding_supported(
     )
 
 
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX FIFOs")
+@pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
+def test_seed_metadata_skips_fifo(no_seed_session: Session, tmp_path: Path, metadata_file: str) -> None:
+    dist_info: Final[Path] = no_seed_session.creator.purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    os.mkfifo(dist_info / metadata_file)
+    result = run(
+        [
+            sys.executable,
+            "-m",
+            "virtualenv",
+            str(no_seed_session.creator.dest),
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+            "--no-setuptools",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert (
+        result.returncode,
+        "not a regular file" in result.stdout,
+        dist_info.exists(),
+        (no_seed_session.creator.purelib / "pip" / "__init__.py").is_file(),
+    ) == (0, True, False, True)
+
+
+@pytest.mark.skipif(os.name == "nt" or not fs_supports_symlink(), reason="requires POSIX device links")
+@pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
+def test_seed_metadata_skips_device(
+    no_seed_session: Session, tmp_path: Path, caplog: pytest.LogCaptureFixture, metadata_file: str
+) -> None:
+    dist_info: Final[Path] = no_seed_session.creator.purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    (dist_info / metadata_file).symlink_to(os.devnull)
+    cli_run(
+        [str(no_seed_session.creator.dest), "--app-data", str(tmp_path / "cache"), "--no-periodic-update"],
+        setup_logging=False,
+    )
+    assert (
+        "not a regular file" in caplog.text,
+        dist_info.exists(),
+        (no_seed_session.creator.purelib / "pip" / "__init__.py").is_file(),
+    ) == (True, False, True)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize(
+    ("metadata_file", "content"),
+    [
+        pytest.param("top_level.txt", "stale.py\n", id="top-level"),
+        pytest.param("RECORD", "stale.py,,\n", id="record"),
+    ],
+)
+def test_seed_metadata_reads_linked_file(
+    no_seed_session: Session, tmp_path: Path, metadata_file: str, content: str
+) -> None:
+    purelib: Final[Path] = no_seed_session.creator.purelib
+    dist_info: Final[Path] = purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    stale: Final[Path] = purelib / "stale.py"
+    stale.write_text("old", encoding="utf-8")
+    target: Final[Path] = tmp_path / "metadata.txt"
+    target.write_text(content, encoding="utf-8")
+    (dist_info / metadata_file).symlink_to(target)
+    cli_run([str(no_seed_session.creator.dest), "--no-periodic-update"], setup_logging=False)
+    assert (stale.exists(), target.read_text(encoding="utf-8"), dist_info.exists()) == (False, content, False)
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_seed_metadata_keeps_empty_folder_behind_symlink(tmp_path: Path) -> None:
     args: Final[list[str]] = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
