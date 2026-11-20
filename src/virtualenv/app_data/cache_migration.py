@@ -94,6 +94,7 @@ def make_private_dirs(folder: str) -> None:
     """Create missing path components with owner-only permissions.
 
     :param folder: target directory, including any missing parents
+
     :raises NotADirectoryError: if a missing component becomes a file during creation
 
     """
