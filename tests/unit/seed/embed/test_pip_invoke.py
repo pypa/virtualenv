@@ -22,6 +22,7 @@ from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from types import FrameType
 
     from pytest_mock import MockerFixture, MockType
 
@@ -325,6 +326,54 @@ def _interrupt_pip_seed_twice(tmp_path: Path, mocker: MockerFixture) -> dict[str
             "folder_exists": folder is not None and folder.exists(),
         }
     finally:
+        if child is not None and child.poll() is None:
+            subprocess.Popen.kill(child)
+            child.wait()
+
+
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython" or os.name == "nt", reason="requires CPython POSIX signal tracing"
+)
+def test_pip_sigint_during_cleanup_entry_reaps_child(tmp_path: Path, mocker: MockerFixture) -> None:
+    assert _interrupt_pip_seed_at_cleanup_entry(tmp_path, mocker) == {
+        "signals": 1,
+        "child_exited": True,
+        "folder_exists": False,
+    }
+
+
+def _interrupt_pip_seed_at_cleanup_entry(tmp_path: Path, mocker: MockerFixture) -> dict[str, int | bool]:
+    child: subprocess.Popen[bytes] | None = None
+    folder: Path | None = None
+    signals = 0
+    previous_trace = sys.gettrace()
+
+    def send_second_interrupt(frame: FrameType, event: str, _arg: None) -> None:
+        nonlocal signals
+        if event == "call" and frame.f_code.co_name == "_terminate_pip" and not signals:
+            signals += 1
+            sys.settrace(previous_trace)
+            signal.raise_signal(signal.SIGINT)
+
+    def start_pip(cmd: list[str], env: dict[str, str]) -> subprocess.Popen[bytes]:
+        nonlocal child, folder
+        child = subprocess.Popen(cmd, env=env)
+        folder = Path(cmd[cmd.index("--find-links") + 1])
+        mocker.patch.object(child, "communicate", autospec=True, side_effect=KeyboardInterrupt)
+        sys.settrace(send_second_interrupt)
+        return child
+
+    mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True, side_effect=start_pip)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+        return {
+            "signals": signals,
+            "child_exited": child is not None and child.poll() is not None,
+            "folder_exists": folder is not None and folder.exists(),
+        }
+    finally:
+        sys.settrace(previous_trace)
         if child is not None and child.poll() is None:
             subprocess.Popen.kill(child)
             child.wait()

@@ -8,8 +8,10 @@ __lazy_modules__ = [
     "logging",
     "pathlib",
     "shutil",
+    "signal",
     "subprocess",
     "tempfile",
+    "threading",
     "virtualenv.seed.wheels",
     "virtualenv.seed.wheels.acquire",
     "virtualenv.seed.wheels.util",
@@ -24,13 +26,15 @@ import hashlib
 import io
 import logging
 import os
+import signal
 from base64 import urlsafe_b64encode
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import copyfile
 from stat import FILE_ATTRIBUTE_REPARSE_POINT, S_IMODE, S_ISDIR, S_ISLNK, S_ISREG
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired
 from tempfile import TemporaryDirectory
+from threading import current_thread, main_thread
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -45,6 +49,7 @@ from .via_app_data.pip_install.base import EntryPointConfig, encodes_as_utf8, sh
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from types import FrameType
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
@@ -221,23 +226,72 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _execute(cmd: list[str], env: dict[str, str]) -> None:
         logging.getLogger(__name__).debug("pip seed by running: %s", LogCmd(cmd, env))
-        process: Final[Popen[bytes]] = Popen(cmd, env=env)
-        try:
-            process.communicate()
-        except BaseException:
-            # The find-links directory closes when this call unwinds.
-            while True:
+        with PipInvoke._capture_sigint() as interrupts:
+            process: Final[Popen[bytes]] = Popen(cmd, env=env)
+            try:
+                PipInvoke._wait_for_pip(process, interrupts)
+            except BaseException:
+                # The find-links directory closes when this call unwinds.
+                PipInvoke._terminate_pip(process)
+                raise
+            if process.returncode != 0:
+                msg: Final[str] = f"failed seed with code {process.returncode}"
+                raise RuntimeError(msg)
+
+    @staticmethod
+    @contextmanager
+    def _capture_sigint() -> Generator[list[BaseException] | None, None, None]:
+        handler = signal.getsignal(signal.SIGINT) if current_thread() is main_thread() else None
+        if not callable(handler):
+            yield None
+            return
+
+        interrupts: list[BaseException] = []
+
+        def on_sigint(signum: int, frame: FrameType | None) -> None:
+            if not interrupts:
                 try:
-                    if process.poll() is not None:
-                        break
-                    process.kill()
-                    process.wait()
-                except KeyboardInterrupt:
-                    continue
-            raise
-        if process.returncode != 0:
-            msg: Final[str] = f"failed seed with code {process.returncode}"
-            raise RuntimeError(msg)
+                    handler(signum, frame)
+                except BaseException as error:  # ruff:ignore[blind-except]  # preserve the caller's signal error
+                    interrupts.append(error)
+
+        signal.signal(signal.SIGINT, on_sigint)
+        try:
+            yield interrupts
+        finally:
+            if signal.getsignal(signal.SIGINT) is on_sigint:
+                signal.signal(signal.SIGINT, handler)
+
+    @staticmethod
+    def _wait_for_pip(process: Popen[bytes], interrupts: list[BaseException] | None) -> None:
+        if interrupts is None:
+            process.communicate()
+            return
+        while True:
+            finished = PipInvoke._communicate_once(process)
+            if interrupts:
+                raise interrupts[0]
+            if finished:
+                break
+
+    @staticmethod
+    def _communicate_once(process: Popen[bytes]) -> bool:
+        try:
+            process.communicate(timeout=0.1)
+        except TimeoutExpired:
+            return False
+        return True
+
+    @staticmethod
+    def _terminate_pip(process: Popen[bytes]) -> None:
+        while True:
+            try:
+                if process.poll() is not None:
+                    break
+                process.kill()
+                process.wait()
+            except KeyboardInterrupt:
+                continue
 
     def _rewrite_launchers(self, creator: Creator, record_names: list[str]) -> None:
         for record_name in record_names:
