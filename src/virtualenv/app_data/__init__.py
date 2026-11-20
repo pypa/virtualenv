@@ -12,10 +12,10 @@ __lazy_modules__ = [
 import logging
 import os
 from argparse import ArgumentTypeError
-from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
+from stat import S_IMODE, S_IRWXG, S_IRWXO, S_ISGID
 from typing import TYPE_CHECKING, Final
 
-from .cache_migration import cache_dir_with_migration
+from .cache_migration import cache_dir_with_migration, make_private_dirs
 from .na import AppDataDisabled
 from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder
@@ -39,6 +39,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     :returns: the app data store
 
     :raises ArgumentTypeError: when the folder is empty or whitespace
+    :raises RuntimeError: when read-only app-data has no default location
 
     """
     private: Final[bool] = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
@@ -49,6 +50,9 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
             folder = cache_dir_with_migration(read_only=read_only)
             if folder is None:
                 _LOGGER.warning("using temporary app-data because the default cache location is unavailable")
+                if read_only:
+                    reason: Final[str] = "read-only app data requires a cache path when no home directory exists"
+                    raise RuntimeError(reason)
                 return TempAppData()
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
@@ -60,33 +64,51 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     if read_only:
         return ReadOnlyAppData(folder)
 
-    try:
-        os.makedirs(folder, mode=0o700 if private else 0o777, exist_ok=True)
-        if private and os.name == "posix" and not _prepare_permissions(folder):
-            return TempAppData()
-        _LOGGER.debug("created app data folder %s", folder)
-    except OSError as exception:
-        _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
+    if not _prepare_app_data_folder(folder, private):
+        return TempAppData()
 
     if os.access(folder, os.W_OK):
-        return AppDataDiskFolder(folder)
+        return AppDataDiskFolder(folder, private=private)
     _LOGGER.debug("app data folder %s has no write access", folder)
     return TempAppData()
 
 
+def _prepare_app_data_folder(folder: str, private: bool) -> bool:
+    try:
+        if private:
+            make_private_dirs(folder)
+        else:
+            os.makedirs(folder, mode=0o777, exist_ok=True)
+        if private and os.name == "posix" and not _prepare_permissions(folder):
+            return False
+    except OSError as exception:
+        _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
+    else:
+        _LOGGER.debug("created app data folder %s", folder)
+    return True
+
+
 def _prepare_permissions(folder: str) -> bool:
     info: Final[os.stat_result] = os.stat(folder)
+    if info.st_uid not in {os.geteuid(), 0}:
+        _LOGGER.warning("using temporary app-data because default cache %s is owned by uid %d", folder, info.st_uid)
+        return False
     if info.st_uid != os.geteuid():
-        _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
         return True
-    # setgid marks a deliberately group-shared cache, so only other-write is dropped there
-    loose: Final[int] = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
+    # setgid marks intentional group sharing; other users must not reach descendants created under a loose umask
+    loose: Final[int] = info.st_mode & (S_IRWXO if info.st_mode & S_ISGID else S_IRWXG | S_IRWXO)
     if loose:
         try:
             os.chmod(folder, S_IMODE(info.st_mode) & ~loose)
         except OSError:
             _LOGGER.warning("using temporary app-data because default cache permissions could not be set")
             return False
+        _LOGGER.warning(
+            "restricted default cache %s to mode %04o; use setgid sharing or an explicit --app-data path to keep "
+            "shared access",
+            folder,
+            S_IMODE(info.st_mode) & ~loose,
+        )
     return True
 
 
