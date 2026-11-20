@@ -74,7 +74,7 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
         return data
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
-        """Decode embedded Tcl and Tk bytes with the active filesystem codec.
+        """Decode embedded path bytes with the active filesystem codec.
 
         :param replacements: the raw placeholder values
         :param creator: the creator of the environment
@@ -83,7 +83,7 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
 
         """
         data = super().substitutions(replacements, creator)
-        for name in ("__TCL_LIBRARY__", "__TK_LIBRARY__"):
+        for name in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__"):
             if os.name != "nt" and not replacements[name].isascii():
                 data[name] = (
                     f"__import__('os').fsdecode(__import__('builtins').bytes.fromhex("
