@@ -6,6 +6,7 @@ __lazy_modules__ = [
 ]
 
 import logging  # isort: skip # fmt: skip
+import re  # isort: skip # fmt: skip
 import shlex  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # fmt: skip
+_NON_ASCII: Final[re.Pattern[str]] = re.compile(r"[^\x00-\x7f]")
 
 
 class CShellActivator(ViaTemplateActivator):  # fmt: skip
@@ -93,11 +95,17 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
         display: Final[str] = collapse_line_boundaries(
             creator.env_name if self.flag_prompt is None else self.flag_prompt
         )
-        return {
+        literals = {
             **super().substitutions(values, creator),
             "__VIRTUAL_PROMPT_DISPLAY_TCSH__": _prompt_literal(display, tcsh=True),
             "__VIRTUAL_PROMPT_DISPLAY_PLAIN__": _prompt_literal(display, tcsh=False),
         }
+        return {key: _NON_ASCII.sub(self._bytes_apart, literal) for key, literal in literals.items()}
+
+    @staticmethod
+    def _bytes_apart(match: re.Match[str]) -> str:
+        # tcsh retains undecodable bytes; decoded characters can become punctuation after a locale change.
+        return "".join(f"{chr(0xDC00 + byte)}''" for byte in match.group().encode("utf-8", "surrogateescape"))
 
 
 def _prompt_literal(value: str, *, tcsh: bool) -> str:  # fmt: skip

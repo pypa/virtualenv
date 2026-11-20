@@ -60,7 +60,8 @@ class ViaTemplateActivator(Activator, ABC):
             dest: Final[Path] = to_folder / self.as_name(template)
             # PowerShell assumes Windows 1252 when the UTF-8 BOM is absent.
             encoding: Final[str] = "utf-8-sig" if str(template).endswith(".ps1") else "utf-8"
-            write_file(dest, text.encode(encoding))
+            # csh literals keep individual non-ASCII bytes undecoded across shell locale changes.
+            write_file(dest, text.encode(encoding, "surrogateescape" if str(template).endswith(".csh") else "strict"))
             generated.append(dest)
         return generated
 
