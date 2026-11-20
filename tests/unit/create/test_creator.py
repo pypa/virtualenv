@@ -995,6 +995,90 @@ def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str) ->
 
 
 @pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 14)
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX CPython 3.14+ copy creator",
+)
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_writable_sibling_lib(tmp_path: Path, creator: str) -> None:
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    sibling_lib.chmod(0o777)
+
+    with pytest.raises(ValueError, match="standard-library search path"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 14)
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX CPython 3.14+ copy creator",
+)
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_sibling_stdlib_zip(tmp_path: Path, creator: str) -> None:
+    sibling_lib = tmp_path / Path(_CURRENT.system_stdlib).parent.name
+    sibling_lib.mkdir()
+    with zipfile.ZipFile(
+        sibling_lib
+        / f"python{sys.version_info.major}{sys.version_info.minor}{'t' * bool(_CURRENT.sysconfig_vars.get('Py_GIL_DISABLED'))}.zip",
+        "w",
+    ):
+        pass
+
+    with pytest.raises(ValueError, match="standard-library search path"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 14)
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT)
+    or not fs_supports_symlink(),
+    reason="requires a POSIX CPython 3.14+ copy creator with symlinks",
+)
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None:
+    (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(tmp_path / "future-lib")
+
+    with pytest.raises(ValueError, match="standard-library search path"):
+        cli_run([str(tmp_path / "env"), "--creator", creator, "--copies", "--no-seed"])
+
+
+@pytest.mark.skipif(
+    IS_WIN
+    or IS_PYPY
+    or IS_GRAALPY
+    or sys.version_info < (3, 14)
+    or is_macos_brew(_CURRENT)
+    or is_mac_os_framework(_CURRENT)
+    or not _CURRENT.sysconfig_vars.get("Py_ENABLE_SHARED"),
+    reason="requires a shared-library POSIX CPython 3.14+ copy creator",
+)
+@pytest.mark.parametrize("creator", ["builtin", "venv"])
+def test_copy_keeps_shared_library_with_trusted_sibling(tmp_path: Path, creator: str) -> None:
+    (tmp_path / Path(_CURRENT.system_stdlib).parent.name).mkdir()
+    dest = tmp_path / "env"
+    cli_run([str(dest), "--creator", creator, "--copies", "--no-seed"])
+
+    libpython = dest / "lib" / str(_CURRENT.sysconfig_vars["INSTSONAME"])
+    base_prefix = subprocess.check_output(
+        [str(dest / "bin/python"), "-I", "-S", "-c", "import sys; print(sys.base_prefix)"], text=True, encoding="utf-8"
+    ).strip()
+    assert (libpython.is_file(), Path(base_prefix).resolve()) == (True, Path(_CURRENT.system_prefix).resolve())
+
+
+@pytest.mark.skipif(
     IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
     reason="requires a POSIX copy-based standard library creator",
 )

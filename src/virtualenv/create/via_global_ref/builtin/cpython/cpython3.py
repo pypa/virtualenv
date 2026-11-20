@@ -11,8 +11,10 @@ __lazy_modules__ = [
 
 import abc
 import fnmatch
+import os
 from operator import methodcaller as method
 from pathlib import Path
+from stat import S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import Python3Supports
@@ -83,7 +85,44 @@ class CPython3Posix(CPythonPosix, CPython3):
 
     @classmethod
     def _to_lib(cls, creator: CPython3Posix, src: Path) -> Path:
+        cls._check_shared_libpython_search(creator)
         return creator.dest / "lib" / src.name
+
+    @staticmethod
+    def _check_shared_libpython_search(creator: CPython3Posix | Venv) -> None:
+        interpreter = creator.interpreter
+        # CPython 3.14 searches above the loaded library for a stdlib zip before using pyvenv.cfg's home.
+        if interpreter.version_info < (3, 14):
+            return
+        zip_name = (
+            f"python{interpreter.version_info.major}{interpreter.version_info.minor}"
+            f"{'t' if interpreter.sysconfig_vars.get('Py_GIL_DISABLED') else ''}.zip"
+        )
+        host_prefix = Path(interpreter.system_prefix).resolve()
+        platlibdir = interpreter.sysconfig_vars.get("platlibdir")
+        if not isinstance(platlibdir, str):
+            platlibdir = Path(interpreter.system_stdlib).parent.name
+        for ancestor in creator.dest.parents:
+            if ancestor.resolve() == host_prefix:
+                continue
+            CPython3Posix._check_candidate_stdlib(ancestor / platlibdir, zip_name)
+
+    @staticmethod
+    def _check_candidate_stdlib(lib_dir: Path, zip_name: str) -> None:
+        if lib_dir.is_symlink() and not lib_dir.is_dir():
+            msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
+            raise ValueError(msg)
+        if not lib_dir.is_dir():
+            return
+        for path in (lib_dir.resolve(), *lib_dir.resolve().parents) if lib_dir.is_symlink() else (lib_dir,):
+            path_stat = path.stat()
+            if path_stat.st_uid not in {os.geteuid(), 0} or path_stat.st_mode & (S_IWGRP | S_IWOTH):
+                msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
+                raise ValueError(msg)
+        zip_path = lib_dir / zip_name
+        if zip_path.is_file() or zip_path.is_symlink():
+            msg = f"copied Python library has an unsafe standard-library search path: {zip_path}"
+            raise ValueError(msg)
 
     def install_venv_shared_libs(self, venv_creator: Venv) -> None:
         """Copy the shared ``libpython`` next to the environment when it does not link the host's copy.
@@ -95,6 +134,7 @@ class CPython3Posix(CPythonPosix, CPython3):
             return
         if not (shared_lib := self._shared_libpython(venv_creator.interpreter)):
             return
+        self._check_shared_libpython_search(venv_creator)
         dest = venv_creator.dest / "lib" / shared_lib.name
         ensure_dir(dest.parent)
         copy_path(shared_lib, dest)
