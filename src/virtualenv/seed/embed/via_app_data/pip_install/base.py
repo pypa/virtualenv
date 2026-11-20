@@ -385,7 +385,11 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
 
     def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
         shebang: Final[bytes] = super()._build_shebang(executable, post_interp)
-        if os.name != "posix" or (len(shebang.split()) == 1 and encodes_as_utf8(self._raw_executable)):
+        if os.name != "posix" or (
+            len(shebang.split()) == 1
+            and not needs_shell_shebang(self._raw_executable)
+            and encodes_as_utf8(self._raw_executable)
+        ):
             return shebang
         return shell_shebang(self._raw_executable, post_interp)
 
@@ -414,6 +418,17 @@ def encodes_as_utf8(path: str) -> bool:
         return False
 
 
+def needs_shell_shebang(executable: str) -> bool:
+    """Whether shell syntax would change a direct shebang's interpreter path.
+
+    :param executable: the interpreter path written in the shebang
+
+    :returns: whether to use a shell wrapper
+
+    """
+    return any(character in executable for character in " \t\r\n'\"\\")
+
+
 def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     # The exec line is read by both sh and Python; double-quoted backslashes survive both readers.
     """Build a shebang that runs the executable through ``sh`` and then Python.
@@ -437,5 +452,6 @@ __all__ = [
     "EntryPointConfig",
     "PipInstall",
     "encodes_as_utf8",
+    "needs_shell_shebang",
     "shell_shebang",
 ]

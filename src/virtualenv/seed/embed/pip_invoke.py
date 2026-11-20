@@ -41,7 +41,7 @@ from virtualenv.util.path import write_file
 from virtualenv.util.subprocess import LogCmd
 
 from .base_embed import BaseEmbed
-from .via_app_data.pip_install.base import EntryPointConfig, encodes_as_utf8, shell_shebang
+from .via_app_data.pip_install.base import EntryPointConfig, encodes_as_utf8, needs_shell_shebang, shell_shebang
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -243,7 +243,7 @@ class PipInvoke(BaseEmbed):
         headers: Final[list[bytes]] = [
             b"#!/bin/sh\n'''exec' " + quoted + b' "$0" "$@"\n' + b"' '''\n" for quoted in (exe, b'"' + exe + b'"')
         ]
-        if len(exe.split()) > 1 or not encodes_as_utf8(str(creator.exe)):
+        if needs_shell_shebang(str(creator.exe)) or not encodes_as_utf8(str(creator.exe)):
             headers.append(b"#!" + exe + b"\n")
         changed = False
         for row in rows:

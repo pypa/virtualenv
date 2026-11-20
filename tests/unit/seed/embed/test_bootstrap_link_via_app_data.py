@@ -8,6 +8,7 @@ import io
 import logging
 import os
 import signal
+import shlex
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
@@ -672,6 +673,43 @@ def test_console_script_preserves_interpreter_path(
         check=True,
     )
     assert os.path.normcase(destination) in os.path.normcase(result.stdout)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shebangs")
+@pytest.mark.parametrize("seeder", [pytest.param("app-data", id="app-data"), pytest.param("pip", id="pip")])
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("rock'n'roll", id="apostrophe"),
+        pytest.param('double"quote"', id="double-quote"),
+        pytest.param("back\\slash", id="backslash"),
+    ],
+)
+def test_console_script_runs_after_xonsh_shebang_parse(tmp_path: Path, seeder: str, name: str) -> None:
+    session: Final[Session] = cli_run([
+        str(tmp_path / name / "env"),
+        "--seeder",
+        seeder,
+        "--pip",
+        "embed",
+        "--no-download",
+        "--no-periodic-update",
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--activators",
+        "",
+    ])
+    script: Final[Path] = session.creator.script("pip")
+    interpreter: Final[list[str]] = shlex.split(os.fsdecode(script.read_bytes().split(b"\n", 1)[0][2:]))
+    result: Final[CompletedProcess[str]] = run(
+        [*interpreter, str(script), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=True,
+    )
+    assert str(session.creator.dest) in result.stdout
 
 
 @pytest.mark.slow
