@@ -10,6 +10,7 @@ __lazy_modules__ = [
     "itertools",
     "json",
     "pathlib",
+    "queue",
     "shutil",
     "ssl",
     "subprocess",
@@ -36,14 +37,15 @@ import ssl
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
-from http.client import HTTPException, HTTPResponse
+from http.client import HTTPException
 from itertools import groupby
 from pathlib import Path
+from queue import Empty, SimpleQueue
 from shutil import copy2
 from subprocess import DEVNULL, Popen
 from textwrap import dedent, indent
 from threading import Thread
-from time import monotonic, sleep
+from time import sleep
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -497,7 +499,19 @@ def _pypi_get_distribution_info_cached(distribution: str) -> _PyPIJson | None:
 
 
 def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
-    content, url = None, f"https://pypi.org/pypi/{distribution}/json"
+    url = f"https://pypi.org/pypi/{distribution}/json"
+    result: SimpleQueue[_PyPIJson | None] = SimpleQueue()
+    # urllib's socket timeout starts over for each read, including reads made while following redirects.
+    Thread(target=_request_pypi_json, args=(url, result), daemon=True).start()
+    try:
+        return result.get(timeout=_PYPI_DEADLINE)
+    except Empty:
+        LOGGER.warning("timed out waiting %s seconds for %s", _PYPI_DEADLINE, url)
+        return None
+
+
+def _request_pypi_json(url: str, result: SimpleQueue[_PyPIJson | None]) -> None:
+    content = None
     try:
         for context in _request_context():
             if (content := _fetch_pypi_json(url, context)) is not None:
@@ -506,7 +520,7 @@ def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
     except Exception as exception:  # ruff:ignore[blind-except]
         # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
-    return content
+    result.put(content)
 
 
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
@@ -523,28 +537,18 @@ def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | No
     try:
         # url is a fixed https://pypi.org address, not user input
         with urlopen(url, timeout=15, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
-            return _read_pypi_json(file_handler, url)
+            return json.load(file_handler)
     except URLError as exception:
         # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
-def _read_pypi_json(file_handler: HTTPResponse, url: str) -> _PyPIJson:
-    # the socket timeout bounds each read, so a trickling response needs an overall deadline
-    deadline, chunks = monotonic() + 60, []
-    while chunk := file_handler.read1(65536):
-        if monotonic() > deadline:
-            msg = f"reading {url} took longer than 60 seconds"
-            raise TimeoutError(msg)
-        chunks.append(chunk)
-    return json.loads(b"".join(chunks))
-
-
 class UnverifiedWheelError(RuntimeError):
     """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
 
 
+_PYPI_DEADLINE: Final[float] = 60
 _PYPI_CACHE: Final[dict[str, _PyPIJson | None]] = {}
 
 

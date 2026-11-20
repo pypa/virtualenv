@@ -11,14 +11,17 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from http.client import HTTPException
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from textwrap import dedent, indent
+from threading import Event, Thread
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
+from urllib.request import ProxyHandler, build_opener
 
 import pytest
 
@@ -44,6 +47,7 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from http.client import HTTPResponse
     from ssl import SSLContext
 
     from pytest_mock import MockerFixture, MockType
@@ -706,17 +710,53 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     assert " failed " in caplog.text
 
 
-def test_pypi_metadata_read_has_total_deadline(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
-    class DrippingResponse(BytesIO):
-        def read1(self, _size: int = -1) -> bytes:
-            return super().read(1)
+@pytest.mark.parametrize("stall", ["headers", "redirect-body", "body"])
+def test_pypi_metadata_request_deadline(stall: str, mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+    release, finished = Event(), Event()
 
-    body = json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}).encode()
-    mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=DrippingResponse(body), autospec=True)
-    mocker.patch("virtualenv.seed.wheels.periodic_update.monotonic", side_effect=[0, 1, 61], autospec=True)
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            if stall == "headers":
+                release.wait(5)
+            if self.path == "/redirect" and stall == "redirect-body":
+                self.send_response(302)
+                self.send_header("Location", "/metadata")
+                self.end_headers()
+                release.wait(5)
+                return
+            self.send_response(200)
+            self.end_headers()
+            if stall == "body":
+                release.wait(5)
+            self.wfile.write(b'{"releases":{"20.1":[{"upload_time":"2020-12-22T12:12:12"}]}}')
 
-    assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
-    assert "reading https://pypi.org/pypi/pip/json took longer than 60 seconds" in caplog.text
+    with HTTPServer(("127.0.0.1", 0), Handler) as server:
+
+        @contextmanager
+        def local_response(
+            _url: str, *, timeout: int, context: SSLContext | None
+        ) -> Generator[HTTPResponse, None, None]:
+            assert context is None
+            try:
+                with build_opener(ProxyHandler({})).open(
+                    f"http://127.0.0.1:{server.server_port}/redirect", timeout=timeout
+                ) as response:
+                    yield response
+            finally:
+                finished.set()
+
+        mocker.patch("virtualenv.seed.wheels.periodic_update._PYPI_DEADLINE", 0.1)
+        mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=local_response)
+        Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
+        try:
+            assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
+            assert "timed out waiting 0.1 seconds for https://pypi.org/pypi/pip/json" in caplog.text
+        finally:
+            release.set()
+            try:
+                assert finished.wait(5)
+            finally:
+                server.shutdown()
 
 
 @pytest.mark.parametrize(
