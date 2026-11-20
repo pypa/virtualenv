@@ -130,6 +130,9 @@ Activate the environment to modify your shell's PATH and environment variables.
 
        If you encounter an execution policy error, run ``Set-ExecutionPolicy RemoteSigned`` to allow local scripts.
 
+    The path used to reach ``Activate.ps1`` cannot contain the ``PATH`` separator (``;`` on Windows, ``:`` on POSIX),
+    including in a symlink name. Use a different path if activation reports this error.
+
 .. tab:: CMD
 
     .. code-block:: console
