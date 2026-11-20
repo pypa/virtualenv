@@ -306,6 +306,11 @@ cache path in this case.
 An unresolved or relative home or XDG-derived cache path is not used as a default. If the path provider falls back to an
 absolute home-based location, that location remains usable.
 
+On macOS and Windows, the legacy app-data directory can also hold ``virtualenv.ini``. Migration leaves that file and
+unrelated user files there and moves only ``py_info``, ``unzip``, and ``wheel`` into the cache. If this migration cannot
+finish, writable runs use temporary app-data and warn; read-only runs can use the legacy directory. Check access to both
+directories and move remaining cache entries before removing the incomplete-migration marker.
+
 On POSIX, a writable default cache owned by the current user is restricted to owner access. When its mode changes,
 virtualenv warns. Set the cache directory's setgid bit to retain group sharing, or select an explicit ``--app-data``
 path to manage its permissions yourself. A default cache owned by a different non-root user is skipped with a warning;

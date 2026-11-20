@@ -47,15 +47,18 @@ def cache_dir_with_migration(*, read_only: bool) -> str | None:
         return new_dir
     if os.path.lexists(os.path.join(old_dir, _CONFIG_NAME)):
         return _config_cache_dir(old_dir, new_dir, read_only=read_only)
-    if os.path.isdir(old_dir) and os.path.isfile(os.path.join(old_dir, _MIGRATION_MARKER)) and os.path.isdir(new_dir):
-        if _migrate_with_config(old_dir, new_dir, keep_config=False):
-            return new_dir
+    if (
+        os.path.isdir(old_dir)
+        and os.path.isfile(os.path.join(old_dir, _MIGRATION_MARKER))
+        and os.path.isdir(new_dir)
+        and not _migrate_with_config(old_dir, new_dir, keep_config=False)
+    ):
         _LOGGER.warning("incomplete app data migration from %s to %s, using old location", old_dir, new_dir)
         return old_dir
     if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
         _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
         try:
-            nested: Final = _is_nested_dir(new_dir, old_dir)
+            nested: Final[bool] = _is_nested_dir(new_dir, old_dir)
             if nested:
                 _migrate_entries(old_dir, new_dir, nested=True)
             else:
@@ -66,6 +69,14 @@ def cache_dir_with_migration(*, read_only: bool) -> str | None:
             )
             return old_dir
     return new_dir
+
+
+def _default_dirs() -> tuple[str, str] | None:
+    new_dir = user_dir(lambda: user_cache_dir(appname="virtualenv", appauthor="pypa"))
+    if new_dir is None:
+        return None
+    old_dir = user_dir(lambda: user_data_dir(appname="virtualenv", appauthor="pypa"))
+    return new_dir, new_dir if old_dir is None else old_dir
 
 
 def _config_cache_dir(old_dir: str, new_dir: str, *, read_only: bool) -> str | None:
@@ -89,24 +100,12 @@ def _config_cache_dir(old_dir: str, new_dir: str, *, read_only: bool) -> str | N
     return None
 
 
-def _default_dirs() -> tuple[str, str] | None:
-    new_dir = user_dir(lambda: user_cache_dir(appname="virtualenv", appauthor="pypa"))
-    if new_dir is None:
-        return None
-    old_dir = user_dir(lambda: user_data_dir(appname="virtualenv", appauthor="pypa"))
-    return new_dir, new_dir if old_dir is None else old_dir
-
-
 def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
     marker = pathlib.Path(new_dir, _MIGRATION_MARKER)
     if os.path.isdir(new_dir) and not marker.exists():
         return True
     try:
-        old_info = os.stat(old_dir)
-        if os.name == "posix" and old_info.st_mode & stat.S_ISGID:
-            _make_group_dirs(os.path.dirname(new_dir), old_info.st_gid, stat.S_IRWXU | stat.S_IXGRP)
-        else:
-            make_private_dirs(os.path.dirname(new_dir))
+        _prepare_cache_parent(old_dir, new_dir)
         os.makedirs(new_dir, mode=0o700, exist_ok=True)
         marker.touch(exist_ok=True)
         _copy_linked_entries(old_dir, new_dir)
@@ -116,6 +115,56 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
         return False
     else:
         return True
+
+
+def _prepare_cache_parent(old_dir: str, new_dir: str) -> os.stat_result:
+    old_info = os.stat(old_dir)
+    if os.name == "posix" and old_info.st_mode & stat.S_ISGID:
+        _make_group_dirs(os.path.dirname(new_dir), old_info.st_gid, stat.S_IRWXU | stat.S_IXGRP)
+    else:
+        make_private_dirs(os.path.dirname(new_dir))
+    return old_info
+
+
+def _make_group_dirs(folder: str, group: int, mode: int) -> None:
+    for path in _missing_dirs(folder):
+        try:
+            os.mkdir(path, 0o700)
+        except FileExistsError:
+            if not os.path.isdir(path):
+                raise NotADirectoryError(path) from None
+            continue
+        if os.stat(path).st_gid != group:
+            os.chown(path, -1, group)
+        os.chmod(path, mode)
+
+
+def _missing_dirs(folder: str) -> list[str]:
+    missing: list[str] = []
+    path = os.path.abspath(folder)
+    while not os.path.exists(path):
+        missing.append(path)
+        parent = os.path.dirname(path)
+        if parent == path:
+            raise FileNotFoundError(path)
+        path = parent
+    return missing[::-1]
+
+
+def make_private_dirs(folder: str) -> None:
+    """Create missing path components with owner-only permissions.
+
+    :param folder: target directory, including any missing parents
+
+    :raises FileNotFoundError: if the filesystem root does not exist
+    :raises NotADirectoryError: if a missing component becomes a file during creation
+
+    """
+    for path in _missing_dirs(folder):
+        with suppress(FileExistsError):
+            os.mkdir(path, 0o700)
+        if not os.path.isdir(path):
+            raise NotADirectoryError(path)
 
 
 def _copy_linked_entries(old_dir: str, new_dir: str) -> None:
@@ -166,21 +215,18 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 
 
 def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: bool = False) -> None:
-    marker: Final = pathlib.Path(old_dir, _MIGRATION_MARKER)
+    marker: Final[pathlib.Path] = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
-    old_info = os.stat(old_dir)
     if nested:
+        old_info = os.stat(old_dir)
         if os.name == "posix" and old_info.st_mode & stat.S_ISGID:
             _make_group_dirs(new_dir, old_info.st_gid, stat.S_ISGID | stat.S_IRWXU | stat.S_IRWXG)
         else:
             make_private_dirs(new_dir)
     else:
-        if os.name == "posix" and old_info.st_mode & stat.S_ISGID:
-            _make_group_dirs(os.path.dirname(new_dir), old_info.st_gid, stat.S_IRWXU | stat.S_IXGRP)
-        else:
-            make_private_dirs(os.path.dirname(new_dir))
+        _prepare_cache_parent(old_dir, new_dir)
         os.makedirs(new_dir, mode=0o700, exist_ok=True)
-    skipped_entries: Final = {_MIGRATION_MARKER}
+    skipped_entries: Final[set[str]] = {_MIGRATION_MARKER}
     if nested:
         skipped_entries.add(os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0])
     skipped_entries.add(f"{_CONFIG_MIGRATION_LOCK}.lock")
@@ -204,7 +250,7 @@ def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: b
 
 
 def _preserve_cache_permissions(old_dir: str, new_dir: str) -> None:
-    old_info: Final = os.stat(old_dir)
+    old_info: Final[os.stat_result] = os.stat(old_dir)
     if os.stat(new_dir).st_gid != old_info.st_gid:
         os.chown(new_dir, -1, old_info.st_gid)
     os.chmod(new_dir, stat.S_IMODE(old_info.st_mode))
@@ -245,53 +291,8 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
     return True
 
 
-def _make_group_dirs(folder: str, group: int, mode: int) -> None:
-    for path in _missing_dirs(folder):
-        try:
-            os.mkdir(path, 0o700)
-        except FileExistsError:
-            if not os.path.isdir(path):
-                raise NotADirectoryError(path) from None
-            continue
-        if os.stat(path).st_gid != group:
-            os.chown(path, -1, group)
-        os.chmod(path, mode)
-
-
-def _missing_dirs(folder: str) -> list[str]:
-    missing: list[str] = []
-    path = os.path.abspath(folder)
-    while not os.path.exists(path):
-        missing.append(path)
-        parent = os.path.dirname(path)
-        if parent == path:
-            raise FileNotFoundError(path)
-        path = parent
-    return missing[::-1]
-
-
-def make_private_dirs(folder: str) -> None:
-    """Create missing path components with owner-only permissions.
-
-    :param folder: target directory, including any missing parents
-
-    :raises FileNotFoundError: if the filesystem root does not exist
-    :raises NotADirectoryError: if a missing component becomes a file during creation
-
-    """
-    for path in _missing_dirs(folder):
-        with suppress(FileExistsError):
-            os.mkdir(path, 0o700)
-        if not os.path.isdir(path):
-            raise NotADirectoryError(path)
-
-
 def _move_cache(old_dir: str, new_dir: str) -> None:
-    old_info = os.stat(old_dir)
-    if os.name == "posix" and old_info.st_mode & stat.S_ISGID:
-        _make_group_dirs(os.path.dirname(new_dir), old_info.st_gid, stat.S_IRWXU | stat.S_IXGRP)
-    else:
-        make_private_dirs(os.path.dirname(new_dir))
+    old_info = _prepare_cache_parent(old_dir, new_dir)
     if os.name != "posix" or os.path.islink(old_dir):
         shutil.move(old_dir, new_dir)
         return
@@ -315,6 +316,7 @@ def _move_cache(old_dir: str, new_dir: str) -> None:
                 shutil.rmtree(staging)
             raise
         shutil.rmtree(old_dir)
+
 
 __all__ = [
     "cache_dir_with_migration",
