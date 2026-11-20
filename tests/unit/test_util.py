@@ -909,6 +909,19 @@ def test_zipapp_extract_uses_destination_name(fake_zipapp_root: Path, tmp_path: 
     assert dest.read_text(encoding="utf-8") == "hello zipapp"
 
 
+def test_zipapp_extract_keeps_previous_file_on_copy_error(
+    fake_zipapp_root: Path, tmp_path: Path, mocker: MockerFixture
+) -> None:
+    dest: Final = tmp_path / "extracted.txt"
+    dest.write_text("previous", encoding="utf-8")
+    mocker.patch("zipfile.shutil.copyfileobj", autospec=True, side_effect=OSError(EACCES, "copy failed"))
+
+    with pytest.raises(OSError, match="copy failed"):
+        zipapp.extract(fake_zipapp_root / "virtualenv" / "payload.txt", dest)
+
+    assert (dest.read_text(encoding="utf-8"), set(tmp_path.iterdir())) == ("previous", {dest, fake_zipapp_root})
+
+
 @pytest.mark.parametrize(
     "parts",
     [

@@ -11,6 +11,7 @@ import site
 import stat
 import subprocess
 import sys
+import sysconfig
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
@@ -906,6 +907,54 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.parametrize(
+    "alias",
+    [
+        "python",
+        pytest.param(
+            "𝜋thon",
+            id="pi",
+            marks=pytest.mark.skipif(
+                sys.version_info[:2] != (3, 14) or IS_PYPY or sys.getfilesystemencoding() != "utf-8",
+                reason="CPython 3.14 creates this alias on UTF-8 filesystems",
+            ),
+        ),
+    ],
+)
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str) -> None:
+    dest: Final = tmp_path / "env"
+    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    stale: Final = dest / "stale"
+    stale.write_bytes(b"stale")
+    stale.replace(dest / "bin" / alias)
+
+    cli_run(command)
+
+    assert subprocess.check_output([str(dest / "bin" / alias), "-c", "print(1)"], text=True).strip() == "1"
+
+
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.skipif(sys.version_info[:2] == (3, 14), reason="CPython 3.14 creates this alias")
+def test_venv_creator_keeps_unrelated_pi_file(tmp_path: Path) -> None:
+    dest: Final = tmp_path / "env"
+    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    alias: Final = dest / "bin/𝜋thon"
+    alias.write_bytes(b"custom")
+
+    cli_run(command)
+
+    assert alias.read_bytes() == b"custom"
+
+
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
 def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
     args: Final = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
@@ -1075,6 +1124,38 @@ def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
         env={**os.environ, "PYTHONUTF8": "1"},
     )
     assert result.strip() == "[]"
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_from_zipped_stdlib(tmp_path: Path) -> None:
+    stdlib: Final = Path(sysconfig.get_path("stdlib"))
+    source: Final = stdlib / "distutils"
+    archive: Final = tmp_path / "stdlib.zip"
+    with zipfile.ZipFile(archive, "w") as zip_file:
+        for module in source.rglob("*.py"):
+            zip_file.write(module, module.relative_to(stdlib))
+    settings: Final = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+
+    result: Final = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils import dist
+                distribution = dist.Distribution()
+                distribution.parse_config_files(sys.argv[1:])
+                print(dist.__file__)
+                print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONPATH": str(archive)},
+    )
+    assert result.splitlines() == [str(archive / "distutils" / "dist.py"), "[]"]
 
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
