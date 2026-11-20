@@ -1135,12 +1135,12 @@ def list_files(path):
 
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
 def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
-    settings: Final = tmp_path / "settings.cfg"
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
     settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
-    malformed: Final = tmp_path / "malformed.cfg"
+    malformed: Final[Path] = tmp_path / "malformed.cfg"
     malformed.write_text("[metadata]\nname = café\n", encoding="latin-1")
-    result: Final = subprocess.check_output(
+    result: Final[str] = subprocess.check_output(
         [
             str(session.creator.exe),
             "-c",
