@@ -7,8 +7,8 @@ __lazy_modules__ = [
     "shutil",
     "tempfile",
     "typing",
+    "virtualenv.util.home",
     "virtualenv.util.lock",
-    "virtualenv.util.path",
 ]
 
 import logging
@@ -22,8 +22,8 @@ from typing import Final
 
 from platformdirs import user_cache_dir, user_data_dir
 
+from virtualenv.util.home import user_dir
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import user_dir
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _MIGRATION_MARKER: Final[str] = ".virtualenv-migration-incomplete"
@@ -105,8 +105,7 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
     if os.path.isdir(new_dir) and not marker.exists():
         return True
     try:
-        _prepare_cache_parent(old_dir, new_dir)
-        os.makedirs(new_dir, mode=0o700, exist_ok=True)
+        _prepare_linked_cache_root(old_dir, new_dir)
         marker.touch(exist_ok=True)
         _copy_linked_entries(old_dir, new_dir)
         marker.unlink()
@@ -115,6 +114,16 @@ def _copy_linked_cache(old_dir: str, new_dir: str) -> bool:
         return False
     else:
         return True
+
+
+def _prepare_linked_cache_root(old_dir: str, new_dir: str) -> None:
+    old_info = _prepare_cache_parent(old_dir, new_dir)
+    os.makedirs(new_dir, mode=0o700, exist_ok=True)
+    if os.name == "posix":
+        if old_info.st_mode & stat.S_ISGID:
+            _preserve_cache_permissions(old_dir, new_dir)
+        else:
+            os.chmod(new_dir, _migrated_cache_mode(os.stat(new_dir)))
 
 
 def _prepare_cache_parent(old_dir: str, new_dir: str) -> os.stat_result:
@@ -165,6 +174,17 @@ def make_private_dirs(folder: str) -> None:
             os.mkdir(path, 0o700)
         if not os.path.isdir(path):
             raise NotADirectoryError(path)
+
+
+def _preserve_cache_permissions(old_dir: str, new_dir: str) -> None:
+    old_info: Final[os.stat_result] = os.stat(old_dir)
+    if os.stat(new_dir).st_gid != old_info.st_gid:
+        os.chown(new_dir, -1, old_info.st_gid)
+    os.chmod(new_dir, _migrated_cache_mode(old_info))
+
+
+def _migrated_cache_mode(info: os.stat_result) -> int:
+    return stat.S_IMODE(info.st_mode) & ~(stat.S_IRWXO if info.st_mode & stat.S_ISGID else stat.S_IRWXG | stat.S_IRWXO)
 
 
 def _copy_linked_entries(old_dir: str, new_dir: str) -> None:
@@ -249,13 +269,6 @@ def _migrate_entries(old_dir: str, new_dir: str, *, nested: bool, keep_config: b
     marker.unlink()
 
 
-def _preserve_cache_permissions(old_dir: str, new_dir: str) -> None:
-    old_info: Final[os.stat_result] = os.stat(old_dir)
-    if os.stat(new_dir).st_gid != old_info.st_gid:
-        os.chown(new_dir, -1, old_info.st_gid)
-    os.chmod(new_dir, stat.S_IMODE(old_info.st_mode))
-
-
 def _move_cache_entry(source: str, target: str) -> bool:
     if not os.path.lexists(target):
         shutil.move(source, target)
@@ -296,9 +309,7 @@ def _move_cache(old_dir: str, new_dir: str) -> None:
     if os.name != "posix" or os.path.islink(old_dir):
         shutil.move(old_dir, new_dir)
         return
-    mode = stat.S_IMODE(old_info.st_mode) & ~(
-        stat.S_IRWXO if old_info.st_mode & stat.S_ISGID else stat.S_IRWXG | stat.S_IRWXO
-    )
+    mode = _migrated_cache_mode(old_info)
     if mode != stat.S_IMODE(old_info.st_mode):
         os.chmod(old_dir, mode)
     try:

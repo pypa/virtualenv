@@ -4,7 +4,7 @@ __lazy_modules__ = [
     "configparser",
     "pathlib",
     "platformdirs",
-    "virtualenv.util.path",
+    "virtualenv.util.home",
     f"{__spec__.parent}.convert",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, ClassVar, Final
 
 from platformdirs import user_config_dir
 
-from virtualenv.util.path import user_dir
+from virtualenv.util.home import user_dir
 
 from .convert import convert
 

@@ -1567,6 +1567,72 @@ def test_migrated_cache_closes_writable_descendants(tmp_path: Path, mocker: Mock
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize(("old_mode", "expected"), [(0o755, 0o700), (0o2775, 0o2770)])
+def test_config_migration_closes_cache_before_move(
+    tmp_path: Path, mocker: MockerFixture, old_mode: int, expected: int
+) -> None:
+    old_dir = tmp_path / "private" / "virtualenv"
+    wheel_dir = old_dir / "wheel"
+    wheel_dir.mkdir(parents=True)
+    old_dir.parent.chmod(0o700)
+    old_dir.chmod(old_mode)
+    wheel_dir.chmod(0o775)
+    (old_dir / "virtualenv.ini").touch()
+    new_dir = tmp_path / "cache" / "virtualenv"
+    new_dir.parent.mkdir(mode=0o755)
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    move = shutil.move
+
+    def check_mode(source: str, target: str) -> str:
+        assert new_dir.stat().st_mode & 0o7777 == expected
+        return move(source, target)
+
+    mocker.patch("virtualenv.app_data.cache_migration.shutil.move", autospec=True, side_effect=check_mode)
+
+    make_app_data(None, read_only=False, env={})
+
+    assert (new_dir.stat().st_mode & 0o7777, wheel_dir.exists(), (old_dir / "virtualenv.ini").exists()) == (
+        expected,
+        False,
+        True,
+    )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize(("source_mode", "expected"), [(0o755, 0o700), (0o2775, 0o2770)])
+def test_linked_config_retry_closes_cache_before_copy(
+    tmp_path: Path, mocker: MockerFixture, source_mode: int, expected: int
+) -> None:
+    source = tmp_path / "private" / "virtualenv"
+    wheel_dir = source / "wheel"
+    wheel_dir.mkdir(parents=True)
+    source.parent.chmod(0o700)
+    source.chmod(source_mode)
+    (source / "virtualenv.ini").touch()
+    (wheel_dir / "pip.whl").write_bytes(b"wheel")
+    old_dir = tmp_path / "legacy"
+    old_dir.symlink_to(source, target_is_directory=True)
+    new_dir = tmp_path / "cache" / "virtualenv"
+    new_dir.mkdir(parents=True)
+    new_dir.chmod(0o755)
+    (new_dir / ".virtualenv-migration-incomplete").touch()
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
+    copy2 = shutil.copy2
+
+    def check_mode(source_path: str, target_path: str) -> str:
+        assert new_dir.stat().st_mode & 0o7777 == expected
+        return copy2(source_path, target_path)
+
+    mocker.patch("virtualenv.app_data.cache_migration.shutil.copy2", autospec=True, side_effect=check_mode)
+
+    make_app_data(None, read_only=False, env={})
+
+    assert (new_dir.stat().st_mode & 0o7777, (new_dir / "wheel/pip.whl").read_bytes()) == (expected, b"wheel")
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 def test_cross_device_cache_copy_keeps_target_private_during_copy(tmp_path: Path, mocker: MockerFixture) -> None:
     old_dir = tmp_path / "private" / "virtualenv"
     old_dir.mkdir(parents=True)
