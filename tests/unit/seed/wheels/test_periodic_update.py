@@ -11,7 +11,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from http.client import HTTPException
-from io import StringIO
+from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
@@ -581,9 +581,9 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     pypi_release = json.dumps({"releases": releases})
 
     @contextmanager
-    def _release(url: str, *, timeout: int, context: None) -> Generator[StringIO, None, None]:
+    def _release(url: str, *, timeout: int, context: None) -> Generator[BytesIO, None, None]:
         assert (url, timeout, context) == ("https://pypi.org/pypi/pip/json", 15, None)
-        yield StringIO(pypi_release)
+        yield BytesIO(pypi_release.encode())
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release, autospec=True)
 
@@ -688,13 +688,13 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", "1")
 
     @contextmanager
-    def _release(url: str, *, timeout: int, context: SSLContext | None) -> Generator[StringIO, None, None]:
+    def _release(url: str, *, timeout: int, context: SSLContext | None) -> Generator[BytesIO, None, None]:
         assert (url, timeout) == ("https://pypi.org/pypi/pip/json", 15)
         if context is None:
             msg = "insecure"
             raise URLError(msg)
         assert context
-        yield StringIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}))
+        yield BytesIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}).encode())
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release, autospec=True)
 
@@ -704,6 +704,19 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     assert url_o.call_count == 2
     assert "insecure" in caplog.text
     assert " failed " in caplog.text
+
+
+def test_pypi_metadata_read_has_total_deadline(mocker: MockerFixture, caplog: pytest.LogCaptureFixture) -> None:
+    class DrippingResponse(BytesIO):
+        def read1(self, _size: int = -1) -> bytes:
+            return super().read(1)
+
+    body = json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}).encode()
+    mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=DrippingResponse(body), autospec=True)
+    mocker.patch("virtualenv.seed.wheels.periodic_update.monotonic", side_effect=[0, 1, 61], autospec=True)
+
+    assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
+    assert "reading https://pypi.org/pypi/pip/json took longer than 60 seconds" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -762,7 +775,9 @@ def test_verify_wheel_digest_matches(tmp_path, mocker) -> None:
 
 def _pypi_release_response(mocker, filename, digests, version="20.1"):
     body = json.dumps({"releases": {version: [{"filename": filename, "digests": digests}]}})
-    return mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body), autospec=True)
+    return mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.urlopen", return_value=BytesIO(body.encode()), autospec=True
+    )
 
 
 def test_verify_wheel_digest_mismatch(tmp_path, mocker) -> None:
@@ -812,7 +827,7 @@ def test_verify_wheel_digest_recovers_on_retry(tmp_path, mocker) -> None:
     body = json.dumps({"releases": {"20.1": [{"filename": wheel.name, "digests": {"sha256": "0" * 64}}]}})
     mocker.patch(
         "virtualenv.seed.wheels.periodic_update.urlopen",
-        side_effect=[URLError("offline"), StringIO(body)],
+        side_effect=[URLError("offline"), BytesIO(body.encode())],
         autospec=True,
     )
 

@@ -36,14 +36,14 @@ import ssl
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
-from http.client import HTTPException
+from http.client import HTTPException, HTTPResponse
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
 from subprocess import DEVNULL, Popen
 from textwrap import dedent, indent
 from threading import Thread
-from time import sleep
+from time import monotonic, sleep
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -523,11 +523,22 @@ def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | No
     try:
         # url is a fixed https://pypi.org address, not user input
         with urlopen(url, timeout=15, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
-            return json.load(file_handler)
+            return _read_pypi_json(file_handler, url)
     except URLError as exception:
         # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
+
+
+def _read_pypi_json(file_handler: HTTPResponse, url: str) -> _PyPIJson:
+    # the socket timeout bounds each read, so a trickling response needs an overall deadline
+    deadline, chunks = monotonic() + 60, []
+    while chunk := file_handler.read1(65536):
+        if monotonic() > deadline:
+            msg = f"reading {url} took longer than 60 seconds"
+            raise TimeoutError(msg)
+        chunks.append(chunk)
+    return json.loads(b"".join(chunks))
 
 
 class UnverifiedWheelError(RuntimeError):
