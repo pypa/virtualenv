@@ -317,39 +317,50 @@ def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding:
 
 @_NEEDS_XONSH
 @pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
-def test_xonsh_refuses_destination_the_codec_cannot_round_trip(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh
+def test_xonsh_keeps_active_environment_when_destination_cannot_round_trip(
+    tmp_path: Path, xonsh: _Xonsh, big5_locale: dict[str, str]
 ) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
-        _run_xonsh_unrepresentable_path(tmp_path, monkeypatch, xonsh, "VIRTUAL_ENV")
-
-
-def _run_xonsh_unrepresentable_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh, variable: str
-) -> str:
-    big5 = {"LC_ALL": "zh_TW.big5", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
-    if xonsh("import sys\nprint(sys.getfilesystemencoding())", **big5).strip() != "big5":
-        pytest.skip("requires the zh_TW.big5 locale")
-    name = "ぢΑ"
-    destination = tmp_path / (name if variable == "VIRTUAL_ENV" else "env")
-    library = tmp_path / name / "tcl9.0"
-    library.mkdir(parents=True)
-    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", os.fsencode(library))
-    session = cli_run([str(destination), "--no-seed", "--activators", "xonsh"])
-    session.creator.interpreter = copy.copy(session.creator.interpreter)
-    session.creator.interpreter.tcl_lib = str(library)
-    XonshActivator(Namespace(prompt=None)).generate(session.creator)
-    (link := tmp_path / "activate.xsh").symlink_to(session.creator.bin_dir / "activate.xsh")
+    previous = cli_run([str(tmp_path / "previous"), "--no-seed", "--activators", "xonsh"])
+    target = cli_run([str(tmp_path / "ぢΑ"), "--no-seed", "--activators", "xonsh"])
+    (link := tmp_path / "activate.xsh").symlink_to(target.creator.bin_dir / "activate.xsh")
     script = (
-        f"original = __xonsh__.env.pop('TCL_LIBRARY', None)\nsource @({str(link)!a})\n"
-        "print(repr(__xonsh__.env.get('TCL_LIBRARY')))"
+        "import json, subprocess\n"
+        f"source @({str(previous.creator.bin_dir / 'activate.xsh')!a})\n"
+        "try:\n"
+        f"    source @({str(link)!a})\n"
+        "except subprocess.CalledProcessError:\n"
+        "    print(json.dumps([__xonsh__.env.get('VIRTUAL_ENV'), $PATH[0], 'pydoc' in aliases]))\n"
+        "    raise"
     )
-    return xonsh(script, **big5)
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        xonsh(script, **big5_locale)
+    assert "the filesystem codec cannot represent" in error.value.stderr
+    assert json.loads(error.value.stdout) == [str(previous.creator.dest), str(previous.creator.bin_dir), True]
+
+
+@pytest.fixture
+def big5_locale(xonsh: _Xonsh) -> dict[str, str]:
+    env = {"LC_ALL": "zh_TW.big5", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}
+    if xonsh("import sys\nprint(sys.getfilesystemencoding())", **env).strip() != "big5":
+        pytest.skip("requires the zh_TW.big5 locale")
+    return env
 
 
 @_NEEDS_XONSH
 @pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
 def test_xonsh_keeps_library_when_codec_cannot_round_trip(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh, big5_locale: dict[str, str]
 ) -> None:
-    assert _run_xonsh_unrepresentable_path(tmp_path, monkeypatch, xonsh, "TCL_LIBRARY").strip() == "None"
+    library = tmp_path / "ぢΑ" / "tcl9.0"
+    library.mkdir(parents=True)
+    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", os.fsencode(library))
+    session = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    session.creator.interpreter = copy.copy(session.creator.interpreter)
+    session.creator.interpreter.tcl_lib = str(library)
+    XonshActivator(Namespace(prompt=None)).generate(session.creator)
+    script = (
+        "original = __xonsh__.env.pop('TCL_LIBRARY', None)\n"
+        f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\n"
+        "print(repr(__xonsh__.env.get('TCL_LIBRARY')))"
+    )
+    assert xonsh(script, **big5_locale).strip() == "None"

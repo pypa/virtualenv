@@ -72,6 +72,9 @@ class _VirtualEnvActivator:
     def activate(self):
         from os.path import join, basename
 
+        if hasattr(__xonsh__.xontrib, "virtualenv"):
+            __xonsh__.xontrib.virtualenv.deactivate(["nondestructive"])
+        __xonsh__.xontrib.virtualenv = self
         aliases["deactivate"] = self.deactivate
         self.deactivate(["nondestructive"])  # wipe any stale state from a prior activation
 
@@ -110,7 +113,4 @@ class _VirtualEnvActivator:
 
 if not hasattr(__xonsh__, "xontrib"):
     __xonsh__.xontrib = __xonsh__.imp.types.SimpleNamespace()
-if hasattr(__xonsh__.xontrib, "virtualenv"):
-    __xonsh__.xontrib.virtualenv.deactivate(["nondestructive"])
-__xonsh__.xontrib.virtualenv = _VirtualEnvActivator()
-__xonsh__.xontrib.virtualenv.activate()
+_VirtualEnvActivator().activate()
