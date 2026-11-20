@@ -907,6 +907,54 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.parametrize(
+    "alias",
+    [
+        "python",
+        pytest.param(
+            "𝜋thon",
+            id="pi",
+            marks=pytest.mark.skipif(
+                sys.version_info[:2] != (3, 14) or IS_PYPY or sys.getfilesystemencoding() != "utf-8",
+                reason="CPython 3.14 creates this alias on UTF-8 filesystems",
+            ),
+        ),
+    ],
+)
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str) -> None:
+    dest: Final = tmp_path / "env"
+    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    stale: Final = dest / "stale"
+    stale.write_bytes(b"stale")
+    stale.replace(dest / "bin" / alias)
+
+    cli_run(command)
+
+    assert subprocess.check_output([str(dest / "bin" / alias), "-c", "print(1)"], text=True).strip() == "1"
+
+
+@pytest.mark.skipif(
+    IS_WIN or IS_GRAALPY or is_macos_brew(_CURRENT) or is_mac_os_framework(_CURRENT),
+    reason="requires a POSIX copy-based standard library creator",
+)
+@pytest.mark.skipif(sys.version_info[:2] == (3, 14), reason="CPython 3.14 creates this alias")
+def test_venv_creator_keeps_unrelated_pi_file(tmp_path: Path) -> None:
+    dest: Final = tmp_path / "env"
+    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    alias: Final = dest / "bin/𝜋thon"
+    alias.write_bytes(b"custom")
+
+    cli_run(command)
+
+    assert alias.read_bytes() == b"custom"
+
+
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
 def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
     args: Final = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
