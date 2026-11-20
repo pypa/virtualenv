@@ -1723,6 +1723,98 @@ def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
     assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
 
 
+@_SKIP_WITHOUT_PYTHON39
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires a newer target")
+def test_newer_interpreter_skips_retained_distutils_hook(tmp_path: Path) -> None:
+    legacy: Final[Session] = cli_run([str(tmp_path / "legacy"), "--python", "python3.9", "--no-seed"])
+    current: Final[Session] = cli_run([str(tmp_path / "current"), "--no-seed"])
+    result: Final[str] = subprocess.check_output(
+        [
+            str(current.creator.exe),
+            "-I",
+            "-c",
+            dedent("""\
+                import site
+                import sys
+                site.addsitedir(sys.argv[1])
+                finders = {type(item).__module__ for item in sys.meta_path}
+                print("_virtualenv" in sys.modules, "_virtualenv" in finders)
+                """),
+            str(legacy.creator.purelib),
+        ],
+        encoding="utf-8",
+    )
+    assert result.strip() == "True False"
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text("[install]\ninstall_purelib = elsewhere\n", encoding="utf-8")
+    malformed: Final[Path] = tmp_path / "malformed.cfg"
+    malformed.write_text("[metadata]\nname = café\n", encoding="latin-1")
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                try:
+                    distribution.parse_config_files(sys.argv[1:])
+                except UnicodeDecodeError:
+                    print(sorted(distribution.get_option_dict("install")))
+                """),
+            str(settings),
+            str(malformed),
+        ],
+        encoding="utf-8",
+        env={**os.environ, "PYTHONUTF8": "1"},
+    )
+    assert result.strip() == "[]"
+
+
+@pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
+@pytest.mark.parametrize(
+    ("command", "option"),
+    [
+        pytest.param("install", "install_lib", id="install_lib"),
+        pytest.param("install", "exec_prefix", id="exec_prefix"),
+        pytest.param("install", "install_base", id="install_base"),
+        pytest.param("install", "install_platbase", id="install_platbase"),
+        pytest.param("install_lib", "install_dir", id="install_lib_dir"),
+        pytest.param("install_scripts", "install_dir", id="install_scripts_dir"),
+        pytest.param("install_headers", "install_dir", id="install_headers_dir"),
+        pytest.param("install_data", "install_dir", id="install_data_dir"),
+        pytest.param("install_egg_info", "install_dir", id="install_egg_info_dir"),
+    ],
+)
+def test_distutils_filters_install_destination(tmp_path: Path, command: str, option: str) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
+    settings: Final[Path] = tmp_path / "settings.cfg"
+    settings.write_text(f"[{command}]\n{option} = elsewhere\n", encoding="utf-8")
+
+    result: Final[str] = subprocess.check_output(
+        [
+            str(session.creator.exe),
+            "-c",
+            dedent("""\
+                import sys
+                from distutils.dist import Distribution
+                distribution = Distribution()
+                distribution.parse_config_files(sys.argv[2:])
+                print(sorted(distribution.get_option_dict(sys.argv[1])))
+                """),
+            command,
+            str(settings),
+        ],
+        encoding="utf-8",
+    )
+    assert result.strip() == "[]"
+
+
 @pytest.mark.skipif(is_macos_brew(_CURRENT), reason="no copy on brew")
 @pytest.mark.skip(reason="https://github.com/pypa/setuptools/issues/4640")
 def test_zip_importer_can_import_setuptools(tmp_path) -> None:
