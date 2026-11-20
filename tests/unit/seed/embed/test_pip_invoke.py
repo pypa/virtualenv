@@ -89,6 +89,52 @@ def test_pip_reseed_replaces_nested_link(
     assert (entry.exists(), entry.is_symlink()) == (True, False)
 
 
+@pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX listing permissions that root bypasses")
+@pytest.mark.parametrize("folder", [pytest.param("", id="package"), pytest.param("_vendor", id="nested")])
+def test_pip_reseed_rejects_unlistable_folder(prepared_pip_session: Session, tmp_path: Path, folder: str) -> None:
+    unlistable: Final[Path] = prepared_pip_session.creator.purelib / "pip" / folder
+    unlistable.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (unlistable / "_internal").symlink_to(outside, target_is_directory=True)
+    unlistable.chmod(0o300)
+    try:
+        with pytest.raises(PermissionError):
+            prepared_pip_session.seeder.run(prepared_pip_session.creator)
+    finally:
+        unlistable.chmod(0o700)
+    assert list(outside.iterdir()) == []
+
+
+def test_pip_reseed_detaches_hardlinked_metadata(prepared_pip_session: Session, tmp_path: Path) -> None:
+    version: Final[str] = prepared_pip_session.creator.interpreter.version_release_str
+    metadata: Final[Path] = (
+        prepared_pip_session.creator.purelib / f"pip-{get_embed_wheel('pip', version).version}.dist-info"
+    )
+    metadata.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "notes.txt"
+    outside.write_text("original\n", encoding="utf-8")
+    os.link(outside, metadata / "REQUESTED")
+
+    prepared_pip_session.seeder.run(prepared_pip_session.creator)
+
+    assert outside.read_text(encoding="utf-8") == "original\n"
+
+
+@pytest.fixture
+def prepared_pip_session(tmp_path: Path) -> Session:
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ])
+    session.creator.run()
+    return session
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
     launcher: Final[Path] = linked_seed.creator.script_dir / _LAUNCHER_NAME

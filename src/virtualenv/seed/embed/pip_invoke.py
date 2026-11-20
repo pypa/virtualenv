@@ -30,7 +30,7 @@ from contextlib import contextmanager
 from importlib.metadata import distributions
 from pathlib import Path
 from shutil import copyfile
-from stat import S_IMODE
+from stat import S_IMODE, S_ISLNK, S_ISREG
 from subprocess import Popen
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
@@ -148,10 +148,18 @@ class PipInvoke(BaseEmbed):
         if path.is_symlink():
             path.unlink()
         elif path.is_dir():
-            for root, dirs, files in os.walk(path, followlinks=False):
+            for root, dirs, files in os.walk(path, onerror=PipInvoke._raise_walk_error, followlinks=False):
                 for name in [*dirs, *files]:
-                    if (entry := Path(root) / name).is_symlink():
+                    entry: Final[Path] = Path(root) / name
+                    info: Final[os.stat_result] = entry.lstat()
+                    if S_ISLNK(info.st_mode) or (S_ISREG(info.st_mode) and info.st_nlink > 1):
                         entry.unlink()
+                        if name in dirs:
+                            dirs.remove(name)
+
+    @staticmethod
+    def _raise_walk_error(error: OSError) -> None:
+        raise error
 
     def _detach_entry_points(self, creator: Creator, content: str) -> None:
         entries: Final[EntryPointConfig] = EntryPointConfig(interpolation=None, strict=False)
