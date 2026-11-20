@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "concurrent.futures",
+    "functools",
     "pathlib",
     "subprocess",
     "threading",
@@ -16,10 +18,12 @@ __lazy_modules__ = [
 import logging
 import sys
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
-from threading import Lock, Thread
+from threading import Event, Lock
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
@@ -31,7 +35,7 @@ from .pip_install.symlink import SymlinkPipInstall
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator, Iterable
 
     from python_discovery import PythonInfo
 
@@ -120,11 +124,7 @@ class FromAppData(BaseEmbed):
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
-            threads = [Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items()]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
+            _run_workers(partial(_install, name, wheel) for name, wheel in name_to_whl.items())
             if exceptions:
                 messages = [f"failed to build image {', '.join(exceptions.keys())} because:"]
                 for value in exceptions.values():
@@ -134,7 +134,7 @@ class FromAppData(BaseEmbed):
 
     @contextmanager
     # the wheel lookup and its image build share one context, splitting it passes the lock around
-    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
+    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:
         name_to_whl, lock, fail = {}, Lock(), {}
 
         def _get(distribution: str, version: str | None) -> None:
@@ -177,14 +177,9 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
-        threads = [
-            Thread(target=_get, args=(distribution, version))
-            for distribution, version in self.distribution_to_versions().items()
-        ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        _run_workers(
+            partial(_get, distribution, version) for distribution, version in self.distribution_to_versions().items()
+        )
         if fail:
             msg = f"seed failed due to failing to download wheels {', '.join(fail.keys())}"
             raise RuntimeError(msg)
@@ -207,6 +202,61 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
     with parent.non_reentrant_lock_for_key(name):
         if not installer.has_image():
             installer.build_image()
+
+
+def _run_workers(work: Iterable[Callable[[], None]]) -> None:
+    with ThreadPoolExecutor() as executor:
+        workers: list[_SeedWorker] = []
+        interrupted = False
+        try:
+            for task in work:
+                worker = _SeedWorker(task)
+                workers.append(worker)
+                _submit_or_run(executor, worker)
+        except KeyboardInterrupt:
+            interrupted = True
+        finally:
+            index = 0 if interrupted else len(workers)
+            while True:
+                index, interrupted_now = _finish_workers(executor, workers, index)
+                interrupted |= interrupted_now
+                if index is None:
+                    break
+        if interrupted:
+            raise KeyboardInterrupt
+
+
+class _SeedWorker:
+    def __init__(self, work: Callable[[], None]) -> None:
+        self.work = work
+        self.done = Event()
+        self._claimed = Lock()
+
+    def __call__(self) -> None:
+        if self._claimed.acquire(blocking=False):
+            try:
+                self.work()
+            finally:
+                self.done.set()
+
+
+def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
+    try:
+        executor.submit(worker)
+    except RuntimeError:
+        worker()
+
+
+def _finish_workers(executor: ThreadPoolExecutor, workers: list[_SeedWorker], index: int) -> tuple[int | None, bool]:
+    try:
+        if index < len(workers):
+            _submit_or_run(executor, workers[index])
+            return index + 1, False
+        for worker in workers:
+            worker.done.wait()
+    except KeyboardInterrupt:
+        return index, True
+    return None, False
 
 
 __all__ = [
