@@ -50,6 +50,31 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
     assert exe_ref.src.stat.call_count == 1
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits")
+@pytest.mark.parametrize(
+    ("mask", "expected"),
+    [
+        pytest.param(0o022, 0o755, id="normal"),
+        pytest.param(0o027, 0o750, id="no-other"),
+        pytest.param(0o077, 0o700, id="private"),
+        pytest.param(0o011, 0o744, id="read-without-execute"),
+    ],
+)
+def test_copied_executables_keep_umask(tmp_path: Path, mask: int, expected: int) -> None:
+    source = tmp_path / "source"
+    source.write_bytes(b"interpreter")
+    source.chmod(0o755)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    ref = ExePathRefToDest(source, targets=["python", "python3"], dest=lambda _creator, _src: bin_dir / "python")
+    previous = os.umask(mask)
+    try:
+        ref.run(object(), symlinks=False)
+    finally:
+        os.umask(previous)
+    assert [(bin_dir / name).stat().st_mode & 0o777 for name in ("python", "python3")] == [expected, expected]
+
+
 @pytest.fixture
 def creator_meta(mocker: MockerFixture) -> Callable[[PathRef], BuiltinViaGlobalRefMeta]:
     # Force symlink support on, otherwise a host without it starts with symlink_error already set.
