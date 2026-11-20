@@ -236,6 +236,79 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
         data.close()
 
 
+@pytest.mark.parametrize(
+    "no_home",
+    [
+        pytest.param("~/.cache/virtualenv", id="unexpanded"),
+        pytest.param(RuntimeError("no home directory"), id="unavailable"),
+    ],
+)
+def test_app_data_without_home_uses_temporary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, no_home: str | RuntimeError
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, side_effect=[no_home])
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value="~/.local/share/virtualenv"
+    )
+
+    data = make_app_data(None, read_only=False, env={})
+    try:
+        assert (isinstance(data, TempAppData), (tmp_path / "~/.cache/virtualenv").exists()) == (True, False)
+    finally:
+        data.close()
+
+
+@pytest.mark.parametrize(
+    "no_home",
+    [
+        pytest.param("~/.local/share/virtualenv", id="unexpanded"),
+        pytest.param(RuntimeError("no home directory"), id="unavailable"),
+    ],
+)
+def test_app_data_does_not_migrate_without_old_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, no_home: str | RuntimeError
+) -> None:
+    old_dir = tmp_path / "~/.local/share/virtualenv"
+    old_dir.mkdir(parents=True)
+    (old_dir / "marker").write_text("old", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    new_dir = tmp_path / "cache/virtualenv"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, side_effect=[no_home])
+
+    data = make_app_data(None, read_only=False, env={})
+
+    assert (str(data), (old_dir / "marker").read_text(encoding="utf-8"), (new_dir / "marker").exists()) == (
+        str(new_dir),
+        "old",
+        False,
+    )
+
+
+def test_app_data_read_only_without_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value="~/.cache/virtualenv"
+    )
+
+    with pytest.raises(RuntimeError, match="read-only app data requires a cache path when no home directory exists"):
+        make_app_data(None, read_only=True, env={})
+    assert not (tmp_path / "~/.cache/virtualenv").exists()
+
+
+def test_app_data_explicit_without_home(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, side_effect=RuntimeError("no home")
+    )
+
+    data = make_app_data(None, read_only=False, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(tmp_path / "cache")})
+
+    assert str(data) == str(tmp_path / "cache")
+
+
 @pytest.fixture
 def app_data_default(tmp_path: Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)  # a blank override resolved to the working directory, so keep that inside tmp_path

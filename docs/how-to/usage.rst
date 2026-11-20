@@ -240,6 +240,9 @@ The configuration file is named ``virtualenv.ini`` and located in the platformdi
 
 Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
 
+If the process has neither ``HOME`` nor a passwd entry, there is no default configuration file. Set
+``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
+
 Configuration format
 ====================
 
@@ -294,6 +297,10 @@ Use ``--app-data`` for an explicit cache location:
 An empty or whitespace-only ``--app-data`` value is an error, as is a whitespace-only ``VIRTUALENV_APP_DATA``. Check
 shell variables before using ``--app-data "$CACHE"``, especially with ``--reset-app-data``, which deletes the selected
 cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DATA`` is treated as unset.
+
+When no default cache path is available, virtualenv uses temporary app-data and removes it after the run. Set
+``VIRTUALENV_OVERRIDE_APP_DATA`` or ``--app-data`` to use a persistent cache. ``--read-only-app-data`` needs an explicit
+cache path in this case.
 
 Allow unverified HTTPS for periodic updates
 ===========================================
