@@ -187,6 +187,12 @@ if ($VenvDir) {
 if ($VenvDir.Contains([string][IO.Path]::PathSeparator)) {
     throw "Environment directory '$VenvDir' contains the PATH separator."
 }
+if ([IO.Path]::PathSeparator -eq ':' -and $VenvDir.Contains('%')) {
+    $PathOption = $VenvDir.Substring($VenvDir.IndexOf('%') + 1)
+    if ($PathOption.StartsWith('func') -or $PathOption.StartsWith('builtin')) {
+        throw "Environment directory '$VenvDir' contains a shell PATH option."
+    }
+}
 
 $pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
 
