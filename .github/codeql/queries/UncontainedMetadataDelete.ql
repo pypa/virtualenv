@@ -3,7 +3,7 @@
  * @description A line read from package metadata (top_level.txt, RECORD) is joined onto a directory and the result is
  *              deleted without first checking that it resolves inside the environment, so a crafted entry such as
  *              ../../home removes files outside it. The query accepts a delete only on the branch where a
- *              `root in path.parents` (or `not in`) comparison shows the path is inside.
+ *              `root in path.parents` (or `not in`) comparison checks the path handed to deletion.
  * @kind path-problem
  * @problem.severity error
  * @security-severity 7.5
@@ -46,15 +46,25 @@ module UncontainedMetadataDeleteConfig implements DataFlow::ConfigSig {
       nodeFrom.asCfgNode() = slash.getRight() and
       nodeTo.asCfgNode() = slash
     )
+    or
+    // Resolving a metadata path keeps it attacker-controlled.
+    exists(DataFlow::MethodCallNode resolve |
+      resolve.getMethodName() = "resolve" and
+      nodeFrom = resolve.getObject() and
+      nodeTo = resolve
+    )
   }
 
   predicate isBarrier(DataFlow::Node node) {
     exists(
-      ConditionBlock guard, CompareNode check, Cmpop op, ControlFlowNode parents, boolean inside
+      ConditionBlock guard, CompareNode check, Cmpop op, ControlFlowNode parents, DataFlow::Node checked,
+      boolean inside
     |
       guard.getLastNode() = check and
       check.operands(_, op, parents) and
       parents.(AttrNode).getName() = "parents" and
+      checked.asCfgNode() = parents.(AttrNode).getObject() and
+      DataFlow::localFlow(checked, node) and
       (
         op.getSymbol() = "in" and inside = true
         or
