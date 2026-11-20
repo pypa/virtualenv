@@ -207,12 +207,12 @@ class Creator(ABC):
                 values: str | Sequence[str] | None,
                 option_string: str | None = None,
             ) -> None:
-                raw: Final = cast("str", values)
+                raw: Final[str] = cast("str", values)
                 try:
                     namespace.dest = cls.validate_dest(raw)
                 except ArgumentTypeError as exception:
                     parser.error(f"argument {option_string or self.dest}: {exception}")
-                destination: Final = Path(os.path.abspath(raw))
+                destination: Final[Path] = Path(os.path.abspath(raw))
                 namespace.dest_is_link = destination.is_symlink() or (
                     os.name == "nt"
                     and destination.exists()

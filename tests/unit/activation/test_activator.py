@@ -11,6 +11,7 @@ from virtualenv.info import IS_PYPY
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from subprocess import CompletedProcess
 
 
 @pytest.mark.graalpy
@@ -35,8 +36,10 @@ def test_activator_prompt_cwd(monkeypatch, tmp_path) -> None:
 )
 def test_activator_prompt_stays_data(tmp_path: Path, case: tuple[str, str, str, str]) -> None:
     shell, state, action, payload = case
-    prompt: Final = SHELLS[shell].payloads[payload]
-    result: Final = run_prompt(shell, generate_script(shell, tmp_path / "env", prompt), state, action, tmp_path)
+    prompt: Final[str] = SHELLS[shell].payloads[payload]
+    result: Final[CompletedProcess[str]] = run_prompt(
+        shell, generate_script(shell, tmp_path / "env", prompt), state, action, tmp_path
+    )
 
     assert ((tmp_path / "PWNED").exists(), prompt_shown(shell, result, prompt, state, action)) == (False, True), (
         result.stdout + result.stderr

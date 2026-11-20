@@ -57,7 +57,7 @@ def test_fish_restores_pythonhome(tmp_path: Path, original: str) -> None:
     ],
 )
 def test_fish_quote_preserves_literal(value: str) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [_FISH, "--no-config"],
         input=f"printf '%s' {FishActivator.quote(value)}\n",
         capture_output=True,
@@ -80,7 +80,7 @@ def _fish_3_with_gbk_locale() -> bool:
 @pytest.mark.skipif(IS_WIN or not _fish_3_with_gbk_locale(), reason="needs fish 3 and the zh_CN.gbk locale")
 @pytest.mark.parametrize("value", [pytest.param("中's", id="apostrophe"), pytest.param("中\\path", id="backslash")])
 def test_fish_quote_preserves_legacy_locale_bytes(value: str) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[bytes]] = subprocess.run(
         [_FISH, "--no-config"],
         input=f"printf '%s' {FishActivator.quote(value)}\n".encode(),
         env={**os.environ, "LC_ALL": "zh_CN.gbk"},

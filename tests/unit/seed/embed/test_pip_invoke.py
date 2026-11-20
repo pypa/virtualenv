@@ -19,7 +19,7 @@ from virtualenv.util.path import safe_delete
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from virtualenv.run.session import Session
 
@@ -28,9 +28,9 @@ _LAUNCHER_NAME: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_keeps_shared_image(linked_seed: Session) -> None:
-    package: Final = linked_seed.creator.purelib / "pip"
-    image: Final = package.resolve().parent
-    before: Final = {
+    package: Final[Path] = linked_seed.creator.purelib / "pip"
+    image: Final[Path] = package.resolve().parent
+    before: Final[dict[str, tuple[bytes, int]]] = {
         str(path.relative_to(image)): (path.read_bytes(), path.stat().st_mode)
         for path in image.rglob("*")
         if path.is_file()
@@ -46,7 +46,7 @@ def test_pip_reseed_keeps_shared_image(linked_seed: Session) -> None:
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_installs_local_package(linked_seed: Session) -> None:
     cli_run([str(linked_seed.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [str(linked_seed.creator.exe), "-I", "-m", "pip", "--version"],
         capture_output=True,
         text=True,
@@ -59,7 +59,7 @@ def test_pip_reseed_installs_local_package(linked_seed: Session) -> None:
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_keeps_unrelated_launcher(linked_seed: Session) -> None:
-    unrelated: Final = linked_seed.creator.script_dir / "unrelated-tool"
+    unrelated: Final[Path] = linked_seed.creator.script_dir / "unrelated-tool"
     unrelated.symlink_to(linked_seed.creator.dest / "missing-tool")
     cli_run([str(linked_seed.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
     assert (unrelated.is_symlink(), unrelated.exists()) == (True, False)
@@ -76,13 +76,13 @@ def test_pip_reseed_keeps_unrelated_launcher(linked_seed: Session) -> None:
 def test_pip_reseed_replaces_nested_link(
     linked_seed: Session, name: str, directory: bool, remove: Callable[[Path], object]
 ) -> None:
-    package: Final = linked_seed.creator.purelib / "pip"
-    source: Final = package.resolve()
+    package: Final[Path] = linked_seed.creator.purelib / "pip"
+    source: Final[Path] = package.resolve()
     package.unlink()
     copytree(source, package)
     for path in filter(Path.is_file, package.rglob("*")):
         path.chmod(0o600)
-    entry: Final = package / name
+    entry: Final[Path] = package / name
     remove(entry)
     entry.symlink_to(source / name, target_is_directory=directory)
     cli_run([str(linked_seed.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
@@ -91,9 +91,9 @@ def test_pip_reseed_replaces_nested_link(
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
-    launcher: Final = linked_seed.creator.script_dir / _LAUNCHER_NAME
+    launcher: Final[Path] = linked_seed.creator.script_dir / _LAUNCHER_NAME
     launcher.unlink()
-    missing: Final = linked_seed.creator.dest / "missing-launcher"
+    missing: Final[Path] = linked_seed.creator.dest / "missing-launcher"
     launcher.symlink_to(missing)
     cli_run([str(linked_seed.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
     assert (launcher.is_file(), launcher.is_symlink(), missing.exists()) == (True, False, False)
@@ -130,7 +130,7 @@ def test_pip_reseed_rejects_invalid_wheel_names(tmp_path: Path, invalid: str, me
 
 
 def test_pip_reseed_reports_process_failure(tmp_path: Path, mocker: MockerFixture) -> None:
-    process: Final = mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True)
+    process: Final[MockType] = mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True)
     process.return_value.configure_mock(returncode=7)
     with pytest.raises(RuntimeError, match="failed seed with code 7"):
         cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
@@ -164,7 +164,7 @@ def test_pip_invoke_uses_selected_wheel(
     (tmp_path / "pip").mkdir()
     (tmp_path / "pip" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
     monkeypatch.chdir(tmp_path)
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         str(tmp_path / "env"),
         "--creator",
         current_fastest,
@@ -174,7 +174,7 @@ def test_pip_invoke_uses_selected_wheel(
         "embed",
         "--no-periodic-update",
     ])
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [str(session.creator.exe), "-I", "-m", "pip", "--version"],
         capture_output=True,
         text=True,
@@ -195,7 +195,7 @@ def test_pip_invoke_uses_selected_wheel(
 def test_base_bootstrap_via_pip_invoke(
     tmp_path: Path, current_fastest: str, excluded: list[str], expected: set[str]
 ) -> None:
-    command: Final = [
+    command: Final[list[str]] = [
         "--seeder",
         "pip",
         str(tmp_path / "env"),
@@ -208,12 +208,12 @@ def test_base_bootstrap_via_pip_invoke(
         "embed",
         "--no-periodic-update",
     ]
-    session: Final = cli_run([*command, *excluded])
+    session: Final[Session] = cli_run([*command, *excluded])
     assert {path.name for path in session.creator.purelib.iterdir()} & {"pip", "setuptools"} == expected
 
 
 def test_pip_invoke_runs_pip_for_environment_python(tmp_path: Path, mocker: MockerFixture) -> None:
-    session: Final = session_via_cli([
+    session: Final[Session] = session_via_cli([
         str(tmp_path / "env"),
         "--seeder",
         "pip",
@@ -222,9 +222,9 @@ def test_pip_invoke_runs_pip_for_environment_python(tmp_path: Path, mocker: Mock
     ])
     session.creator.run()
     # no other interpreter is needed: report a version whose bundled pip differs from the one of this interpreter
-    target: Final = {MIN: MAX}.get(session.creator.interpreter.version_release_str, MIN)
+    target: Final[str] = {MIN: MAX}.get(session.creator.interpreter.version_release_str, MIN)
     mocker.patch.object(PythonInfo, "version_release_str", new_callable=mocker.PropertyMock, return_value=target)
-    process: Final = mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True)
+    process: Final[MockType] = mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True)
     process.return_value.configure_mock(returncode=0)
 
     session.seeder.run(session.creator)
@@ -247,7 +247,7 @@ def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:
 
 @pytest.mark.usefixtures("_no_coverage")
 def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         str(tmp_path / "env"),
         "--seeder",
         "pip",
@@ -256,22 +256,22 @@ def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
         "--no-setuptools",
         "--no-periodic-update",
     ])
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [str(session.creator.exe), "-I", "-m", "pip", "freeze", "--all"],
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=True,
     )
-    version: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").version
+    version: Final[str] = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").version
     assert f"pip=={version}" in result.stdout.splitlines()
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires two compatible bundled pip versions")
 def test_pip_reseed_removes_previous_version_metadata(tmp_path: Path) -> None:
-    old: Final = BUNDLE_SUPPORT["3.9"]["pip"].split("-")[1]
-    session: Final = cli_run([
+    old: Final[str] = BUNDLE_SUPPORT["3.9"]["pip"].split("-")[1]
+    session: Final[Session] = cli_run([
         str(tmp_path / "env"),
         "--pip",
         old,
@@ -283,7 +283,7 @@ def test_pip_reseed_removes_previous_version_metadata(tmp_path: Path) -> None:
         str(tmp_path / "cache"),
     ])
     cli_run([str(session.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
-    expected: Final = BUNDLE_SUPPORT[f"{sys.version_info.major}.{sys.version_info.minor}"]["pip"].split("-")[1]
+    expected: Final[str] = BUNDLE_SUPPORT[f"{sys.version_info.major}.{sys.version_info.minor}"]["pip"].split("-")[1]
     assert sorted(entry.name for entry in session.creator.purelib.glob("pip-*.dist-info")) == [
         f"pip-{expected}.dist-info",
     ]

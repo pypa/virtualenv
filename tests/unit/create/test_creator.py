@@ -62,7 +62,7 @@ _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 def test_clear_rejects_linked_destination(
     linked_destination: Path, args: list[str], clear_env: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    marker: Final = linked_destination / "keep.txt"
+    marker: Final[Path] = linked_destination / "keep.txt"
     marker.write_text("keep", encoding="utf-8")
     with pytest.raises(SystemExit) as context:
         cli_run(
@@ -79,9 +79,9 @@ def test_clear_rejects_linked_destination(
 
 @pytest.mark.skipif(not IS_WIN, reason="requires Windows junctions")
 def test_clear_rejects_junction(tmp_path: Path) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
-    junction: Final = tmp_path / "junction"
+    junction: Final[Path] = tmp_path / "junction"
     subprocess.run(["cmd", "/c", "mklink", "/J", str(junction), str(target)], check=True, capture_output=True)
     with pytest.raises(SystemExit) as context:
         session_via_cli([str(junction), "--clear", "--no-seed"])
@@ -90,7 +90,7 @@ def test_clear_rejects_junction(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_create_linked_destination_without_clear(linked_destination: Path) -> None:
-    session: Final = cli_run([str(linked_destination), "--no-seed"])
+    session: Final[Session] = cli_run([str(linked_destination), "--no-seed"])
     assert (
         session.creator.dest,
         linked_destination.is_symlink(),
@@ -100,9 +100,9 @@ def test_create_linked_destination_without_clear(linked_destination: Path) -> No
 
 @pytest.fixture
 def linked_destination(tmp_path: Path) -> Path:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
-    link: Final = tmp_path / "link"
+    link: Final[Path] = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
     return link
 
@@ -113,13 +113,13 @@ def linked_destination(tmp_path: Path) -> Path:
     [pytest.param("target", id="direct"), pytest.param("parent/target", id="linked-parent")],
 )
 def test_clear_direct_destination(tmp_path: Path, destination: str) -> None:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
-    marker: Final = target / "old.txt"
+    marker: Final[Path] = target / "old.txt"
     marker.write_text("old", encoding="utf-8")
-    link: Final = tmp_path / "parent"
+    link: Final[Path] = tmp_path / "parent"
     link.symlink_to(tmp_path, target_is_directory=True)
-    session: Final = cli_run([str(tmp_path / destination), "--clear", "--no-seed"])
+    session: Final[Session] = cli_run([str(tmp_path / destination), "--clear", "--no-seed"])
     assert (session.creator.dest, marker.exists(), (target / "pyvenv.cfg").is_file()) == (target.resolve(), False, True)
 
 
@@ -163,7 +163,7 @@ def test_creator_replaces_generated_file_links(
     link_to: str,
     generated: _GeneratedFile,
 ) -> None:
-    command: Final = [
+    command: Final[list[str]] = [
         str(tmp_path / "env"),
         "--creator",
         creator_name,
@@ -172,16 +172,16 @@ def test_creator_replaces_generated_file_links(
         "--no-periodic-update",
         *generated.extra_args,
     ]
-    session: Final = session_via_cli(command)
+    session: Final[Session] = session_via_cli(command)
     session.creator.bin_dir.mkdir(parents=True)
-    target: Final = session.creator.dest / "original"
+    target: Final[Path] = session.creator.dest / "original"
     target.write_bytes(b"original")
-    path: Final = generated.folder(session.creator) / generated.name
+    path: Final[Path] = generated.folder(session.creator) / generated.name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.symlink_to(session.creator.dest / link_to)
     with session:
         session.run()
-    kept: Final = link_to == "original" and (
+    kept: Final[bool] = link_to == "original" and (
         generated.name == "CACHEDIR.TAG" or (generated.name == ".gitignore" and creator_name == "builtin")
     )
     assert path.is_symlink() is kept
@@ -189,7 +189,13 @@ def test_creator_replaces_generated_file_links(
 
 
 def test_venv_rejects_executable_directory_that_is_a_file(tmp_path: Path) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+    ])
     session.creator.dest.mkdir()
     session.creator.bin_dir.write_bytes(b"file")
     with pytest.raises(NotADirectoryError, match="environment directory is not a real directory"):
@@ -198,9 +204,15 @@ def test_venv_rejects_executable_directory_that_is_a_file(tmp_path: Path) -> Non
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires directory symlinks")
 def test_venv_prepares_real_executable_directory_over_symlink(tmp_path: Path) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+    ])
     session.creator.dest.mkdir()
-    target: Final = session.creator.dest / "empty"
+    target: Final[Path] = session.creator.dest / "empty"
     target.mkdir()
     session.creator.bin_dir.symlink_to(target, target_is_directory=True)
     session.run()
@@ -209,7 +221,13 @@ def test_venv_prepares_real_executable_directory_over_symlink(tmp_path: Path) ->
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires directory symlinks")
 def test_venv_prepares_real_executable_directory_over_dangling_symlink(tmp_path: Path) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+    ])
     session.creator.dest.mkdir()
     session.creator.bin_dir.symlink_to(session.creator.dest / "empty", target_is_directory=True)
     session.run()
@@ -218,9 +236,15 @@ def test_venv_prepares_real_executable_directory_over_dangling_symlink(tmp_path:
 
 @pytest.mark.skipif(not IS_WIN, reason="requires Windows junctions")
 def test_venv_prepares_real_executable_directory_over_junction(tmp_path: Path) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+    ])
     session.creator.dest.mkdir()
-    target: Final = session.creator.dest / "empty"
+    target: Final[Path] = session.creator.dest / "empty"
     target.mkdir()
     subprocess.run(
         ["cmd", "/c", "mklink", "/J", str(session.creator.bin_dir), str(target)],
@@ -251,7 +275,7 @@ def _non_success_exit_code(capsys, target):
 
 
 def test_resolved_destination_rejects_path_separator(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    parent: Final = tmp_path / f"parent{os.pathsep}directory"
+    parent: Final[Path] = tmp_path / f"parent{os.pathsep}directory"
     parent.mkdir()
     monkeypatch.chdir(parent)
     with pytest.raises(ArgumentTypeError, match="must not contain the path separator"):
@@ -260,7 +284,7 @@ def test_resolved_destination_rejects_path_separator(tmp_path: Path, monkeypatch
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires directory symlinks")
 def test_symlinked_destination_rejects_path_separator(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    parent: Final = tmp_path / f"parent{os.pathsep}directory"
+    parent: Final[Path] = tmp_path / f"parent{os.pathsep}directory"
     parent.mkdir()
     (tmp_path / "link").symlink_to(parent, target_is_directory=True)
     monkeypatch.chdir(tmp_path)
@@ -382,7 +406,7 @@ def test_blank_destination_leaves_working_directory(
 
 def test_dot_destination_is_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
-    session: Final = session_via_cli([".", "--clear", "--no-seed"])
+    session: Final[Session] = session_via_cli([".", "--clear", "--no-seed"])
     assert (session.creator.dest, session.creator.clear) == (tmp_path.resolve(), True)
 
 
@@ -430,7 +454,7 @@ _CURRENT_CREATORS: Final[list[str]] = [
     ],
 )
 def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.CaptureFixture[str], boundary: str) -> None:
-    destination: Final = tmp_path / f"project{boundary}name"
+    destination: Final[Path] = tmp_path / f"project{boundary}name"
     with pytest.raises(SystemExit) as context:
         cli_run([str(destination), "--creator", "venv", "--no-seed"])
     assert context.value.code == 2
@@ -440,7 +464,7 @@ def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.Captu
 
 @pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
 def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
-    session: Final = cli_run([str(tmp_path / "environment"), "--creator", "venv", "--no-seed"])
+    session: Final[Session] = cli_run([str(tmp_path / "environment"), "--creator", "venv", "--no-seed"])
     assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
@@ -480,11 +504,13 @@ def _make_junction(link: Path, stored: Path) -> None:
 def test_creator_replaces_directory_links(
     tmp_path: Path, creator_name: str, folder: str, make_link: Callable[[Path, Path], None]
 ) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", creator_name, "--no-seed"])
+    session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--creator", creator_name, "--no-seed"])
     session.creator.dest.mkdir()
-    stored: Final = session.creator.dest / "stored"
+    stored: Final[Path] = session.creator.dest / "stored"
     stored.mkdir()
-    link: Final = session.creator.dest / getattr(session.creator, folder).relative_to(session.creator.dest).parts[0]
+    link: Final[Path] = (
+        session.creator.dest / getattr(session.creator, folder).relative_to(session.creator.dest).parts[0]
+    )
     make_link(link, stored)
     with session:
         session.run()
@@ -616,7 +642,7 @@ def _bin_exes(creator_key: str) -> tuple[str, ...]:
     not (IS_WIN and _CURRENT.implementation == "CPython"), reason="pythonw is a Windows CPython launcher"
 )
 def test_create_ships_pythonw(tmp_path: Path) -> None:
-    creator: Final = cli_run([str(tmp_path / "env"), "--without-pip", "--activators", ""]).creator
+    creator: Final[Creator] = cli_run([str(tmp_path / "env"), "--without-pip", "--activators", ""]).creator
     assert (creator.exe.parent / "pythonw.exe").read_bytes() != creator.exe.read_bytes()
 
 
@@ -668,18 +694,21 @@ def test_create_vcs_ignore_exists_override(tmp_path) -> None:
 def test_venv_configuration_uses_selected_options(
     tmp_path: Path, site_args: list[str], include_system_site: str
 ) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed", *site_args])
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed", *site_args])
     session.creator.pyenv_cfg.path.write_text("vendor-marker = unused\n", encoding="utf-8")
     session.creator.set_pyenv_cfg()
-    expected: Final = {"vendor-marker": None, "include-system-site-packages": include_system_site}
+    expected: Final[dict[str, str | None]] = {
+        "vendor-marker": None,
+        "include-system-site-packages": include_system_site,
+    }
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
 
 
 @pytest.mark.skipif(not IS_GRAALPY, reason="GraalPy records its launcher and base executable in pyvenv.cfg")
 def test_venv_configuration_records_graalpy_executable(tmp_path: Path) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed"])
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed"])
     session.creator.set_pyenv_cfg()
-    executable: Final = session.creator.interpreter.system_exe
+    executable: Final[str] = session.creator.interpreter.system_exe
     assert (
         session.creator.pyenv_cfg.content.get("venvlauncher_command"),
         session.creator.pyenv_cfg.content.get("base-executable"),
@@ -692,9 +721,9 @@ def test_venv_configuration_records_graalpy_executable(tmp_path: Path) -> None:
     reason="stdlib creator requires symlinks on this runtime",
 )
 def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
+    args: Final[list[str]] = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
     cli_run([*args, "--symlinks"])
-    session: Final = cli_run([*args, "--copies"])
+    session: Final[Session] = cli_run([*args, "--copies"])
     assert (session.creator.exe.is_file(), session.creator.exe.resolve().parent) == (
         True,
         session.creator.bin_dir.resolve(),
@@ -706,7 +735,7 @@ def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: py
     (tmp_path / "venv").mkdir()
     (tmp_path / "venv" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
     monkeypatch.chdir(tmp_path)
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         "-p",
         str(_CURRENT.executable),
         str(tmp_path / "env"),
@@ -743,9 +772,16 @@ _HARD_LINKED_NAMES: Final[tuple[str, ...]] = (
     ],
 )
 def test_venv_replaces_hard_linked_files(tmp_path: Path, mode: str) -> None:
-    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators=", mode])
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+        mode,
+    ])
     session.creator.bin_dir.mkdir(parents=True)
-    planted: Final = [
+    planted: Final[list[Path]] = [
         session.creator.dest / "pyvenv.cfg",
         *(session.creator.bin_dir / name for name in _HARD_LINKED_NAMES),
     ]
@@ -908,8 +944,8 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
 
 @pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
 def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
-    executables: Final = list(cli_run(args).creator.bin_dir.iterdir())
+    args: Final[list[str]] = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
+    executables: Final[list[Path]] = list(cli_run(args).creator.bin_dir.iterdir())
     for path in executables:
         path.chmod(S_IREAD)
 
@@ -1081,7 +1117,7 @@ def test_zip_importer_can_import_setuptools(tmp_path) -> None:
             base = root[len(lib) :].lstrip(os.pathsep)
             for file in (name for name in files if not name.startswith("_virtualenv")):
                 zip_handler.write(filename=os.path.join(root, file), arcname=os.path.join(base, file))
-    unwanted: Final = [
+    unwanted: Final[list[Path]] = [
         folder for folder in result.creator.purelib.iterdir() if not folder.name.startswith("_virtualenv")
     ]
     for folder in (path for path in unwanted if path.is_dir()):
@@ -1205,10 +1241,10 @@ def test_debug_bad_virtualenv(tmp_path) -> None:
 
 
 def test_debug_ignores_python_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    extra: Final = tmp_path / "extra"
+    extra: Final[Path] = tmp_path / "extra"
     extra.mkdir()
     monkeypatch.setenv("PYTHONPATH", str(extra))
-    session: Final = cli_run([str(tmp_path / "venv"), "--without-pip", "--activators", ""])
+    session: Final[Session] = cli_run([str(tmp_path / "venv"), "--without-pip", "--activators", ""])
     assert str(extra) not in session.creator.debug["sys"]["path"]
 
 
@@ -1468,8 +1504,8 @@ def test_pyenv_cfg_from_folder_skips_non_entries(tmp_path: Path, text: str, expe
     [pytest.param("read", id="read"), pytest.param("write", id="write"), pytest.param("refresh", id="refresh")],
 )
 def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None:
-    config: Final = PyEnvCfg(OrderedDict(), tmp_path)
-    action: Final = {
+    config: Final[PyEnvCfg] = PyEnvCfg(OrderedDict(), tmp_path)
+    action: Final[Callable[[], PyEnvCfg | OrderedDict[str, str] | None]] = {
         "read": partial(PyEnvCfg.from_file, tmp_path),
         "write": config.write,
         "refresh": config.refresh,
@@ -1480,8 +1516,8 @@ def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None
 
 @pytest.fixture
 def latin1_locale() -> str:
-    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
-    names: Final = [name for name in locales if name.lower() == "aa_dj.iso88591"]
+    locales: Final[list[str]] = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    names: Final[list[str]] = [name for name in locales if name.lower() == "aa_dj.iso88591"]
     if not names:
         pytest.skip("Latin-1 locale is unavailable")
     return names[0]
@@ -1490,9 +1526,9 @@ def latin1_locale() -> str:
 @pytest.mark.skipif(IS_WIN, reason="POSIX locales")
 @pytest.mark.usefixtures("_no_coverage")
 def test_default_activators_allow_legacy_locale(tmp_path: Path, latin1_locale: str) -> None:
-    parent: Final = os.fsencode(tmp_path) + b"/calf\xe9"
+    parent: Final[bytes] = os.fsencode(tmp_path) + b"/calf\xe9"
     os.mkdir(parent)
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[bytes]] = subprocess.run(
         [sys.executable, "-m", "virtualenv", "env", "--no-seed"],
         cwd=parent,
         env={**os.environ, "LC_ALL": latin1_locale, "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
@@ -1505,7 +1541,7 @@ def test_default_activators_allow_legacy_locale(tmp_path: Path, latin1_locale: s
 
 
 def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
-    config: Final = PyEnvCfg(OrderedDict({"prompt": "\udcff"}), tmp_path / "pyvenv.cfg")
+    config: Final[PyEnvCfg] = PyEnvCfg(OrderedDict({"prompt": "\udcff"}), tmp_path / "pyvenv.cfg")
     config.path.write_bytes(b"home = original\n")
     with pytest.raises(UnicodeEncodeError):
         config.write()

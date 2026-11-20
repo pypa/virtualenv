@@ -37,7 +37,7 @@ def main() -> None:
 
 def describes_archive(pyz: Path) -> list[str]:
     # python-sbom archive --embed writes it at the archive root, next to the zipapp's __main__.py
-    sbom: Final = "virtualenv.pyz.cdx.json"
+    sbom: Final[str] = "virtualenv.pyz.cdx.json"
     with zipfile.ZipFile(pyz) as archive:
         document = json.loads(archive.read(sbom))
         contents: Final[dict[str, str]] = {

@@ -75,7 +75,7 @@ class Wheel:
         """
         # https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
         # {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
-        min_parts: Final = 5
+        min_parts: Final[int] = 5
         if path.suffix == ".whl" and len(path.stem.split("-")) >= min_parts:
             return cls(path)
         return None

@@ -62,10 +62,10 @@ def test_download_ini_and_env_var(
     config: Final[Path] = tmp_path / "virtualenv.ini"
     config.write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
     # the test suite sets VIRTUALENV_NO_DOWNLOAD for every test, so start from an environment without it
-    env: Final = {key: value for key, value in os.environ.items() if key != "VIRTUALENV_NO_DOWNLOAD"}
-    options: Final = VirtualEnvOptions()
+    env: Final[dict[str, str]] = {key: value for key, value in os.environ.items() if key != "VIRTUALENV_NO_DOWNLOAD"}
+    options: Final[VirtualEnvOptions] = VirtualEnvOptions()
 
-    session: Final = session_via_cli(
+    session: Final[Session] = session_via_cli(
         [str(tmp_path / "env")],
         options=options,
         setup_logging=False,
