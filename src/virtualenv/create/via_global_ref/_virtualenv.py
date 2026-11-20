@@ -26,28 +26,35 @@ def patch_dist(dist: types.ModuleType) -> None:
     # matches the untyped distutils parse_config_files override it replaces
     def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[imprecise-annotation]  # distutils signature
         try:
-            return old_parse_config_files(self, *args, **kwargs)
-        finally:
-            # Distutils can leave options from earlier files in place when parsing fails.
-            install = self.get_option_dict("install")
-            if "prefix" in install:
-                install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-            destinations: Final[tuple[str, ...]] = (
-                "install_lib",
-                "install_purelib",
-                "install_platlib",
-                "install_headers",
-                "install_scripts",
-                "install_data",
-            )
-            for key in ("exec_prefix", "install_base", "install_platbase", *destinations):
-                install.pop(key, None)
-            # A subcommand's install_dir takes precedence over the environment's prefix.
-            for command in (*destinations, "install_egg_info"):
-                if (options := self.command_options.get(command)) is not None:
-                    options.pop("install_dir", None)
+            result = old_parse_config_files(self, *args, **kwargs)
+        except UnicodeDecodeError:
+            # Distutils keeps options from files it decoded before the error.
+            _filter_install_paths(self.command_options)
+            raise
+        _filter_install_paths(self.command_options)
+        return result
 
     dist.Distribution.parse_config_files = parse_config_files
+
+
+def _filter_install_paths(command_options: dict[str, dict[str, tuple[str, str]]]) -> None:
+    install: Final[dict[str, tuple[str, str]]] = command_options.setdefault("install", {})
+    if "prefix" in install:
+        install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
+    destinations: Final[tuple[str, ...]] = (
+        "install_lib",
+        "install_purelib",
+        "install_platlib",
+        "install_headers",
+        "install_scripts",
+        "install_data",
+    )
+    for key in ("exec_prefix", "install_base", "install_platbase", *destinations):
+        install.pop(key, None)
+    # A subcommand's install_dir takes precedence over the environment's prefix.
+    for command in (*destinations, "install_egg_info"):
+        if (options := command_options.get(command)) is not None:
+            options.pop("install_dir", None)
 
 
 # Import hook that patches some modules to ignore configuration values that break package installation in case
@@ -133,4 +140,6 @@ class _Finder:
                 patch_dist(module)
 
 
-sys.meta_path.insert(0, _Finder())
+# A newer interpreter can still load a .pth file retained from a Python 3.9 environment.
+if sys.version_info < (3, 10):
+    sys.meta_path.insert(0, _Finder())

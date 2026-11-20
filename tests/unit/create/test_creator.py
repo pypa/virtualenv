@@ -1103,6 +1103,30 @@ def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
     assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
 
 
+@_SKIP_WITHOUT_PYTHON39
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires a newer target")
+def test_newer_interpreter_skips_retained_distutils_hook(tmp_path: Path) -> None:
+    legacy: Final[Session] = cli_run([str(tmp_path / "legacy"), "--python", "python3.9", "--no-seed"])
+    current: Final[Session] = cli_run([str(tmp_path / "current"), "--no-seed"])
+    result: Final[str] = subprocess.check_output(
+        [
+            str(current.creator.exe),
+            "-I",
+            "-c",
+            dedent("""\
+                import site
+                import sys
+                site.addsitedir(sys.argv[1])
+                finders = {type(item).__module__ for item in sys.meta_path}
+                print("_virtualenv" in sys.modules, "_virtualenv" in finders)
+                """),
+            str(legacy.creator.purelib),
+        ],
+        encoding="utf-8",
+    )
+    assert result.strip() == "True False"
+
+
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
 def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
     session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
