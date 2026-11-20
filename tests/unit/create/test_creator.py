@@ -1382,6 +1382,18 @@ def test_debug_ignores_python_path(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     assert str(extra) not in session.creator.debug["sys"]["path"]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="PYTHONSAFEPATH is new in Python 3.11")
+def test_debug_ignores_safe_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PYTHONSAFEPATH", "1")
+    session: Final[Session] = cli_run([str(tmp_path / "venv"), "--without-pip", "--activators", ""])
+    debug_path: Final[list[str | None]] = session.creator.debug["sys"]["path"]
+    monkeypatch.delenv("PYTHONSAFEPATH")
+    code = "import json, sys; print(json.dumps(sys.path[1:]))"
+    real_path: Final[list[str]] = json.loads(subprocess.check_output([str(session.creator.exe), "-c", code], text=True))
+
+    assert debug_path == real_path
+
+
 @pytest.mark.parametrize("missing", ["site", "datetime", "math"])
 def test_debug_reports_missing_target_module(
     missing: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
