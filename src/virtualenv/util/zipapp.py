@@ -2,17 +2,24 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "pathlib",
+    "shutil",
     "typing",
+    "uuid",
     "virtualenv.info",
+    "virtualenv.util.path.windows",
     "zipfile",
 ]
 
 import logging
+import os
+import shutil
 import zipfile
 from pathlib import Path
 from typing import Final
+from uuid import uuid4
 
 from virtualenv.info import ROOT
+from virtualenv.util.path.windows import windows_extended_path
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
@@ -57,8 +64,19 @@ def extract(full_path: str | Path, dest: Path) -> None:
     sub_file = _get_path_within_zip(full_path)
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
-        info.filename = dest.name
-        zip_file.extract(info, str(dest.parent))
+        if os.name == "nt":
+            dest = Path(windows_extended_path(str(dest)))
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        temp = dest.with_name(f".{dest.name}.{uuid4().hex}.tmp")
+        output = temp.open("xb")
+        try:
+            with output, zip_file.open(info) as source:
+                shutil.copyfileobj(source, output)
+                output.flush()
+                os.fsync(output.fileno())
+            os.replace(temp, dest)
+        finally:
+            temp.unlink(missing_ok=True)
 
 
 __all__ = [
