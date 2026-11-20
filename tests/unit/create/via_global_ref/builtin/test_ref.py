@@ -64,7 +64,9 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
         pytest.param(
             0o177,
             0o700,
-            marks=pytest.mark.skipif(sys.platform != "linux", reason="Linux default ACL detection"),
+            marks=pytest.mark.skipif(
+                sys.platform != "linux" or not hasattr(os, "getxattr"), reason="Linux default ACL detection"
+            ),
             id="owner-execute-masked",
         ),
     ],

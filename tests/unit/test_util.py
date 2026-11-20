@@ -53,13 +53,13 @@ _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="Linux default ACL detection")
+@pytest.mark.skipif(sys.platform != "linux" or not hasattr(os, "getxattr"), reason="Linux default ACL detection")
 def test_owner_executable_mode_reports_acl_read_error(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         owner_executable_mode(tmp_path / "missing", 0o600)
 
 
-@pytest.mark.skipif(sys.platform == "linux", reason="default ACL lookup unavailable")
+@pytest.mark.skipif(sys.platform == "linux" and hasattr(os, "getxattr"), reason="default ACL lookup available")
 def test_owner_executable_mode_refuses_unverified_acl(tmp_path: Path) -> None:
     with pytest.raises(PermissionError, match=r"owner-executable.*--symlinks"):
         owner_executable_mode(tmp_path, 0o600)
