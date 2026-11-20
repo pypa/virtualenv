@@ -188,6 +188,9 @@ With ``promptvars`` off, bash shows a backslash doubled and a backtick with a le
 escapes the prompt for a later ``shopt -s promptvars``. In posix mode bash shows ``!!`` as ``!``, and under root it
 shows ``#`` for a dollar sign. Zsh shows the prompt as typed under every prompt option.
 
+Bash uses POSIX ``awk`` to escape the prompt. If that command fails, activation reports the failure and leaves the
+prompt unchanged.
+
 .. _programmatic-activation:
 
 Programmatic activation
