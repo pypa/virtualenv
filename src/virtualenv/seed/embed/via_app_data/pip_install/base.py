@@ -130,8 +130,9 @@ class PipInstall(ABC):
             junction: Final[bool] = (
                 os.name == "nt"
                 and not linked
-                and bool(entry.lstat().st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT)
-                and entry.is_dir()
+                and stat.S_ISDIR((info := entry.lstat()).st_mode)
+                # Windows name-surrogate tags redirect lookup; cloud placeholders keep ordinary directory contents.
+                and bool(info.st_reparse_tag & 0x2000_0000)
             )
             try:
                 # Unlinking a final link leaves its target intact; parent links still affect containment.

@@ -569,6 +569,28 @@ def test_seed_metadata_removes_junction_without_following(tmp_path: Path) -> Non
     assert (link.exists(), (target / "keep.txt").read_text(encoding="utf-8")) == (False, "keep")
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows cloud reparse tags")
+def test_seed_metadata_removes_cloud_directory_contents(tmp_path: Path, mocker: MockerFixture) -> None:
+    dist_info: Final[Path] = tmp_path / "seed-0.dist-info"
+    dist_info.mkdir()
+    cloud: Final[Path] = tmp_path / "cloud"
+    cloud.mkdir()
+    (cloud / "module.py").touch()
+    (dist_info / "RECORD").write_text("cloud,,\n", encoding="utf-8")
+    original_lstat = Path.lstat
+
+    def cloud_lstat(path: Path) -> os.stat_result:
+        info = original_lstat(path)
+        if path == cloud:
+            # IO_REPARSE_TAG_CLOUD has no name-surrogate bit.
+            return os.stat_result(info, {"st_reparse_tag": 0x9000001A, "st_file_attributes": 0x410})
+        return info
+
+    mocker.patch.object(Path, "lstat", side_effect=cloud_lstat, autospec=True)
+    CopyPipInstall._uninstall_dist(dist_info, tmp_path)  # ruff:ignore[private-member-access]  # metadata cleanup
+    assert (cloud.exists(), dist_info.exists()) == (False, False)
+
+
 def test_seed_package_installs_do_not_overlap(tmp_path: Path, mocker: MockerFixture) -> None:
     ready: Final[Barrier] = Barrier(2)
     overlap: Final[Barrier] = Barrier(2)
