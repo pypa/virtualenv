@@ -113,7 +113,7 @@ class PipInstall(ABC):
         top_txt: Final[Path] = dist / "top_level.txt"
         paths: Final[set[Path]] = (
             {dist.parent / i.strip() for i in top_txt.read_text(encoding="utf-8").splitlines()}
-            if top_txt.exists()
+            if PipInstall._is_regular_metadata(top_txt)
             else set()
         )
         paths.add(dist)
@@ -142,9 +142,17 @@ class PipInstall(ABC):
         PipInstall._remove_emptied_folders(paths, dist_base)
 
     @staticmethod
+    def _is_regular_metadata(path: Path) -> bool:
+        if path.is_file():
+            return True
+        if path.exists():
+            LOGGER.warning("skip reading %s: not a regular file", path)
+        return False
+
+    @staticmethod
     def _record_paths(dist: Path, base_dirs: set[Path]) -> set[Path]:
         record: Final[Path] = dist / "RECORD"
-        if not record.exists():
+        if not PipInstall._is_regular_metadata(record):
             return set()
         paths: Final[set[Path]] = set()
         for row in csv.reader(io.StringIO(record.read_bytes().decode("utf-8"), newline="")):
