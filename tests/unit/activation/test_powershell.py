@@ -382,11 +382,11 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
 def test_powershell_rejects_path_separator_in_activation_path(tmp_path: Path, powershell: str) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
-    alias: Final = tmp_path / "alias:qa"
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    alias: Final[Path] = tmp_path / "alias:qa"
     alias.symlink_to(session.creator.dest, target_is_directory=True)
 
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             powershell,
             "-NoProfile",
