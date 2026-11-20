@@ -184,6 +184,16 @@ if ($VenvDir) {
     Write-Verbose "VenvDir=$VenvDir"
 }
 
+if ([IO.Path]::PathSeparator -eq ':' -and $VenvDir.Contains('%')) {
+    $PathOption = $VenvDir.Substring($VenvDir.IndexOf('%') + 1)
+    if (
+        $PathOption.StartsWith('func', [StringComparison]::Ordinal) -or
+        $PathOption.StartsWith('builtin', [StringComparison]::Ordinal)
+    ) {
+        throw "Environment directory '$VenvDir' contains a shell PATH option."
+    }
+}
+
 $pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
 
 if ($Prompt) {

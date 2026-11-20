@@ -258,7 +258,7 @@ class Creator(ABC):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
-        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able.
+        """Not blank, a directory if it exists, safe for activation, valid chars and must be write-able.
 
         :param raw_value: the destination as given on the command line
 
@@ -278,7 +278,7 @@ class Creator(ABC):
             msg = f"the destination {value} already exists and is not a directory"
             raise ArgumentTypeError(msg)
         dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
-        cls._check_path_separator(raw_value, dest)
+        cls._check_activation_path(raw_value, dest)
         cls._ensure_writable(dest)
         return str(dest)
 
@@ -304,14 +304,19 @@ class Creator(ABC):
             raise ArgumentTypeError(msg)
 
     @staticmethod
-    def _check_path_separator(raw_value: str, dest: Path) -> None:
-        for destination in (raw_value, str(dest)):
+    def _check_activation_path(raw_value: str, dest: Path) -> None:
+        resolved = str(dest)
+        for destination in (raw_value, resolved):
             if os.pathsep in destination:
                 msg = (
                     f"destination {destination!r} must not contain the path separator ({os.pathsep})"
                     f" as this would break the activation scripts"
                 )
                 raise ArgumentTypeError(msg)
+        # dash reads the first percent sign in a PATH entry as an option delimiter.
+        if os.pathsep == ":" and resolved.partition("%")[2].startswith(("func", "builtin")):
+            msg = f"destination {resolved!r} must not contain a shell PATH option (%func or %builtin)"
+            raise ArgumentTypeError(msg)
 
     @classmethod
     def _ensure_writable(cls, dest: Path) -> None:

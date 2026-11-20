@@ -355,6 +355,36 @@ def test_bash_relocation_stops_when_unavailable(
     assert result.stdout == f"1|{path}|unset"
 
 
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    ("name", "expected_output", "rejected"),
+    [
+        pytest.param("moved%func", "1|/usr/bin:/bin|unset", True, id="option"),
+        pytest.param("moved%20", "0|{env}/bin:/usr/bin:/bin|{env}", False, id="literal-percent"),
+    ],
+)
+def test_bash_relocation_handles_shell_path_option(
+    tmp_path: Path, moved_bash_activate: Path, name: str, expected_output: str, rejected: bool
+) -> None:
+    relocated: Final[Path] = tmp_path / name
+    moved_bash_activate.parents[1].rename(relocated)
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            _BASH,
+            "-c",
+            '. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${VIRTUAL_ENV-unset}"',
+            "activate",
+            str(relocated / "bin" / "activate"),
+        ],
+        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert (result.stdout, "shell PATH option" in result.stderr) == (expected_output.format(env=relocated), rejected)
+
+
 @pytest.fixture
 def git_bash() -> Path:
     if (git := shutil.which("git")) is None or not (bash := Path(git).parents[1] / "bin" / "bash.exe").exists():

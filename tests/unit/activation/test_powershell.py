@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
@@ -377,6 +377,41 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
             return text.replace('"', '""') if sys.platform == "win32" else text
 
     activation_tester(PowerShell)
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
+@pytest.mark.parametrize(
+    ("alias_name", "returncode"),
+    [
+        pytest.param("alias%func", 1, id="option"),
+        pytest.param("alias%func\u0301", 1, id="combining-mark"),
+        pytest.param("alias%20", 0, id="literal-percent"),
+    ],
+)
+def test_powershell_handles_shell_path_option_in_activation_path(
+    tmp_path: Path, powershell: str, alias_name: str, returncode: int
+) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    alias: Final[Path] = tmp_path / alias_name
+    alias.symlink_to(session.creator.dest, target_is_directory=True)
+
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f". {PowerShellActivator.quote(str(alias / _VENV_BIN_DIR / 'activate.ps1'))}",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, "shell PATH option" in result.stderr) == (returncode, returncode == 1)
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
