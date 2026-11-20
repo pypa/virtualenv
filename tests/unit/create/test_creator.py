@@ -36,6 +36,7 @@ from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
+from virtualenv.create.via_global_ref.venv import Venv
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
@@ -43,6 +44,7 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from types import SimpleNamespace
 
     from pytest_mock import MockerFixture
 
@@ -528,6 +530,71 @@ def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.Captu
 def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
     session: Final[Session] = cli_run([str(tmp_path / "environment"), "--creator", "venv", "--no-seed"])
     assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize(
+    ("activators", "expected"),
+    [
+        pytest.param("", set(), id="none"),
+        pytest.param("fish", {"activate.fish"}, id="fish"),
+        pytest.param("bash,fish", {"activate", "activate.fish"}, id="bash-and-fish"),
+        pytest.param("powershell", {"activate.ps1"}, id="powershell"),
+    ],
+)
+def test_venv_creator_keeps_only_selected_activators(tmp_path: Path, activators: str, expected: set[str]) -> None:
+    session = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators", activators])
+    scripts = {
+        path.name.casefold()
+        for path in session.creator.bin_dir.iterdir()
+        if path.name.casefold().startswith(("activate", "deactivate"))
+    }
+    assert scripts == expected
+
+
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize("inline", [pytest.param(True, id="inline"), pytest.param(False, id="subprocess")])
+def test_venv_creator_discards_read_only_stdlib_script(tmp_path: Path, inline: bool) -> None:
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    creator = session.creator
+    assert isinstance(creator, Venv)
+    creator.can_be_inline = inline
+    creator.bin_dir.mkdir(parents=True)
+    script = creator.bin_dir / "activate"
+    script.write_text("old activator", encoding="utf-8")
+    script.chmod(S_IREAD)
+    with session:
+        session.run()
+    assert not script.exists()
+
+
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+def test_venv_creator_keeps_vendor_templates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import venv  # ruff:ignore[import-outside-top-level]  # optional stdlib module
+
+    templates = tmp_path / "vendor" / "scripts" / "common"
+    (templates / "tools").mkdir(parents=True)
+    (templates / "activate").write_text("stock template", encoding="utf-8")
+    (templates / "tools" / "activate").write_text("__VENV_NAME__", encoding="utf-8")
+
+    def setup_scripts(builder: venv.EnvBuilder, context: SimpleNamespace) -> None:
+        builder.install_scripts(context, str(templates.parent))
+
+    monkeypatch.setattr(venv.EnvBuilder, "setup_scripts", setup_scripts)
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    creator = session.creator
+    assert isinstance(creator, Venv)
+    creator.can_be_inline = True
+    copymode = shutil.copymode
+
+    def concurrent_cleanup(src: str, dst: str, *, follow_symlinks: bool = True) -> None:
+        (creator.bin_dir / "activate").unlink(missing_ok=True)
+        copymode(src, dst, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(shutil, "copymode", concurrent_cleanup)
+    with session:
+        session.run()
+    assert (creator.bin_dir / "tools" / "activate").read_text(encoding="utf-8") == "env"
 
 
 def _make_symlink(link: Path, stored: Path) -> None:

@@ -7,6 +7,7 @@ __lazy_modules__ = [
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
     "virtualenv.util.text",
+    f"{__spec__.parent}._venv_scripts",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.cpython3",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.mac_os",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
@@ -22,10 +23,11 @@ from typing import TYPE_CHECKING, Final
 from python_discovery import PythonInfo
 
 from virtualenv.util.error import ProcessCallFailedError
-from virtualenv.util.path import ensure_within
+from virtualenv.util.path import ensure_within, remove_file
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.text import collapse_line_boundaries
 
+from ._venv_scripts import discard_stdlib_scripts, vendor_templates
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
 from .builtin.cpython.cpython3 import CPython3Posix
@@ -110,16 +112,20 @@ class Venv(ViaGlobalRefApi):
             self.create_inline()
         else:
             self.create_via_sub_process()
+        discard_stdlib_scripts(self.bin_dir, remove_file)
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
 
     def create_inline(self) -> None:
         """Create the environment with the stdlib ``venv`` module imported in this process."""
-        # the stdlib venv module is imported only when this creator runs, to keep startup cheap
+        # Not every interpreter ships the stdlib venv module.
         from venv import EnvBuilder  # ruff:ignore[import-outside-top-level]
 
-        builder = EnvBuilder(
+        class TemplateBuilder(EnvBuilder):
+            install_scripts = vendor_templates(EnvBuilder.install_scripts)
+
+        builder = TemplateBuilder(
             system_site_packages=self.enable_system_site_package,
             clear=False,
             symlinks=self.symlinks,
@@ -150,8 +156,12 @@ class Venv(ViaGlobalRefApi):
             "-c",
             (
                 "import sys; sys.path[:] = [p for p in sys.path if p != '']; "
-                "import runpy; runpy.run_module('venv', run_name='__main__', alter_sys=True)"
+                "import os, runpy, venv; sys.path.insert(0, os.path.dirname(sys.argv.pop(1))); "
+                "from _venv_scripts import vendor_templates; sys.path.pop(0); "
+                "venv.EnvBuilder.install_scripts = vendor_templates(venv.EnvBuilder.install_scripts); "
+                "runpy.run_module('venv', run_name='__main__', alter_sys=True)"
             ),
+            __file__,
             "--without-pip",
         ]
         if self.interpreter.version_info >= (3, 13):
