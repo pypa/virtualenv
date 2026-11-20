@@ -309,9 +309,10 @@ This convention is shared across pyenv, mise, and asdf, so the same resolution l
 Creators are responsible for constructing the virtual environment structure. virtualenv supports two types of creators:
 
 **venv creator**
-    This creator delegates the entire creation process to the standard library's ``venv`` module, following `PEP 405
-    <https://www.python.org/dev/peps/pep-0405/>`_. The venv creator requires spawning a subprocess to invoke the venv
-    module, unless virtualenv is installed in the system Python.
+    This creator delegates environment construction to the standard library's ``venv`` module, following `PEP 405
+    <https://www.python.org/dev/peps/pep-0405/>`_. On POSIX, virtualenv applies the current umask to copied interpreters
+    and limits access to an existing ``bin`` directory while the standard library writes them. The venv creator requires
+    spawning a subprocess to invoke the venv module, unless virtualenv is installed in the system Python.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 
