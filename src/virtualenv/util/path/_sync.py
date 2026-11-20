@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Final
 if os.name == "nt":
     from stat import IO_REPARSE_TAG_MOUNT_POINT
 
-    from ._win import clear_readonly, windows_extended_path
+    from ._win import delete_readonly, windows_extended_path
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -94,7 +94,7 @@ def write_file(path: Path, data: bytes) -> None:
 
 
 def remove_file(path: Path) -> None:
-    """Remove a file, clearing its read-only flag on Windows when that blocks the removal.
+    """Remove a file, retrying read-only deletion on Windows when needed.
 
     :param path: the file to remove
 
@@ -105,8 +105,7 @@ def remove_file(path: Path) -> None:
         # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
         if os.name != "nt" or path.is_symlink():
             raise
-        clear_readonly(str(path))
-        path.unlink()
+        delete_readonly(str(path))
 
 
 def symlink(src: Path, dest: Path) -> None:
@@ -136,7 +135,7 @@ def _ensure_safe_to_do(src: Path, dest: Path) -> None:
 
 
 def safe_delete(dest: Path) -> None:
-    """Delete a file or folder tree, clearing read-only flags where needed.
+    """Delete a file or folder tree, retrying read-only entries on Windows.
 
     :param dest: the path to delete
 
@@ -149,8 +148,7 @@ def safe_delete(dest: Path) -> None:
         # POSIX deletion depends on the parent directory, so changing the entry's mode cannot help.
         if os.name != "nt" or func not in {os.unlink, os.rmdir} or os.path.islink(path) or os.access(path, os.W_OK):
             raise exc
-        clear_readonly(path)
-        func(path)
+        delete_readonly(path)
 
     target = windows_extended_path(str(dest)) if os.name == "nt" else str(dest)
     if sys.version_info >= (3, 12):

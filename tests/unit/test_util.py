@@ -491,6 +491,99 @@ def test_write_file_replaces_read_only_file(tmp_path: Path) -> None:
     assert path.read_bytes() == b"generated"
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+def test_write_file_keeps_hard_linked_file_read_only(tmp_path: Path) -> None:
+    (source := tmp_path / "source").write_bytes(b"previous")
+    os.link(source, path := tmp_path / "generated")
+    source.chmod(S_IREAD)
+    write_file(path, b"generated")
+    assert (source.read_bytes(), bool(source.stat().st_file_attributes & 1), path.read_bytes()) == (
+        b"previous",
+        True,
+        b"generated",
+    )
+
+
+@pytest.fixture
+def legacy_windows_delete(mocker: MockerFixture) -> None:
+    kernel: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+    native_set: Final[Callable[[int, int, ctypes.c_void_p, int], int]] = kernel.SetFileInformationByHandle
+
+    def set_info(handle: int, info_class: int, info: ctypes.c_void_p, size: int) -> int:
+        if info_class == 21:
+            ctypes.set_last_error(87)
+            return 0
+        return native_set(handle, info_class, info, size)
+
+    mocker.patch.object(kernel, "SetFileInformationByHandle", autospec=True, side_effect=set_info)
+    mocker.patch("ctypes.WinDLL", autospec=True, return_value=kernel)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+@pytest.mark.usefixtures("legacy_windows_delete")
+def test_write_file_replaces_read_only_file_without_disposition_ex(tmp_path: Path) -> None:
+    (path := tmp_path / "generated").write_bytes(b"previous")
+    path.chmod(S_IREAD)
+    write_file(path, b"generated")
+    assert path.read_bytes() == b"generated"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+@pytest.mark.usefixtures("legacy_windows_delete")
+def test_write_file_refuses_hard_link_without_disposition_ex(tmp_path: Path) -> None:
+    (source := tmp_path / "source").write_bytes(b"previous")
+    os.link(source, path := tmp_path / "generated")
+    source.chmod(S_IREAD)
+    with pytest.raises(OSError, match="cannot delete read-only hard link"):
+        write_file(path, b"generated")
+    assert (source.read_bytes(), path.read_bytes(), bool(source.stat().st_file_attributes & 1)) == (
+        b"previous",
+        b"previous",
+        True,
+    )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+@pytest.mark.parametrize(
+    "failure",
+    [
+        pytest.param("standard", id="read-link-count"),
+        pytest.param("basic", id="clear-attribute"),
+        pytest.param("disposition", id="mark-for-deletion"),
+    ],
+)
+def test_legacy_delete_reports_errors_without_changing_read_only_file(
+    tmp_path: Path, mocker: MockerFixture, failure: str
+) -> None:
+    kernel: Final[ctypes.CDLL] = ctypes.WinDLL("kernel32", use_last_error=True)
+    native_get: Final[Callable[[int, int, ctypes.c_void_p, int], int]] = kernel.GetFileInformationByHandleEx
+    native_set: Final[Callable[[int, int, ctypes.c_void_p, int], int]] = kernel.SetFileInformationByHandle
+
+    def get_info(handle: int, info_class: int, info: ctypes.c_void_p, size: int) -> int:
+        if failure == "standard" and info_class == 1:
+            ctypes.set_last_error(5)
+            return 0
+        return native_get(handle, info_class, info, size)
+
+    def set_info(handle: int, info_class: int, info: ctypes.c_void_p, size: int) -> int:
+        if info_class == 21:
+            ctypes.set_last_error(87)
+            return 0
+        if (failure == "basic" and info_class == 0) or (failure == "disposition" and info_class == 4):
+            ctypes.set_last_error(5)
+            return 0
+        return native_set(handle, info_class, info, size)
+
+    mocker.patch.object(kernel, "GetFileInformationByHandleEx", autospec=True, side_effect=get_info)
+    mocker.patch.object(kernel, "SetFileInformationByHandle", autospec=True, side_effect=set_info)
+    mocker.patch("ctypes.WinDLL", autospec=True, return_value=kernel)
+    (path := tmp_path / "generated").write_bytes(b"previous")
+    path.chmod(S_IREAD)
+    with pytest.raises(PermissionError, match="WinError 5"):
+        write_file(path, b"generated")
+    assert (path.read_bytes(), bool(path.stat().st_file_attributes & 1)) == (b"previous", True)
+
+
 @pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX deletion permissions that root bypasses")
 def test_write_file_reports_read_only_directory(tmp_path: Path) -> None:
     (folder := tmp_path / "locked").mkdir()
@@ -592,6 +685,20 @@ def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
     safe_delete(target)
 
     assert not target.exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+def test_safe_delete_keeps_hard_linked_file_read_only(tmp_path: Path) -> None:
+    (source := tmp_path / "source").write_bytes(b"previous")
+    (folder := tmp_path / "folder").mkdir()
+    os.link(source, folder / "linked")
+    source.chmod(S_IREAD)
+    safe_delete(folder)
+    assert (folder.exists(), source.read_bytes(), bool(source.stat().st_file_attributes & 1)) == (
+        False,
+        b"previous",
+        True,
+    )
 
 
 def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
