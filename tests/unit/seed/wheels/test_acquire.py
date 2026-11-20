@@ -180,10 +180,10 @@ def test_pip_helper_omits_current_directory_at_startup(session_app_data: AppData
             "TEST_LINECACHE": str(Path(sysconfig.get_path("stdlib")) / "linecache.py"),
         },
     )
+    # The tox Python loads coverage code before the helper source.
     result = subprocess.run(
         [
-            Path(sys.base_prefix if os.name == "nt" else sysconfig.get_config_var("BINDIR"))
-            / Path(sys.executable).name,
+            sys._base_executable,  # ruff: ignore[private-member-access]  # Homebrew lacks BINDIR/python
             "-c",
             PIP_RUN,
             "--version",
