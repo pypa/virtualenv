@@ -5,6 +5,12 @@
 set newline='\
 '
 
+# History substitution precedes quote parsing, and the generated literals escape only its default character.
+if ($?histchars) then
+    set _virtualenv_histchars="$histchars:q"
+    unset histchars
+endif
+
 # Undo an activation that is still in effect, otherwise its values get saved as the ones to restore
 if ($?_OLD_VIRTUAL_PATH) source __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
 
@@ -96,5 +102,10 @@ alias pydoc python -m pydoc
 # quotes cannot nest around a path that itself needed single-quoting
 set deactivate_script = __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
 alias deactivate 'source "$deactivate_script:q"'
+
+if ($?_virtualenv_histchars) then
+    set histchars="$_virtualenv_histchars:q"
+    unset _virtualenv_histchars
+endif
 
 rehash
