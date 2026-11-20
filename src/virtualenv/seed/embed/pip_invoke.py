@@ -76,7 +76,10 @@ class PipInvoke(BaseEmbed):
         with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
             self._detach_links(creator)
             # pip runs under the interpreter of the environment, so it must be a pip that supports that version
-            self._execute(cmd, pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env, for_py_version))
+            env = pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env, for_py_version)
+            env.pop("PIP_FIND_LINKS", None)
+            env["PIP_CONFIG_FILE"] = os.devnull
+            self._execute(cmd, env)
         if os.name == "posix":
             self._rewrite_launchers(creator)
 
