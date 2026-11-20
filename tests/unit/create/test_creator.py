@@ -1067,15 +1067,18 @@ def test_copy_rejects_dangling_sibling_lib(tmp_path: Path, creator: str) -> None
     reason="requires a POSIX CPython 3.14+ copy creator with symlinks",
 )
 @pytest.mark.parametrize("creator", ["builtin", "venv"])
+@pytest.mark.parametrize("target", ["link", "link/../safe"])
 def test_copy_rejects_replaceable_link_in_sibling_target(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, creator: str, target: str
 ) -> None:
     with tempfile.TemporaryDirectory() as folder:
         shared = Path(folder)
         shared.chmod(0o1770)
+        (shared / "child").mkdir()
+        (shared / "safe").mkdir()
         link = shared / "link"
-        link.symlink_to(Path("/usr/lib"))
-        (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(link)
+        link.symlink_to(shared / "child")
+        (tmp_path / Path(_CURRENT.system_stdlib).parent.name).symlink_to(shared / target)
         original_lstat = Path.lstat
 
         def attacker_owned_link(path: Path) -> os.stat_result:

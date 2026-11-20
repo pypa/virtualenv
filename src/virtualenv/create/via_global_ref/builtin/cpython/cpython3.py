@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "collections",
     "fnmatch",
     "operator",
     "pathlib",
@@ -12,6 +13,7 @@ __lazy_modules__ = [
 import abc
 import fnmatch
 import os
+from collections import deque
 from operator import methodcaller as method
 from pathlib import Path
 from stat import S_ISLNK, S_ISVTX, S_IWGRP, S_IWOTH
@@ -129,30 +131,32 @@ class CPython3Posix(CPythonPosix, CPython3):
 
     @staticmethod
     def _resolve_candidate_lib(lib_dir: Path) -> Path:
-        candidate = lib_dir
+        candidate = Path(lib_dir.anchor)
+        remaining = deque(lib_dir.parts[1:])
         seen: set[Path] = set()
-        while True:
-            for path in reversed((candidate, *candidate.parents)):
-                try:
-                    path_stat = path.lstat()
-                except FileNotFoundError:
-                    return candidate
-                if not S_ISLNK(path_stat.st_mode):
-                    continue
-                if path in seen:
-                    msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
-                    raise ValueError(msg)
-                seen.add(path)
-                CPython3Posix._check_replaceable_link(path, path_stat)
-                target = path.readlink()
-                candidate = Path(
-                    os.path.abspath(
-                        (target if target.is_absolute() else path.parent / target) / candidate.relative_to(path)
-                    )
-                )
-                break
-            else:
-                return candidate
+        while remaining:
+            part = remaining.popleft()
+            # Resolve each link before "..", matching filesystem lookup order.
+            if part == "..":
+                candidate = candidate.parent
+                continue
+            candidate /= part
+            try:
+                path_stat = candidate.lstat()
+            except FileNotFoundError:
+                return candidate.joinpath(*remaining)
+            if not S_ISLNK(path_stat.st_mode):
+                continue
+            if candidate in seen:
+                msg = f"copied Python library has an unsafe standard-library search path: {lib_dir}"
+                raise ValueError(msg)
+            seen.add(candidate)
+            CPython3Posix._check_replaceable_link(candidate, path_stat)
+            target = candidate.readlink()
+            absolute_target = target.is_absolute()
+            candidate = Path(target.anchor) if absolute_target else candidate.parent
+            remaining = deque((*(target.parts[1:] if absolute_target else target.parts), *remaining))
+        return candidate
 
     @staticmethod
     def _check_replaceable_link(path: Path, link_stat: os.stat_result) -> None:
