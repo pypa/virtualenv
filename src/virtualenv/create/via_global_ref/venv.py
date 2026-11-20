@@ -13,6 +13,7 @@ __lazy_modules__ = [
 ]
 
 import logging
+import os
 from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Final
 
@@ -181,6 +182,35 @@ class Venv(ViaGlobalRefApi):
             # GraalPy launchers need these settings on Windows and macOS.
             self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_exe
             self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
+
+    def run(self) -> None:
+        """Warn about obsolete executables left by the previous interpreter after recreation."""
+        previous = self.pyenv_cfg.content
+        super().run()
+        if os.name != "posix" or not previous:
+            return
+        recorded = previous.get("python-version") or previous.get("version_info") or previous.get("version") or ""
+        version = ".".join(recorded.split(".")[:2])
+        current = self.interpreter.version_info
+        names: set[str] = set()
+        if version and version != f"{current.major}.{current.minor}":
+            names.update({f"python{version}", f"python{version}t"})
+            if previous.get("implementation") == "CPython" and version == "3.14":
+                names.add("𝜋thon")
+        if previous.get("implementation") == "PyPy":
+            if self.interpreter.implementation != "PyPy":
+                names.update({"pypy", "pypy3"})
+            if names:
+                names.update({f"pypy{version}", f"libpypy{version}-c.so", f"libpypy{version}-c.dylib"})
+        if names:
+            remaining = sorted(path.name for path in self.bin_dir.iterdir() if path.name in names and path.is_file())
+            if remaining:
+                LOGGER.warning(
+                    "files named for the previous interpreter remain in %r and may no longer work: %s. "
+                    "Use a fresh destination to avoid stale files.",
+                    os.fspath(self.bin_dir),
+                    ", ".join(map(repr, remaining)),
+                )
 
 
 __all__ = [
