@@ -9,18 +9,20 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "collections",
+    "subprocess",
     "virtualenv.util.path",
 ]
 
 import os
+import subprocess
 import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from stat import S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_IMODE, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
 
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import copy, make_exe, remove_file, symlink
+from virtualenv.util.path import copy, remove_file, symlink
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -264,27 +266,38 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         creator: object,  # simplint: ignore[imprecise-annotation]  # public signature
         symlinks: bool,
     ) -> None:
-        """Link or copy the executable, then its aliases, into the destination folder, marking copies executable.
+        """Link or copy the executable, then its aliases, into the destination folder.
 
         :param creator: the creator the environment is created by
         :param symlinks: ``True`` to prefer symlinks over copies
 
         """
         bin_dir = self.dest(creator, self.src).parent
-        dest = bin_dir / self.base
-        self.method(symlinks)(self.src, dest)
-        if not symlinks:
-            make_exe(dest)
-        for extra in self.aliases:
-            link_file = bin_dir / extra
-            if link_file.is_symlink() or link_file.exists():
-                remove_file(link_file)
-            if symlinks:
-                link_file.symlink_to(self.base)
-            else:
-                copy(self.src, link_file)
-            if not symlinks:
-                make_exe(link_file)
+        method = self.method(symlinks)
+        if os.name == "posix" and method is copy:
+            allowed = (0o777 & ~int(subprocess.check_output(["/bin/sh", "-c", "umask"], env={}), 8)) | 0o7000
+            mode = S_IMODE(bin_dir.stat().st_mode)
+            # A default ACL can grant access beyond the umask while a copy is being written.
+            bin_dir.chmod(mode & allowed)
+        try:
+            method(self.src, bin_dir / self.base)
+            for extra in self.aliases:
+                link_file = bin_dir / extra
+                if link_file.is_symlink() or link_file.exists():
+                    remove_file(link_file)
+                if symlinks:
+                    link_file.symlink_to(self.base)
+                else:
+                    copy(self.src, link_file)
+        finally:
+            if os.name == "posix" and method is copy:
+                try:
+                    for name in (self.base, *self.aliases):
+                        path = bin_dir / name
+                        if path.is_file() and not path.is_symlink():
+                            path.chmod(S_IMODE(path.stat().st_mode) & allowed)
+                finally:
+                    bin_dir.chmod(S_IMODE(bin_dir.stat().st_mode) | (mode & ~allowed))
 
 
 __all__ = [

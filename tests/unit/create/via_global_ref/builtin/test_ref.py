@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 from pathlib import Path
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
@@ -48,6 +50,56 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
     assert exe_ref.can_run is False
     assert exe_ref.can_run is False
     assert exe_ref.src.stat.call_count == 1
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits")
+@pytest.mark.parametrize(
+    ("mask", "expected"),
+    [
+        pytest.param(0o022, 0o755, id="normal"),
+        pytest.param(0o027, 0o750, id="no-other"),
+        pytest.param(0o077, 0o700, id="private"),
+        pytest.param(0o011, 0o744, id="read-without-execute"),
+    ],
+)
+def test_copied_executables_keep_umask(tmp_path: Path, mask: int, expected: int) -> None:
+    source = tmp_path / "source"
+    source.write_bytes(b"interpreter")
+    source.chmod(0o755)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    ref = ExePathRefToDest(source, targets=["python", "python3"], dest=lambda _creator, _src: bin_dir / "python")
+    previous = os.umask(mask)
+    try:
+        ref.run(object(), symlinks=False)
+    finally:
+        os.umask(previous)
+    assert [(bin_dir / name).stat().st_mode & 0o777 for name in ("python", "python3")] == [expected, expected]
+
+
+@pytest.mark.skipif(os.name != "posix" or shutil.which("setfacl") is None, reason="requires POSIX default ACL")
+def test_copied_executables_mask_default_acl(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.write_bytes(b"interpreter")
+    source.chmod(0o755)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    bin_dir.chmod(0o775)
+    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::rx", str(bin_dir)], check=True)
+    ref = ExePathRefToDest(source, targets=["python", "python3"], dest=lambda _creator, _src: bin_dir / "python")
+    previous = os.umask(0o077)
+    try:
+        ref.run(object(), symlinks=False)
+    finally:
+        os.umask(previous)
+
+    assert (
+        bin_dir.stat().st_mode & 0o777,
+        [(bin_dir / name).stat().st_mode & 0o777 for name in ("python", "python3")],
+    ) == (
+        0o775,
+        [0o700, 0o700],
+    )
 
 
 @pytest.fixture
