@@ -125,6 +125,142 @@ def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup
     assert result.stdout == f"{expected}|example"
 
 
+@pytest.mark.skipif(_BASH is None or shutil.which("localedef") is None, reason="requires bash and localedef")
+def test_bash_prompt_survives_gb18030_source(tmp_path: Path, gb18030_session: dict[str, str]) -> None:
+    script = generate_script("bash", tmp_path / "env", "a你0")
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            '. "$1"; printf %s "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(script),
+        ],
+        env=gb18030_session,
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
+@pytest.fixture
+def gb18030_session(tmp_path: Path) -> dict[str, str]:
+    locale_dir = tmp_path / "locales"
+    locale_dir.mkdir()
+    subprocess.run(
+        [
+            "localedef",
+            "-c",
+            "-f",
+            str(Path(__file__).with_name("gb18030.charmap")),
+            "-i",
+            str(Path(__file__).with_name("zh_CN.locale")),
+            str(locale_dir / "zh_CN.GB18030"),
+        ],
+        capture_output=True,
+        check=False,
+    )
+    env = {**os.environ, "LC_ALL": "zh_CN.GB18030", "LOCPATH": str(locale_dir)}
+    if subprocess.run(["locale", "charmap"], env=env, capture_output=True, check=False).stdout.strip() != b"GB18030":
+        pytest.skip("glibc GB18030 locale is unavailable")
+    return env
+
+
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param("bash", marks=pytest.mark.skipif(_BASH is None, reason="bash is unavailable"), id="bash"),
+        pytest.param(
+            "dash", marks=pytest.mark.skipif(shutil.which("dash") is None, reason="dash is unavailable"), id="dash"
+        ),
+        pytest.param(
+            "zsh", marks=pytest.mark.skipif(shutil.which("zsh") is None, reason="zsh is unavailable"), id="zsh"
+        ),
+    ],
+)
+@pytest.mark.skipif(IS_WIN, reason="Windows shell paths differ from the host paths")
+def test_bash_prompt_unicode_survives_posix_shells(tmp_path: Path, shell: str) -> None:
+    script = generate_script("bash", tmp_path / "env", "a你0")
+    result = subprocess.run(
+        [
+            shell,
+            "-c",
+            '. "$1"; printf %s "$VIRTUAL_ENV_PROMPT"',
+            shell,
+            str(script),
+        ],
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+def test_bash_prompt_unicode_survives_custom_ifs(tmp_path: Path) -> None:
+    script = generate_script("bash", tmp_path / "env", "a你0")
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            'IFS=你; . "$1"; printf %s "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(script),
+        ],
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+def test_bash_prompt_unicode_ignores_printf_function(tmp_path: Path) -> None:
+    script = generate_script("bash", tmp_path / "env", "a你0")
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            'printf() { builtin printf hijacked; }; . "$1"; builtin printf %s "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(script),
+        ],
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
+@pytest.mark.skipif(IS_WIN or shutil.which("zsh") is None, reason="requires POSIX zsh")
+def test_bash_prompt_unicode_uses_zsh_builtin_printf(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "zsh",
+            "-f",
+            "-c",
+            'setopt ERR_EXIT; command() { return 127; }; . "$1"; print -rn -- "$VIRTUAL_ENV_PROMPT"',
+            "zsh",
+            str(generate_script("bash", tmp_path / "env", "a你0")),
+        ],
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "a你0".encode(), b"")
+
+
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "expected_snippets"),
