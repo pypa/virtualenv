@@ -57,8 +57,14 @@ def run() -> None:
     )
     for key in path_keys:
         value = getattr(sys, key, None)
-        value = encode_list_path(value) if isinstance(value, list) else encode_path(value)
-        sys_info[key] = value
+        if isinstance(value, list):
+            entries = encode_list_path(value)
+            # Isolated interpreters and safe-path mode omit the probe directory at startup.
+            sys_info[key] = (
+                entries[1:] if key == "path" and not getattr(sys.flags, "safe_path", sys.flags.isolated) else entries
+            )
+        else:
+            sys_info[key] = encode_path(value)
     sys_info["fs_encoding"] = sys.getfilesystemencoding()
     sys_info["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version

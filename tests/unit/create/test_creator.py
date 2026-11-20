@@ -1599,6 +1599,31 @@ def test_debug_ignores_python_path(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     assert str(extra) not in session.creator.debug["sys"]["path"]
 
 
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="PYTHONSAFEPATH is new in Python 3.11")
+def test_debug_preserves_safe_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PYTHONSAFEPATH", "1")
+    session: Final[Session] = cli_run([str(tmp_path / "venv"), "--without-pip", "--activators", ""])
+    debug_path: Final[list[str | None]] = session.creator.debug["sys"]["path"]
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    code = "import json, sys; print(json.dumps(sys.path))"
+    real_path: Final[list[str]] = json.loads(subprocess.check_output([str(session.creator.exe), "-c", code], text=True))
+
+    assert debug_path == real_path
+
+
+@pytest.mark.skipif(not IS_WIN or sys.implementation.name != "cpython", reason="requires a Windows CPython executable")
+def test_debug_preserves_isolated_path_file(tmp_path: Path, session_app_data: AppDataDiskFolder) -> None:
+    system_exe = Path(_CURRENT.system_executable)
+    exe = tmp_path / system_exe.name
+    shutil.copyfile(system_exe, exe)
+    for dll in system_exe.parent.glob("*.dll"):
+        shutil.copyfile(dll, tmp_path / dll.name)
+    paths = [str(tmp_path), _CURRENT.system_stdlib, str(system_exe.parent / "DLLs")]
+    exe.with_suffix("._pth").write_text("\n".join(paths), encoding="utf-8")
+
+    assert get_env_debug_info(exe, DEBUG_SCRIPT, session_app_data, dict(os.environ))["sys"]["path"] == paths
+
+
 @pytest.mark.parametrize("missing", ["site", "datetime", "math"])
 def test_debug_reports_missing_target_module(
     missing: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
