@@ -10,11 +10,10 @@ __lazy_modules__ = [
     f"{__spec__.parent}.builtin.cpython.common",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.builtin.cpython.mac_os",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
     f"{__spec__.parent}.store",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.venv_copied",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
 ]
 
 import logging
-import os
-import sys
 from argparse import ArgumentTypeError
 from typing import TYPE_CHECKING, Final
 
@@ -29,6 +28,7 @@ from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
 from .builtin.cpython.mac_os import CPython3macOsBrew
 from .store import handle_store_python
+from .venv_copied import remove_copied_interpreters
 
 if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
@@ -94,26 +94,9 @@ class Venv(ViaGlobalRefApi):
         # hard link would receive them outside the environment
         for directory in (self.bin_dir, self.purelib, self.platlib):
             ensure_within(self.dest, directory)
-        # CPython 3.14 adds the pi alias to stdlib venvs on UTF-8 filesystems.
-        interpreter_names = {
-            "python",
-            f"python{self.interpreter.version_info.major}",
-            f"python{self.interpreter.version_info.major}.{self.interpreter.version_info.minor}",
-        }
-        if (self.interpreter.version_info.major, self.interpreter.version_info.minor) == (
-            3,
-            14,
-        ) and sys.getfilesystemencoding() == "utf-8":
-            interpreter_names.add("𝜋thon")
-        if self.interpreter.implementation == "PyPy":
-            library: Final[str] = (
-                f"libpypy{self.interpreter.version_info.major}.{self.interpreter.version_info.minor}-c"
-            )
-            interpreter_names.update({"pypy", "pypy3", f"{library}.so", f"{library}.dylib"})
+        remove_copied_interpreters(self.bin_dir, self.interpreter)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
-            if path.is_symlink() or (
-                path.is_file() and (path.stat().st_nlink > 1 or (os.name == "posix" and path.name in interpreter_names))
-            ):
+            if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
         if self.can_be_inline:
             self.create_inline()
