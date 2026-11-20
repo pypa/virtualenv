@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Final
 from python_discovery import PythonInfo
 
 from virtualenv.util.error import ProcessCallFailedError
-from virtualenv.util.path import ensure_within
+from virtualenv.util.path import ensure_within, remove_file
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.text import collapse_line_boundaries
 
@@ -99,6 +99,15 @@ class Venv(ViaGlobalRefApi):
             self.create_inline()
         else:
             self.create_via_sub_process()
+        # The stdlib builder writes scripts for shells that virtualenv may not select.
+        for name in (
+            "activate",
+            "activate.fish",
+            "Activate.ps1",
+            *(("activate.bat", "deactivate.bat") if self.interpreter.os == "nt" else ("activate.csh",)),
+        ):
+            if (script := self.bin_dir / name).is_symlink() or script.exists():
+                remove_file(script)
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()

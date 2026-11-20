@@ -33,6 +33,7 @@ from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
+from virtualenv.create.via_global_ref.venv import Venv
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
@@ -466,6 +467,52 @@ def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.Captu
 def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
     session: Final[Session] = cli_run([str(tmp_path / "environment"), "--creator", "venv", "--no-seed"])
     assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize(
+    ("activators", "expected"),
+    [
+        pytest.param("", set(), id="none"),
+        pytest.param("fish", {"activate.fish"}, id="fish"),
+        pytest.param("bash,fish", {"activate", "activate.fish"}, id="bash-and-fish"),
+        pytest.param("powershell", {"activate.ps1"}, id="powershell"),
+    ],
+)
+def test_venv_creator_keeps_only_selected_activators(tmp_path: Path, activators: str, expected: set[str]) -> None:
+    session = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators", activators])
+    scripts = {
+        path.name.casefold()
+        for path in session.creator.bin_dir.iterdir()
+        if path.name.casefold().startswith(("activate", "deactivate"))
+    }
+    assert scripts == expected
+
+
+@pytest.mark.skipif(not IS_WIN or "venv" not in _CURRENT_CREATORS, reason="requires Windows stdlib venv")
+def test_venv_creator_discards_read_only_stdlib_script(tmp_path: Path, mocker: MockerFixture) -> None:
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--creator",
+        "venv",
+        "--no-seed",
+        "--activators=",
+    ])
+    creator = session.creator
+    assert isinstance(creator, Venv)
+    creator.can_be_inline = False
+    create = creator.create_via_sub_process
+    script: Final[Path] = creator.bin_dir / "activate.bat"
+
+    def install_read_only_script() -> None:
+        create()
+        script.chmod(S_IREAD)
+
+    mocker.patch.object(creator, "create_via_sub_process", autospec=True, side_effect=install_read_only_script)
+    with session:
+        session.run()
+
+    assert not script.exists()
 
 
 def _make_symlink(link: Path, stored: Path) -> None:
