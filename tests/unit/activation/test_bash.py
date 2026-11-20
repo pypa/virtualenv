@@ -237,6 +237,7 @@ def gb18030_session(tmp_path: Path) -> dict[str, str]:
         ),
     ],
 )
+@pytest.mark.skipif(IS_WIN, reason="Windows shell paths differ from the host paths")
 def test_bash_prompt_unicode_survives_posix_shells(tmp_path: Path, shell: str) -> None:
     script = generate_script("bash", tmp_path / "env", "a你0")
     result = subprocess.run(
