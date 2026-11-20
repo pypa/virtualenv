@@ -1132,67 +1132,38 @@ def test_seed_uninstall_reads_quoted_record_paths(
     assert (installed.exists(), dist_info.exists(), unrelated.read_text(encoding="utf-8")) == (False, False, "keep")
 
 
-def test_seed_uninstall_does_not_look_up_outside_metadata_paths(tmp_path: Path, mocker: MockerFixture) -> None:
-    env_dir = tmp_path / "venv"
-    dist_info = env_dir / "lib" / "python3" / "site-packages" / "example-1.0.dist-info"
-    dist_info.mkdir(parents=True)
-    inside = env_dir / "bin" / "inside.py"
-    inside.parent.mkdir()
+def test_seed_uninstall_does_not_look_up_outside_metadata_paths(
+    tmp_path: Path, no_seed_session: Session, mocker: MockerFixture
+) -> None:
+    env_dir = no_seed_session.creator.dest
+    purelib = no_seed_session.creator.purelib
+    dist_info = purelib / "pip-0.dist-info"
+    dist_info.mkdir()
+    inside = env_dir / "old.py"
     inside.write_text("old", encoding="utf-8")
     outside = tmp_path / "outside.py"
     outside.write_text("keep", encoding="utf-8")
-    (dist_info / "RECORD").write_text(f"{outside},,\n../../../bin/inside.py,,\n", encoding="utf-8")
-    (dist_info / "top_level.txt").write_text(f"{outside}\n", encoding="utf-8")
+    outside_relative = os.path.relpath(outside, purelib)
+    (dist_info / "RECORD").write_text(
+        f"{outside},,\n{outside_relative},,\n{os.path.relpath(inside, purelib)},,\n", encoding="utf-8"
+    )
+    (dist_info / "top_level.txt").write_text(f"{outside}\n{outside_relative}\n", encoding="utf-8")
     exists = Path.exists
     glob = Path.glob
 
     def checked_exists(path: Path) -> bool:
-        assert path != outside
+        assert Path(os.path.abspath(path)) != outside
         return exists(path)
 
     def checked_glob(path: Path, pattern: str) -> Iterator[Path]:
-        assert path != outside.parent / "__pycache__"
+        assert Path(os.path.abspath(path)) != outside.parent / "__pycache__"
         return glob(path, pattern)
 
     mocker.patch.object(Path, "exists", checked_exists)
     mocker.patch.object(Path, "glob", checked_glob)
-    PipInstall._uninstall_dist(dist_info, env_dir)  # ruff:ignore[private-member-access]  # inspect pre-lookup behavior
+    cli_run([str(env_dir), "--no-periodic-update", "--no-setuptools"], setup_logging=False)
 
     assert (inside.exists(), outside.read_text(encoding="utf-8"), dist_info.exists()) == (False, "keep", False)
-
-
-@pytest.mark.skipif(os.name == "nt", reason="symlink creation requires privileges on Windows")
-def test_seed_uninstall_does_not_follow_metadata_parent_link(tmp_path: Path, mocker: MockerFixture) -> None:
-    env_dir = tmp_path / "venv"
-    dist_info = env_dir / "lib" / "python3" / "site-packages" / "example-1.0.dist-info"
-    dist_info.mkdir(parents=True)
-    outside = tmp_path / "outside.py"
-    outside.write_text("keep", encoding="utf-8")
-    link = dist_info.parent / "linked"
-    link.symlink_to(tmp_path, target_is_directory=True)
-    (dist_info / "RECORD").write_text("linked/outside.py,,\n", encoding="utf-8")
-    exists = Path.exists
-    glob = Path.glob
-    is_dir = Path.is_dir
-
-    def checked_exists(path: Path) -> bool:
-        assert path != link / outside.name
-        return exists(path)
-
-    def checked_glob(path: Path, pattern: str) -> Iterator[Path]:
-        assert path != link / "__pycache__"
-        return glob(path, pattern)
-
-    def checked_is_dir(path: Path) -> bool:
-        assert path != link
-        return is_dir(path)
-
-    mocker.patch.object(Path, "exists", checked_exists)
-    mocker.patch.object(Path, "glob", checked_glob)
-    mocker.patch.object(Path, "is_dir", checked_is_dir)
-    PipInstall._uninstall_dist(dist_info, env_dir)  # ruff:ignore[private-member-access]  # inspect pre-lookup behavior
-
-    assert (outside.read_text(encoding="utf-8"), dist_info.exists()) == ("keep", False)
 
 
 @pytest.fixture

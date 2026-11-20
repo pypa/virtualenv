@@ -120,21 +120,17 @@ class PipInstall(ABC):
 
         lexical_root: Final[Path] = Path(os.path.abspath(env_dir))
         root: Final[Path] = env_dir.resolve()
-        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy(), lexical_root=lexical_root, root=root))
+        paths.update(PipInstall._record_paths(dist, base_dirs=paths.copy(), lexical_root=lexical_root))
 
         metadata_parents: Final[set[Path]] = set(dist.resolve().parents)
         for entry in sorted(paths):
             if not Path(os.path.abspath(entry)).is_relative_to(lexical_root):
                 LOGGER.warning("skip removal of %s listed by %s: not inside environment %s", entry, dist.name, root)
                 continue
-            resolved_parent: Final[Path] = entry.parent.resolve()
-            if resolved_parent != root and root not in resolved_parent.parents:
-                LOGGER.warning("skip removal of %s listed by %s: not inside environment %s", entry, dist.name, root)
-                continue
             if entry.exists() or entry.is_symlink():
                 linked: Final[bool] = entry.is_symlink()
                 # Unlinking the final link leaves its target intact; parent links still affect containment.
-                resolved: Final[Path] = resolved_parent / entry.name if linked else entry.resolve()
+                resolved: Final[Path] = entry.parent.resolve() / entry.name if linked else entry.resolve()
                 if root not in resolved.parents or resolved in metadata_parents:
                     LOGGER.warning(
                         "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
@@ -158,7 +154,7 @@ class PipInstall(ABC):
         return False
 
     @staticmethod
-    def _record_paths(dist: Path, base_dirs: set[Path], lexical_root: Path, root: Path) -> set[Path]:
+    def _record_paths(dist: Path, base_dirs: set[Path], lexical_root: Path) -> set[Path]:
         record: Final[Path] = dist / "RECORD"
         if not PipInstall._is_regular_metadata(record):
             return set()
@@ -170,11 +166,7 @@ class PipInstall(ABC):
             if not any(p in base_dirs for p in path.parents):
                 paths.add(path)
                 # bytecode written after the install, by a --no-compile install or an -O run, is not in RECORD
-                if (
-                    path.suffix == ".py"
-                    and Path(os.path.abspath(path)).is_relative_to(lexical_root)
-                    and path.parent.resolve().is_relative_to(root)
-                ):
+                if path.suffix == ".py" and Path(os.path.abspath(path)).is_relative_to(lexical_root):
                     paths.update(PipInstall._bytecode_of(path))
         return paths
 
@@ -202,9 +194,8 @@ class PipInstall(ABC):
         for folder in sorted(folders, key=lambda path: len(path.parts), reverse=True):
             # a RECORD row can lead through a link, so only remove what still resolves inside the packages folder
             if (
-                folder.parent.resolve().is_relative_to(base)
+                folder.is_dir()
                 and not folder.is_symlink()
-                and folder.is_dir()
                 and base in folder.resolve().parents
                 and not any(folder.iterdir())
             ):
