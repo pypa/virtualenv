@@ -7,8 +7,8 @@ import hashlib
 import io
 import logging
 import os
-import signal
 import shlex
+import signal
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
@@ -1543,6 +1543,8 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
         pytest.param("plain", False, id="plain"),
         pytest.param("two words", True, id="space"),
         pytest.param("env\tname", True, id="tab"),
+        pytest.param("env\vname", True, id="vertical-tab"),
+        pytest.param("env\fname", True, id="form-feed"),
     ],
 )
 def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_shell: bool) -> None:

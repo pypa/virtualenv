@@ -404,6 +404,17 @@ class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 
+def needs_shell_shebang(executable: str) -> bool:
+    """Whether the interpreter path needs a shell wrapper.
+
+    :param executable: the interpreter path written in the shebang
+
+    :returns: whether the path contains whitespace, quotes, or backslashes
+
+    """
+    return any(character in executable for character in " \t\n\v\f\r'\"\\")
+
+
 def encodes_as_utf8(path: str) -> bool:
     """Check whether a path has the same filesystem and UTF-8 bytes.
 
@@ -416,17 +427,6 @@ def encodes_as_utf8(path: str) -> bool:
         return os.fsencode(path) == path.encode("utf-8")
     except UnicodeEncodeError:
         return False
-
-
-def needs_shell_shebang(executable: str) -> bool:
-    """Whether shell syntax would change a direct shebang's interpreter path.
-
-    :param executable: the interpreter path written in the shebang
-
-    :returns: whether to use a shell wrapper
-
-    """
-    return any(character in executable for character in " \t\r\n'\"\\")
 
 
 def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
