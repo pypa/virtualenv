@@ -102,6 +102,23 @@ def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...
     assert session.seeder.extra_search_dir == expected
 
 
+def test_extra_search_dir_skips_files(tmp_path: Path) -> None:
+    wheel_dir = tmp_path / "wheels"
+    wheel_dir.mkdir()
+    wheel_file = tmp_path / "pip-1.0-py3-none-any.whl"
+    wheel_file.touch()
+
+    session = session_via_cli([
+        str(tmp_path / "env"),
+        "--no-seed",
+        "--extra-search-dir",
+        str(wheel_file),
+        str(wheel_dir),
+    ])
+
+    assert session.seeder.extra_search_dir == [wheel_dir]
+
+
 _CLI_SEARCH_DIRS: Final[list[pytest.ParameterSet]] = [
     pytest.param((), id="none"),
     pytest.param(("first",), id="first"),
