@@ -149,10 +149,18 @@ class ViaTemplateActivator(Activator, ABC):
         if os.name == "nt" or path.isascii():
             return path
         # Tcl may decode the raw environment path with a different codec than the activation script uses.
+        source = os.environb.get(environment_name)
         try:
-            return path if os.environb.get(environment_name) == path.encode("utf-8") else ""
+            encoded = path.encode("utf-8")
+            if source == encoded:
+                return path
+            if source is None and environment_name == b"TK_LIBRARY":
+                tcl = creator.interpreter.tcl_lib
+                if tcl and os.environb.get(b"TCL_LIBRARY") == tcl.encode("utf-8") and os.fsencode(path) == encoded:
+                    return path
         except UnicodeEncodeError:
             return ""
+        return ""
 
     @abstractmethod
     def templates(self) -> Iterator[str]:

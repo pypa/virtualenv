@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = ["logging"]
 
 import logging  # isort: skip # fmt: skip
+import os  # isort: skip # fmt: skip
 import re  # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
@@ -70,6 +71,21 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
             "__TCL_LIBRARY__": self._library_path(creator, "tcl_lib", b"TCL_LIBRARY"),
             "__TK_LIBRARY__": self._library_path(creator, "tk_lib", b"TK_LIBRARY"),
         })
+        return data
+
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        """Decode embedded Tcl and Tk bytes with the active filesystem codec.
+
+        :param replacements: the raw placeholder values
+        :param creator: the creator of the environment
+
+        :returns: placeholder values safe for the active filesystem codec
+
+        """
+        data = super().substitutions(replacements, creator)
+        for name in ("__TCL_LIBRARY__", "__TK_LIBRARY__"):
+            if os.name != "nt" and not replacements[name].isascii():
+                data[name] = f"__import__('os').fsdecode({replacements[name].encode('utf-8')!r})"
         return data
 
 

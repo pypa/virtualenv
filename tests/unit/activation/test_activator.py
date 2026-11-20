@@ -89,6 +89,42 @@ def test_activation_library_paths_keep_original_bytes(
     assert (values["__TCL_LIBRARY__"], values["__TK_LIBRARY__"]) == (expected, expected)
 
 
+@pytest.mark.skipif(IS_WIN, reason="POSIX activation uses raw environment bytes")
+@pytest.mark.parametrize(
+    ("tcl_source", "expected"),
+    [
+        pytest.param(
+            b"/library/andr\xc3\xa9/tcl8.6",
+            ("/library/andré/tcl8.6", "/library/andré/tk8.6"),
+            id="verified-tcl",
+        ),
+        pytest.param(b"/library/andr\xe9/tcl8.6", ("", ""), id="different-tcl-source-bytes"),
+    ],
+)
+def test_derived_tk_path_keeps_verified_tcl_bytes(
+    library_creator: Creator,
+    monkeypatch: pytest.MonkeyPatch,
+    tcl_source: bytes,
+    expected: tuple[str, str],
+) -> None:
+    monkeypatch.setattr(library_creator.interpreter, "tcl_lib", "/library/andré/tcl8.6")
+    monkeypatch.setattr(library_creator.interpreter, "tk_lib", "/library/andré/tk8.6")
+    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", tcl_source)
+    monkeypatch.delenv("TK_LIBRARY", raising=False)
+    values = BashActivator(Namespace(prompt=None)).replacements(library_creator, library_creator.bin_dir)
+    assert (values["__TCL_LIBRARY__"], values["__TK_LIBRARY__"]) == expected
+
+
+@pytest.mark.skipif(IS_WIN, reason="POSIX activation uses raw environment bytes")
+def test_explicit_tk_path_requires_its_own_bytes(library_creator: Creator, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(library_creator.interpreter, "tcl_lib", "/library/andré/tcl8.6")
+    monkeypatch.setattr(library_creator.interpreter, "tk_lib", "/library/andré/tk8.6")
+    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", b"/library/andr\xc3\xa9/tcl8.6")
+    monkeypatch.setitem(os.environb, b"TK_LIBRARY", b"/library/andr\xe9/tk8.6")
+    values = BashActivator(Namespace(prompt=None)).replacements(library_creator, library_creator.bin_dir)
+    assert (values["__TCL_LIBRARY__"], values["__TK_LIBRARY__"]) == ("/library/andré/tcl8.6", "")
+
+
 @pytest.mark.graalpy
 def test_activator_prompt_cwd(monkeypatch, tmp_path) -> None:
     class FakeActivator(Activator):

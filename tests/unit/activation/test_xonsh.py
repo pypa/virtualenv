@@ -16,6 +16,7 @@ from python_discovery import PythonInfo
 from virtualenv.activation import XonshActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.create.creator import Creator
+from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
@@ -102,6 +103,13 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
             None,
             ["self.embedded_tcl_library = ''", "self.embedded_tk_library = ''"],
             id="missing",
+        ),
+        pytest.param(
+            "C:/andré/tcl",
+            "C:/andré/tk",
+            ["self.embedded_tcl_library = 'C:/andr\\xe9/tcl'", "self.embedded_tk_library = 'C:/andr\\xe9/tk'"],
+            id="windows-unicode",
+            marks=pytest.mark.skipif(not IS_WIN, reason="requires Windows path encoding"),
         ),
     ],
 )
@@ -193,6 +201,26 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: _Xonsh)
         "print(json.dumps([__xonsh__.env.get('TCL_LIBRARY'), __xonsh__.env.get('TK_LIBRARY')]))\n"
     )
     assert json.loads(xonsh(script)) == [None, None]
+
+
+@_NEEDS_XONSH
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
+def test_xonsh_keeps_tcl_library_bytes_across_locales(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, xonsh: _Xonsh
+) -> None:
+    library = tmp_path / "andré" / "tcl9.0"
+    library.mkdir(parents=True)
+    session = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    session.creator.interpreter = copy.copy(session.creator.interpreter)
+    session.creator.interpreter.tcl_lib = str(library)
+    monkeypatch.setitem(os.environb, b"TCL_LIBRARY", os.fsencode(library))
+    XonshActivator(Namespace(prompt=None)).generate(session.creator)
+    script = (
+        "original = __xonsh__.env.pop('TCL_LIBRARY', None)\n"
+        f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\n"
+        "python -c \"import os; print(repr(os.environb.get(b'TCL_LIBRARY')))\""
+    )
+    assert literal_eval(xonsh(script, LC_ALL="C", PYTHONUTF8="0")) == os.fsencode(library)
 
 
 @_NEEDS_XONSH
