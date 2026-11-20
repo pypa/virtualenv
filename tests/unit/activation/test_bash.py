@@ -793,6 +793,7 @@ def bash_prompt_rendering() -> None:
         [_BASH, "-c", 'printf %s "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=True,
     ).stdout
     if int(version) < 404:
