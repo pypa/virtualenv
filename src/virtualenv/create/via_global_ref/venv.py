@@ -4,7 +4,7 @@ __lazy_modules__ = [
     "argparse",
     "pathlib",
     "python_discovery",
-    "tempfile",
+    "subprocess",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -16,11 +16,11 @@ __lazy_modules__ = [
 
 import logging
 import os
+import subprocess
 import sys
 from argparse import ArgumentTypeError
 from pathlib import Path
 from stat import S_IMODE
-from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
@@ -134,10 +134,8 @@ class Venv(ViaGlobalRefApi):
         super().create()
 
     def _create_with_umask(self) -> None:
-        with TemporaryDirectory(dir=self.dest) as folder:
-            probe = Path(folder) / "probe"
-            probe.touch(mode=0o777)
-            allowed = S_IMODE(probe.stat().st_mode) | 0o7000
+        # A mode probe can inherit a default ACL that overrides the umask.
+        allowed = (0o777 & ~int(subprocess.check_output(["/bin/sh", "-c", "umask"], env={}), 8)) | 0o7000
         mode = S_IMODE(self.bin_dir.stat().st_mode)
         kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
         # Hide copied bytes while stdlib venv temporarily sets their mode to 0755.

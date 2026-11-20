@@ -795,6 +795,33 @@ def test_venv_reused_interpreter_copy_keeps_umask(tmp_path: Path, mask: int, exp
     os.name != "posix"
     or _CURRENT.implementation != "CPython"
     or is_mac_os_framework(_CURRENT)
+    or is_macos_brew(_CURRENT)
+    or shutil.which("setfacl") is None,
+    reason="requires POSIX CPython venv copies and setfacl",
+)
+def test_venv_copy_respects_umask_with_default_acl(tmp_path: Path) -> None:
+    destination = tmp_path / "env"
+    cli_run([str(destination), "--creator", "venv", "--symlinks", "--no-seed"])
+    (destination / "bin").chmod(0o755)
+    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::rwx", str(destination)], check=True)
+
+    previous = os.umask(0o077)
+    try:
+        session = cli_run([str(destination), "--creator", "venv", "--copies", "--no-seed"])
+    finally:
+        os.umask(previous)
+
+    assert (
+        stat.S_IMODE(session.creator.bin_dir.stat().st_mode),
+        stat.S_IMODE(session.creator.exe.stat().st_mode),
+        subprocess.run([str(session.creator.exe), "-c", "print(1)"], capture_output=True, check=True).stdout,
+    ) == (0o755, 0o700, b"1\n")
+
+
+@pytest.mark.skipif(
+    os.name != "posix"
+    or _CURRENT.implementation != "CPython"
+    or is_mac_os_framework(_CURRENT)
     or is_macos_brew(_CURRENT),
     reason="requires POSIX CPython venv interpreter copies",
 )
