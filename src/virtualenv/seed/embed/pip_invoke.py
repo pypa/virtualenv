@@ -72,11 +72,11 @@ class PipInvoke(BaseEmbed):
             return
         for_py_version: Final[str] = creator.interpreter.version_release_str
         with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
-            self._detach_links(creator)
+            record_names: Final[list[str]] = self._detach_links(creator)
             # pip runs under the interpreter of the environment, so it must be a pip that supports that version
             self._execute(cmd, pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env, for_py_version))
         if os.name == "posix":
-            self._rewrite_launchers(creator)
+            self._rewrite_launchers(creator, record_names)
 
     @contextmanager
     def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:
@@ -125,10 +125,14 @@ class PipInvoke(BaseEmbed):
                 cmd.append(Version.as_pip_req(dist, wheel.version))
             yield cmd
 
-    def _detach_links(self, creator: Creator) -> None:
+    def _detach_links(self, creator: Creator) -> list[str]:
+        record_names: Final[list[str]] = []
         for wheel in self._wheels:
             with ZipFile(wheel) as archive:
                 names: Final[list[str]] = archive.namelist()
+                record_names.append(
+                    next(name for name in names if name.count("/") == 1 and name.endswith(".dist-info/RECORD"))
+                )
                 for root in {creator.purelib, creator.platlib}:
                     for name in {entry.partition("/")[0] for entry in names}:
                         if Path(name).name != name or name in {"", ".", ".."}:
@@ -140,6 +144,7 @@ class PipInvoke(BaseEmbed):
                         self._detach_entry_points(creator, archive.read(name).decode("utf-8"))
 
         self._detach_metadata(creator)
+        return record_names
 
     @staticmethod
     def _detach_tree(path: Path) -> None:
@@ -193,12 +198,8 @@ class PipInvoke(BaseEmbed):
             raise RuntimeError(msg)
         return process
 
-    def _rewrite_launchers(self, creator: Creator) -> None:
-        for wheel in self._wheels:
-            with ZipFile(wheel) as archive:
-                record_name: Final[str] = next(
-                    name for name in archive.namelist() if name.count("/") == 1 and name.endswith(".dist-info/RECORD")
-                )
+    def _rewrite_launchers(self, creator: Creator, record_names: list[str]) -> None:
+        for record_name in record_names:
             for root in {creator.purelib, creator.platlib}:
                 record: Final[Path] = root / record_name
                 if record.is_file():
