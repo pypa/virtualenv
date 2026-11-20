@@ -537,27 +537,45 @@ class UnverifiedWheelError(RuntimeError):
 _PYPI_CACHE: Final[dict[str, _PyPIJson | None]] = {}
 
 
-def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
+def manual_upgrade(app_data: AppData, env: dict[str, str]) -> int:
     """Update the bundled wheels of every supported Python version now, in parallel.
 
     :param app_data: the application data folder
     :param env: the environment variables for the update
 
-    """
-    threads = []
+    :returns: ``0`` when every update succeeded, ``1`` when any failed
 
+    """
+    failed: list[str] = []
+
+    threads = []
     for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
         # load extra search dir for the given for_py
         for distribution in distribution_to_package:
-            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env))
+            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env, failed))
             thread.start()
             threads.append(thread)
 
     for thread in threads:
         thread.join()
+    return 1 if failed else 0
 
 
-def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
+def _run_manual_upgrade(
+    app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str], failed: list[str]
+) -> None:
+    try:
+        _manual_upgrade_one(app_data, distribution, for_py_version, env)
+    # Worker exceptions do not propagate through join(), so record them for the exit status.
+    except Exception as exception:  # ruff:ignore[blind-except]
+        details = getattr(exception, "stderr", None) or ""
+        LOGGER.error(  # ruff: ignore[error-instead-of-exception]  # avoid a worker traceback for update failures
+            "could not upgrade %s for python %s: %s %s", distribution, for_py_version, exception, details
+        )
+        failed.append(f"{distribution} for python {for_py_version}")
+
+
+def _manual_upgrade_one(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
     start = datetime.now(tz=timezone.utc)
     # bundle imports this module, so the import must wait until it is needed
     from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]

@@ -125,14 +125,19 @@ def test_success_exit_not_reported(
     assert (context.value.code, capsys.readouterr()) == (code, ("", ""))
 
 
-def test_upgrade_embed_wheels_exits_without_error(
-    mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize(
+    ("status", "out"),
+    [pytest.param(0, "", id="upgraded"), pytest.param(1, "SystemExit: 1\n", id="failed")],
+)
+def test_upgrade_embed_wheels_exit_status(
+    mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str], status: int, out: str
 ) -> None:
-    # manual_upgrade returns None, so a finished upgrade exits with SystemExit(None)
-    upgrade: Final[MockType] = mocker.patch("virtualenv.run.manual_upgrade", return_value=None, autospec=True)
+    upgrade: Final[MockType] = mocker.patch(  # simplint: ignore[mock-without-spec]  # lazy import may not be callable
+        "virtualenv.run.manual_upgrade", return_value=status
+    )
     with pytest.raises(SystemExit) as context:
         run_with_catch(["--upgrade-embed-wheels", "--app-data", str(tmp_path)])
-    assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (None, 1, ("", ""))
+    assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (status, 1, (out, ""))
 
 
 @pytest.mark.usefixtures("session_app_data")
