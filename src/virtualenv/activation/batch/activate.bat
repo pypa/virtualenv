@@ -46,18 +46,22 @@
 @if defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;%PKG_CONFIG_PATH%"
 @if not defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig"
 
+@REM In /V:ON, !! is empty and !NAME! does not rescan ! in the value.
 @REM if defined _OLD_VIRTUAL_PATH (
 @if not defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH1
     @set "PATH=%_OLD_VIRTUAL_PATH%"
+    @if "!!"=="" @set "PATH=!_OLD_VIRTUAL_PATH!"
 :ENDIFVPATH1
 @REM ) else (
 @if defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH2
     @set "_OLD_VIRTUAL_PATH=%PATH%"
+    @if "!!"=="" @set "_OLD_VIRTUAL_PATH=!PATH!"
     @REM An undefined PATH leaves _OLD_VIRTUAL_PATH undefined too, so record it for deactivate.bat
     @if not defined PATH @set _OLD_VIRTUAL_PATH_UNSET=1
 :ENDIFVPATH2
 
 @set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
+@if "!!"=="" @set "PATH=!VIRTUAL_ENV!\__BIN_NAME__;!_OLD_VIRTUAL_PATH!"
 
 @if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" %_OLD_CODEPAGE% > nul

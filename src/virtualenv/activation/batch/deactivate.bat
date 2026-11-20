@@ -24,8 +24,10 @@
 @if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=
 @set _OLD_PKG_CONFIG_PATH=
 
+@REM In /V:ON, !! is empty and !NAME! does not rescan ! in the value.
 @if not defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH
     @set "PATH=%_OLD_VIRTUAL_PATH%"
+    @if "!!"=="" @set "PATH=!_OLD_VIRTUAL_PATH!"
     @set _OLD_VIRTUAL_PATH=
 :ENDIFVPATH
 @if defined _OLD_VIRTUAL_PATH_UNSET @set PATH=
