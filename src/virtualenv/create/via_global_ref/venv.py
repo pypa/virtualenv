@@ -105,6 +105,11 @@ class Venv(ViaGlobalRefApi):
             14,
         ) and sys.getfilesystemencoding() == "utf-8":
             interpreter_names.add("𝜋thon")
+        if self.interpreter.implementation == "PyPy":
+            library: Final[str] = (
+                f"libpypy{self.interpreter.version_info.major}.{self.interpreter.version_info.minor}-c"
+            )
+            interpreter_names.update({"pypy", "pypy3", f"{library}.so", f"{library}.dylib"})
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (
                 path.is_file() and (path.stat().st_nlink > 1 or (os.name == "posix" and path.name in interpreter_names))

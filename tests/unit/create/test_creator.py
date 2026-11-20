@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     from virtualenv.run.session import Session
 
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
+_PYPY_LIBRARY: Final[Path] = Path(_CURRENT.system_executable).parent / (
+    f"libpypy{_CURRENT.version_info.major}.{_CURRENT.version_info.minor}-c"
+    f"{'.dylib' if sys.platform == 'darwin' else '.so'}"
+)
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -947,10 +951,11 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     reason="requires a POSIX copy-based standard library creator",
 )
 @pytest.mark.parametrize(
-    "alias",
+    ("alias", "runner"),
     [
-        "python",
+        pytest.param("python", "python", id="python"),
         pytest.param(
+            "𝜋thon",
             "𝜋thon",
             id="pi",
             marks=pytest.mark.skipif(
@@ -958,19 +963,44 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
                 reason="CPython 3.14 creates this alias on UTF-8 filesystems",
             ),
         ),
+        pytest.param("pypy", "pypy", id="pypy", marks=pytest.mark.skipif(not IS_PYPY, reason="PyPy alias")),
+        pytest.param("pypy3", "pypy3", id="pypy3", marks=pytest.mark.skipif(not IS_PYPY, reason="PyPy alias")),
     ],
 )
-def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str) -> None:
-    dest: Final = tmp_path / "env"
-    command: Final = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+def test_venv_creator_replaces_copied_interpreter(tmp_path: Path, alias: str, runner: str) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
     cli_run(command)
-    stale: Final = dest / "stale"
+    stale: Final[Path] = dest / "stale"
     stale.write_bytes(b"stale")
     stale.replace(dest / "bin" / alias)
 
     cli_run(command)
 
-    assert subprocess.check_output([str(dest / "bin" / alias), "-c", "print(1)"], text=True).strip() == "1"
+    assert (
+        subprocess.check_output([str(dest / "bin" / runner), "-c", "print(1)"], text=True, encoding="utf-8").strip()
+        == "1"
+    )
+
+
+@pytest.mark.skipif(
+    not IS_PYPY or IS_WIN or not _PYPY_LIBRARY.is_file(), reason="requires a copied PyPy shared library"
+)
+def test_venv_creator_replaces_copied_pypy_library(tmp_path: Path) -> None:
+    dest: Final[Path] = tmp_path / "env"
+    command: Final[list[str]] = [str(dest), "--creator", "venv", "--copies", "--no-seed", "--activators", ""]
+    cli_run(command)
+    library: Final[Path] = dest / "bin" / _PYPY_LIBRARY.name
+    assert library.is_file()
+    library.unlink()
+    library.write_bytes(b"stale")
+
+    cli_run(command)
+
+    assert (
+        subprocess.check_output([str(dest / "bin/python"), "-c", "print(1)"], text=True, encoding="utf-8").strip()
+        == "1"
+    )
 
 
 @pytest.mark.skipif(
