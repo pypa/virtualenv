@@ -111,7 +111,7 @@ class ListType(TypeData):
         values = self.split_values(value)
         result = []
         for a_value in values:
-            result.extend(a_value.split(os.pathsep))
+            result.extend(item for item in a_value.split(os.pathsep) if item)
         return [self.as_type(i) for i in result]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
