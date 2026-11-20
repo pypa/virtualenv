@@ -173,11 +173,12 @@ class _Debug:
         return f"{'directory ' if self.src.is_dir() else ''}{self.src!s} to {self.dest!s}"
 
 
-def copy(src: Path, dest: Path) -> None:
+def copy(src: Path, dest: Path, *, executable: bool = False) -> None:
     """Copy a file, or a folder tree, to the destination.
 
     :param src: the file or folder to copy
     :param dest: the destination path
+    :param executable: request execute permissions when copying a single file
 
     """
     _LOGGER.debug("copy %s", _Debug(src, dest))
@@ -185,7 +186,7 @@ def copy(src: Path, dest: Path) -> None:
         _ensure_safe_to_do(src, dest)
         _copytree(src, dest, (src.resolve(),))
     else:
-        _copy_file(src, dest)
+        _copy_file(src, dest, executable=executable)
 
 
 def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
@@ -206,9 +207,9 @@ def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
             _copytree(link, dest_dir / name, (*ancestors, target))
 
 
-def _copy_file(src: Path, dest: Path) -> None:
+def _copy_file(src: Path, dest: Path, *, executable: bool = False) -> None:
     _ensure_safe_to_do(src, dest)
-    mode: Final[int] = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
+    mode: Final[int] = 0o755 if executable or src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
     flags: Final[int] = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
     # Creation applies the current umask without changing the process-wide setting.
     with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:

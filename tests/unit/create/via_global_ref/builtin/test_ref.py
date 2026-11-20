@@ -62,10 +62,11 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
         pytest.param(0o011, 0o744, id="read-without-execute"),
     ],
 )
-def test_copied_executables_keep_umask(tmp_path: Path, mask: int, expected: int) -> None:
+@pytest.mark.parametrize("source_mode", [0o755, 0o644])
+def test_copied_executables_keep_umask(tmp_path: Path, mask: int, expected: int, source_mode: int) -> None:
     source = tmp_path / "source"
     source.write_bytes(b"interpreter")
-    source.chmod(0o755)
+    source.chmod(source_mode)
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     ref = ExePathRefToDest(source, targets=["python", "python3"], dest=lambda _creator, _src: bin_dir / "python")

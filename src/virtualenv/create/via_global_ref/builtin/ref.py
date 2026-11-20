@@ -271,7 +271,11 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
 
         """
         bin_dir = self.dest(creator, self.src).parent
-        self.method(symlinks)(self.src, bin_dir / self.base)
+        dest = bin_dir / self.base
+        if (method := self.method(symlinks)) is copy:
+            copy(self.src, dest, executable=True)
+        else:
+            method(self.src, dest)
         for extra in self.aliases:
             link_file = bin_dir / extra
             if link_file.is_symlink() or link_file.exists():
@@ -279,7 +283,7 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
             if symlinks:
                 link_file.symlink_to(self.base)
             else:
-                copy(self.src, link_file)
+                copy(self.src, link_file, executable=True)
 
 
 __all__ = [
