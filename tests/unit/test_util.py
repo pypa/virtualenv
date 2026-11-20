@@ -1423,7 +1423,7 @@ def test_config_cache_migration_leaves_linked_data_dir(tmp_path: Path, mocker: M
 
 
 @pytest.mark.skipif(os.name != "posix" or not fs_supports_symlink(), reason="POSIX symlinks and modes")
-def test_legacy_cache_migration_moves_link_without_changing_target(tmp_path: Path, mocker: MockerFixture) -> None:
+def test_legacy_cache_migration_moves_link_and_closes_target(tmp_path: Path, mocker: MockerFixture) -> None:
     target = tmp_path / "target"
     target.mkdir()
     target.chmod(0o2775)
@@ -1438,7 +1438,7 @@ def test_legacy_cache_migration_moves_link_without_changing_target(tmp_path: Pat
         new_dir.is_symlink(),
         old_dir.exists(),
         target.stat().st_mode & 0o7777,
-    ) == (str(target), True, False, 0o2775)
+    ) == (str(target), True, False, 0o2770)
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
