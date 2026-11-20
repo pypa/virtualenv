@@ -1084,6 +1084,25 @@ def list_files(path):
     return result
 
 
+def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
+    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
+    creator.env_patch_text.return_value = "import _virtualenv"
+    ViaGlobalRefApi.install_patch(creator)
+    assert not (tmp_path / "_virtualenv.pth").exists()
+    assert not (tmp_path / "_virtualenv.py").exists()
+    creator.env_patch_text.assert_not_called()
+
+
+def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 9, 21))
+    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
+    creator.env_patch_text.return_value = "import _virtualenv"
+    ViaGlobalRefApi.install_patch(creator)
+    assert (tmp_path / "_virtualenv.pth").read_text(encoding="utf-8") == "import _virtualenv"
+    assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
+
+
 @pytest.mark.skipif(sys.version_info[:2] != (3, 9), reason="only Python 3.9 uses this distutils hook")
 def test_distutils_filters_options_after_decode_error(tmp_path: Path) -> None:
     session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", ""])
@@ -1149,25 +1168,6 @@ def test_distutils_filters_install_destination(tmp_path: Path, command: str, opt
         encoding="utf-8",
     )
     assert result.strip() == "[]"
-
-
-def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
-    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
-    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
-    creator.env_patch_text.return_value = "import _virtualenv"
-    ViaGlobalRefApi.install_patch(creator)
-    assert not (tmp_path / "_virtualenv.pth").exists()
-    assert not (tmp_path / "_virtualenv.py").exists()
-    creator.env_patch_text.assert_not_called()
-
-
-def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
-    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 9, 21))
-    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
-    creator.env_patch_text.return_value = "import _virtualenv"
-    ViaGlobalRefApi.install_patch(creator)
-    assert (tmp_path / "_virtualenv.pth").read_text(encoding="utf-8") == "import _virtualenv"
-    assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
 
 
 @pytest.mark.skipif(is_macos_brew(_CURRENT), reason="no copy on brew")
