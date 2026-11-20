@@ -23,7 +23,7 @@ from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock, Timeout
-from virtualenv.util.path import copy, ensure_within, safe_delete, symlink, write_file
+from virtualenv.util.path import copy, ensure_within, get_short_path_name, safe_delete, symlink, write_file
 from virtualenv.util.subprocess import LogCmd, run_cmd
 
 if os.name == "nt":
@@ -609,6 +609,14 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
 
     with busy.open(encoding="utf-8"), pytest.raises(OSError, match="busy"):
         safe_delete(target)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows short path API")
+def test_get_short_path_name_reports_missing_path(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        get_short_path_name(str(tmp_path / "missing"))
+
+    assert Path(get_short_path_name(str(tmp_path))).samefile(tmp_path)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows extended-length paths")
