@@ -89,6 +89,20 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
     assert result.seeder.extra_search_dir == [Path("a").resolve(), Path("b").resolve(), Path("c").resolve()]
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows cannot create a space-named directory")
+def test_extra_search_dir_via_env_var_keeps_space_named_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name in ("trusted", " ", "other"):
+        (tmp_path / name).mkdir()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", f"trusted{os.pathsep} {os.pathsep}other")
+
+    session = session_via_cli(["venv"])
+
+    assert session.seeder.extra_search_dir == [tmp_path / name for name in ("trusted", " ", "other")]
+
+
 @pytest.mark.parametrize(
     ("value", "directory_names"),
     [
