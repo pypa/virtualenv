@@ -82,6 +82,8 @@ class PipInvoke(BaseEmbed):
             self._detach_links(creator)
             # pip runs under the interpreter of the environment, so it must be a pip that supports that version
             env = pip_wheel_env_run(self.extra_search_dir, self.app_data, self.env, for_py_version)
+            # pip reads PIP_PYTHON before it applies --isolated.
+            env = {key: value for key, value in env.items() if not key.upper().startswith("PIP_")}
             env["PIP_CONFIG_FILE"] = os.devnull
             self._execute(cmd, env)
         if os.name == "posix":

@@ -448,6 +448,33 @@ def test_pip_invoke_uses_selected_wheel(
     assert os.path.normcase(str(session.creator.purelib)) in os.path.normcase(result.stdout)
 
 
+@pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="requires POSIX directory write restrictions")
+def test_pip_seed_fails_when_only_user_site_is_writable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    user_base = tmp_path / "user"
+    monkeypatch.setenv("PYTHONUSERBASE", str(user_base))
+    session = session_via_cli([
+        str(tmp_path / "env"),
+        "--system-site-packages",
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+        "--no-download",
+    ])
+    session.creator.run()
+    site_packages = session.creator.purelib
+    mode = site_packages.stat().st_mode
+    site_packages.chmod(0o555)
+    try:
+        with pytest.raises(RuntimeError, match="failed seed"):
+            session.seeder.run(session.creator)
+    finally:
+        site_packages.chmod(mode)
+    assert not user_base.exists()
+
+
 @pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.parametrize(
     ("variable", "source"),
@@ -457,6 +484,7 @@ def test_pip_invoke_uses_selected_wheel(
         pytest.param("PIP_REQUIREMENT", "requirements.txt", id="requirement"),
         pytest.param("PIP_TARGET", ".", id="target"),
         pytest.param("PIP_CONFIG_FILE", "pip.conf", id="config"),
+        pytest.param("PIP_PYTHON", "missing-python", id="python"),
     ],
 )
 def test_pip_invoke_uses_selected_archive_with_configured_sources(
