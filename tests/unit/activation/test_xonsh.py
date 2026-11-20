@@ -233,6 +233,23 @@ def test_xonsh_keeps_tcl_library_bytes_across_locales(
 
 
 @_NEEDS_XONSH
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX environment bytes")
+def test_xonsh_keeps_environment_path_bytes_across_locales(tmp_path: Path, xonsh: _Xonsh) -> None:
+    destination = tmp_path / "café"
+    session = cli_run([str(destination), "--no-seed", "--activators", "xonsh"])
+    script = (
+        "import json, os\n"
+        f"source @(os.fsdecode({os.fsencode(session.creator.bin_dir / 'activate.xsh')!r}))\n"
+        "paths = $VIRTUAL_ENV, $PATH[0], $PKG_CONFIG_PATH[0]\n"
+        "print(json.dumps([os.fsencode(path).hex() for path in paths]))\n"
+    )
+    expected = [destination, session.creator.bin_dir, destination / "lib" / "pkgconfig"]
+    assert json.loads(xonsh(script, LC_ALL="C", PYTHONUTF8="0", PYTHONCOERCECLOCALE="0")) == [
+        os.fsencode(path).hex() for path in expected
+    ]
+
+
+@_NEEDS_XONSH
 @pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
 def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding: str) -> None:
     destination: Final[Path] = tmp_path / "中文環境"
