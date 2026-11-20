@@ -730,6 +730,7 @@ def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+@pytest.mark.usefixtures("bash_prompt_rendering")
 @pytest.mark.parametrize(
     ("source_locale", "draw_locale"),
     [
@@ -784,6 +785,18 @@ def _locale_env(*locales: str) -> dict[str, str]:
         ).returncode:
             pytest.skip(f"{locale} is unavailable")
     return {**os.environ, "LC_ALL": locales[0]}
+
+
+@pytest.fixture(scope="module")
+def bash_prompt_rendering() -> None:
+    version = subprocess.run(
+        [_BASH, "-c", 'printf %s "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if int(version) < 404:
+        pytest.skip("${PS1@P} needs bash 4.4 or later")
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
