@@ -4,7 +4,7 @@ __lazy_modules__ = [
     "argparse",
     "pathlib",
     "python_discovery",
-    "tempfile",
+    "uuid",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -21,8 +21,8 @@ import os
 from argparse import ArgumentTypeError
 from pathlib import Path
 from stat import S_IMODE
-from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
+from uuid import uuid4
 
 from python_discovery import PythonInfo
 
@@ -122,13 +122,15 @@ class Venv(ViaGlobalRefApi):
         super().create()
 
     def _create_with_copy_mode(self) -> None:
-        # A private child inherits bin's default ACL without exposing the probe.
-        with TemporaryDirectory(dir=self.bin_dir) as private:
-            probe = os.open(Path(private) / "mode", os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o755)
-            try:
-                allowed = S_IMODE(os.fstat(probe).st_mode) | 0o7000
-            finally:
-                os.close(probe)
+        # The empty probe receives file-only ACL entries and is unlinked before interpreter bytes are copied.
+        probe = self.bin_dir / f".virtualenv-mode-{uuid4().hex}"
+        # codeql[py/overly-permissive-file]  # ruff:ignore[commented-out-code]  # empty probe
+        descriptor = os.open(probe, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o755)
+        try:
+            probe.unlink()
+            allowed = S_IMODE(os.fstat(descriptor).st_mode) | 0o7000
+        finally:
+            os.close(descriptor)
         mode = S_IMODE(self.bin_dir.stat().st_mode)
         kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
         # Hide copied bytes while stdlib venv temporarily sets their mode to 0755.
