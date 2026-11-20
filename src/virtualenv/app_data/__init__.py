@@ -49,10 +49,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         if not folder.strip():
             folder = cache_dir_with_migration(read_only=read_only)
             if folder is None:
-                _LOGGER.warning("using temporary app-data because the default cache location is unavailable")
                 if read_only:
-                    reason: Final[str] = "read-only app data requires a cache path when no home directory exists"
+                    reason: Final[str] = (
+                        "read-only app data requires an explicit cache path when the default cache is unavailable"
+                    )
                     raise RuntimeError(reason)
+                _LOGGER.warning("using temporary app-data because the default cache location is unavailable")
                 return TempAppData()
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)

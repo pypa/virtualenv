@@ -71,6 +71,7 @@ def test_ini_empty_env_var_uses_default(
     "no_home",
     [
         pytest.param("~/.config/virtualenv", id="unexpanded"),
+        pytest.param("./~/.config/virtualenv", id="relative"),
         pytest.param(RuntimeError("no home directory"), id="unavailable"),
     ],
 )

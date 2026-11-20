@@ -308,13 +308,17 @@ absolute home-based location, that location remains usable.
 
 On macOS and Windows, the legacy app-data directory can also hold ``virtualenv.ini``. When it does, migration leaves
 that file and unrelated user files there and moves only ``py_info``, ``unzip``, and ``wheel`` into the cache. If this
-migration cannot finish, writable runs use temporary app-data and warn; read-only runs can use the legacy directory.
-Check access to both directories and move remaining cache entries before removing the incomplete-migration marker.
+migration cannot finish, writable runs use temporary app-data and warn. Read-only runs can use the legacy directory. For
+a linked legacy directory, copy any remaining cache entries and leave the link and original files in place. The warning
+gives the marker path to remove after recovering the entries.
 
 On POSIX, a writable default cache owned by the current user is restricted to owner access. When its mode changes,
 virtualenv warns. Set the cache directory's setgid bit to retain group sharing, or select an explicit ``--app-data``
-path to manage its permissions yourself. A default cache owned by a different non-root user is skipped with a warning;
-virtualenv uses temporary app-data. A root-owned cache remains eligible if writable.
+path to manage its permissions yourself.
+
+Virtualenv skips default caches owned by another non-root user, including legacy caches. If the new default cache has
+such an owner, writable runs use temporary app-data and read-only runs require an explicit cache path. A root-owned
+cache remains eligible for reading, and for writing when the user has write access.
 
 Allow unverified HTTPS for periodic updates
 ===========================================
