@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
 _JSON: Final[str] = "application/vnd.pypi.simple.v1+json"
 
@@ -28,7 +28,7 @@ def server() -> Generator[_Server, None, None]:
 
 
 def _serve() -> Generator[_Server, None, None]:
-    running: Final = _Server()
+    running: Final[_Server] = _Server()
     Thread(target=running.httpd.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
     yield running
     running.httpd.shutdown()
@@ -40,7 +40,7 @@ class _Server:
         self.pages: dict[str, _Page] = {}
         self.auth: str | None = None
         self.received_auth: list[str | None] = []
-        owner: Final = self
+        owner: Final[_Server] = self
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:
@@ -77,15 +77,15 @@ def _page(body: str, content_type: str = "text/html") -> _Page:
 
 
 def test_yanked_files_reads_a_file_index(tmp_path: Path) -> None:
-    index: Final = _file_index(tmp_path, {"pip-1.0-py3-none-any.whl": None, "pip-2.0-py3-none-any.whl": ""})
+    index: Final[str] = _file_index(tmp_path, {"pip-1.0-py3-none-any.whl": None, "pip-2.0-py3-none-any.whl": ""})
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
 
 def _file_index(tmp_path: Path, files: dict[str, str | None]) -> str:
-    project: Final = tmp_path / "simple" / "pip"
+    project: Final[Path] = tmp_path / "simple" / "pip"
     project.mkdir(parents=True)
     (project / "index.html").write_text(_html(files), encoding="utf-8")
     return (tmp_path / "simple").as_uri()
@@ -107,10 +107,16 @@ def _html(files: dict[str, str | None]) -> str:
     ],
 )
 def test_yanked_files_reads_pep_691_json(server: _Server, yanked: bool | str, expected: set[str]) -> None:
-    files: Final = [{"filename": "pip-2.0-py3-none-any.whl", "yanked": yanked}, {"url": "no-filename"}, "not-a-file"]
+    files: Final[list[dict[str, str | bool] | str]] = [
+        {"filename": "pip-2.0-py3-none-any.whl", "yanked": yanked},
+        {"url": "no-filename"},
+        "not-a-file",
+    ]
     server.pages["/simple/pip/"] = _page(json.dumps({"files": files}), _JSON)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == expected
 
@@ -118,9 +124,9 @@ def test_yanked_files_reads_pep_691_json(server: _Server, yanked: bool | str, ex
 def test_yanked_files_sends_credentials_from_the_index_url(server: _Server) -> None:
     server.auth = f"Basic {b64encode(b'user:p@ss').decode()}"
     server.pages["/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": "bad"}))
-    index: Final = f"http://user:p%40ss@{server.url.removeprefix('http://')}/simple/"
+    index: Final[str] = f"http://user:p%40ss@{server.url.removeprefix('http://')}/simple/"
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
@@ -136,7 +142,7 @@ def test_yanked_files_sends_credentials_from_the_index_url(server: _Server) -> N
 def test_yanked_files_sends_credentials_from_netrc(
     server: _Server, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, variable: str
 ) -> None:
-    netrc_file: Final = tmp_path / name
+    netrc_file: Final[Path] = tmp_path / name
     netrc_file.write_text("machine 127.0.0.1 login user password secret\n", encoding="utf-8")
     # world readable, which the default netrc lookup would reject
     netrc_file.chmod(0o644)
@@ -144,9 +150,9 @@ def test_yanked_files_sends_credentials_from_netrc(
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     server.auth = f"Basic {b64encode(b'user:secret').decode()}"
     server.pages["/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": "bad"}))
-    env: Final = {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    env: Final[dict[str, str]] = {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
 
-    result: Final = yanked_files("pip", {**env, variable: str(netrc_file)})
+    result: Final[frozenset[str] | None] = yanked_files("pip", {**env, variable: str(netrc_file)})
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
@@ -167,7 +173,9 @@ def test_yanked_files_netrc_without_credentials_still_reads_the_index(
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     server.pages["/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": "bad"}))
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == {"pip-2.0-py3-none-any.whl"}
     assert server.received_auth == [None]
@@ -177,9 +185,9 @@ def test_yanked_files_keeps_credentials_from_a_redirect(server: _Server, other_s
     server.auth = f"Basic {b64encode(b'user:secret').decode()}"
     server.pages["/simple/pip/"] = _Page(302, {"Location": f"{other_server.url}/simple/pip/"}, b"")
     other_server.pages["/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": ""}))
-    index: Final = f"http://user:secret@{server.url.removeprefix('http://')}/simple/"
+    index: Final[str] = f"http://user:secret@{server.url.removeprefix('http://')}/simple/"
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull})
 
     assert result == {"pip-2.0-py3-none-any.whl"}
     assert other_server.received_auth == [None]
@@ -187,7 +195,7 @@ def test_yanked_files_keeps_credentials_from_a_redirect(server: _Server, other_s
 
 def test_yanked_files_never_logs_the_password(server: _Server, caplog: pytest.LogCaptureFixture) -> None:
     server.pages["/simple/pip/"] = _Page(500, {}, b"")
-    index: Final = f"http://user:s3cret@{server.url.removeprefix('http://')}/simple/"
+    index: Final[str] = f"http://user:s3cret@{server.url.removeprefix('http://')}/simple/"
 
     assert yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull}) is None
     assert "could not read" in caplog.text
@@ -204,7 +212,7 @@ def test_yanked_files_never_logs_the_password(server: _Server, caplog: pytest.Lo
 def test_yanked_files_needs_every_index_to_yank(server: _Server, extra: str | None, expected: set[str]) -> None:
     server.pages["/a/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": ""}))
     server.pages["/b/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": extra}))
-    env: Final = {
+    env: Final[dict[str, str]] = {
         "PIP_INDEX_URL": f"{server.url}/a/",
         "PIP_EXTRA_INDEX_URL": f"{server.url}/b/",
         "PIP_CONFIG_FILE": os.devnull,
@@ -215,7 +223,7 @@ def test_yanked_files_needs_every_index_to_yank(server: _Server, extra: str | No
 
 def test_yanked_files_goes_through_the_configured_proxy(server: _Server) -> None:
     server.pages["http://index.invalid/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": ""}))
-    env: Final = {
+    env: Final[dict[str, str]] = {
         "PIP_INDEX_URL": "http://index.invalid/simple/",
         "PIP_PROXY": server.url,
         "PIP_CONFIG_FILE": os.devnull,
@@ -234,7 +242,7 @@ def test_yanked_files_goes_through_the_configured_proxy(server: _Server) -> None
 def test_yanked_files_asks_pypi_only_without_a_configured_index(
     mocker: MockerFixture, env: dict[str, str], expected: str
 ) -> None:
-    opener: Final = mocker.patch("virtualenv.seed.wheels.index.build_opener", autospec=True)
+    opener: Final[MockType] = mocker.patch("virtualenv.seed.wheels.index.build_opener", autospec=True)
     opener.return_value.open.side_effect = URLError("offline")
 
     assert yanked_files("Pip", {**env, "PIP_CONFIG_FILE": os.devnull}) is None
@@ -243,23 +251,23 @@ def test_yanked_files_asks_pypi_only_without_a_configured_index(
 
 @pytest.mark.parametrize("value", ["y", "T", "true", "On", "1"])
 def test_yanked_files_without_index_asks_nothing(mocker: MockerFixture, value: str) -> None:
-    opener: Final = mocker.patch("virtualenv.seed.wheels.index.build_opener", autospec=True)
+    opener: Final[MockType] = mocker.patch("virtualenv.seed.wheels.index.build_opener", autospec=True)
 
     assert yanked_files("pip", {"PIP_NO_INDEX": value, "PIP_CONFIG_FILE": os.devnull}) is None
     opener.assert_not_called()
 
 
 def test_yanked_files_reads_the_index_from_pip_configuration(tmp_path: Path) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    config: Final = tmp_path / "pip.conf"
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    config: Final[Path] = tmp_path / "pip.conf"
     config.write_text(f"[global]\nindex-url = file:///nowhere\n[download]\nindex_url = {index}\n", encoding="utf-8")
 
     assert yanked_files("pip", {"PIP_CONFIG_FILE": str(config)}) == {"pip-2.0-py3-none-any.whl"}
 
 
 def test_yanked_files_environment_wins_over_configuration(tmp_path: Path) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    config: Final = tmp_path / "pip.conf"
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    config: Final[Path] = tmp_path / "pip.conf"
     config.write_text("[global]\nindex-url = file:///nowhere\n", encoding="utf-8")
 
     assert yanked_files("pip", {"PIP_CONFIG_FILE": str(config), "PIP_INDEX_URL": index}) == {"pip-2.0-py3-none-any.whl"}
@@ -278,8 +286,8 @@ def test_yanked_files_environment_wins_over_configuration(tmp_path: Path) -> Non
 def test_yanked_files_reads_the_per_user_configuration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, user_file: str
 ) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    home: Final = tmp_path / "home"
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    home: Final[Path] = tmp_path / "home"
     (home / user_file).parent.mkdir(parents=True)
     (home / user_file).write_text(f"[global]\nindex-url = {index}\n", encoding="utf-8")
     monkeypatch.setenv("HOME", str(home))
@@ -293,14 +301,14 @@ def test_yanked_files_reads_the_per_user_configuration(
 def test_yanked_files_config_file_variable_skips_per_user_configuration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    home: Final = tmp_path / "home"
-    user_file: Final = home / ("pip/pip.ini" if sys.platform == "win32" else ".pip/pip.conf")
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    home: Final[Path] = tmp_path / "home"
+    user_file: Final[Path] = home / ("pip/pip.ini" if sys.platform == "win32" else ".pip/pip.conf")
     user_file.parent.mkdir(parents=True)
     user_file.write_text("[global]\nno-index = true\n", encoding="utf-8")
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
-    config: Final = tmp_path / "pip.conf"
+    config: Final[Path] = tmp_path / "pip.conf"
     config.write_text(f"[global]\nindex-url = {index}\n", encoding="utf-8")
 
     assert yanked_files("pip", {"PIP_CONFIG_FILE": str(config)}) == {"pip-2.0-py3-none-any.whl"}
@@ -310,19 +318,21 @@ def test_yanked_files_config_file_variable_skips_per_user_configuration(
 def test_yanked_files_ignores_a_config_file_in_a_folder_it_may_not_enter(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
-    locked: Final = tmp_path / "locked"
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    locked: Final[Path] = tmp_path / "locked"
     locked.mkdir(mode=0)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": str(locked / "pip.conf")})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": str(locked / "pip.conf")}
+    )
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
 
 def test_yanked_files_reads_the_index_without_a_home_folder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
     _forget_home(monkeypatch, forget=True)
     # leaves only the legacy ~/.pip folder to resolve without a home
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
@@ -344,7 +354,7 @@ def _no_passwd_entry(uid: int) -> NoReturn:
 
 
 def test_yanked_files_reads_the_index_when_the_user_folders_are_unknown(tmp_path: Path, mocker: MockerFixture) -> None:
-    index: Final = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
+    index: Final[str] = _file_index(tmp_path, {"pip-2.0-py3-none-any.whl": ""})
     # as platformdirs does on macOS without a home folder, where XDG variables do not apply
     mocker.patch(
         "virtualenv.seed.wheels.index.user_config_dir",
@@ -357,10 +367,12 @@ def test_yanked_files_reads_the_index_when_the_user_folders_are_unknown(tmp_path
 
 @pytest.mark.parametrize("charset", ["utf8mb4", "base64", "zlib", "rot13"])
 def test_yanked_files_reads_a_page_with_a_charset_it_cannot_decode_with(server: _Server, charset: str) -> None:
-    html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
+    html: Final[bytes] = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
     server.pages["/simple/pip/"] = _Page(200, {"Content-Type": f"text/html; charset={charset}"}, html)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
@@ -393,7 +405,9 @@ def test_yanked_files_reads_a_page_with_a_charset_it_cannot_decode_with(server: 
 def test_yanked_files_reads_each_listing_on_a_page(server: _Server, page: str, expected: set[str]) -> None:
     server.pages["/simple/pip/"] = _page(page)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == expected
 
@@ -402,20 +416,26 @@ def test_yanked_files_reads_each_listing_on_a_page(server: _Server, page: str, e
     "order", [pytest.param((False, True), id="not-yanked-first"), pytest.param((True, False), id="yanked-first")]
 )
 def test_yanked_files_needs_every_json_listing_yanked(server: _Server, order: tuple[bool, bool]) -> None:
-    files: Final = [{"filename": "pip-2.0-py3-none-any.whl", "yanked": yanked} for yanked in order]
+    files: Final[list[dict[str, str | bool]]] = [
+        {"filename": "pip-2.0-py3-none-any.whl", "yanked": yanked} for yanked in order
+    ]
     server.pages["/simple/pip/"] = _page(json.dumps({"files": files}), _JSON)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == frozenset()
 
 
 def test_yanked_files_reads_a_page_whose_length_is_not_a_decimal_number(server: _Server) -> None:
-    html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
+    html: Final[bytes] = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
     # str.isdigit accepts the superscript, which int() then refuses
     server.pages["/simple/pip/"] = _Page(200, {"Content-Type": "text/html", "Content-Length": "\u00b2"}, html)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
@@ -430,7 +450,7 @@ def test_yanked_files_reads_a_page_whose_length_is_not_a_decimal_number(server: 
 def test_yanked_files_reports_markup_the_parser_rejects_as_unknown(
     server: _Server, mocker: MockerFixture, error: Exception
 ) -> None:
-    html: Final = f"{_html({'pip-2.0-py3-none-any.whl': ''})}<![foo bar]>"
+    html: Final[str] = f"{_html({'pip-2.0-py3-none-any.whl': ''})}<![foo bar]>"
     server.pages["/simple/pip/"] = _Page(200, {"Content-Type": "text/html"}, html.encode())
     # html.parser before its 2025 hardening raised on such a marked section
     mocker.patch(
@@ -443,25 +463,31 @@ def test_yanked_files_reports_markup_the_parser_rejects_as_unknown(
 
 
 def test_yanked_files_reads_a_chunked_page(server: _Server) -> None:
-    html: Final = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
-    chunked: Final = f"{len(html):x}\r\n".encode() + html + b"\r\n0\r\n\r\n"
+    html: Final[bytes] = _html({"pip-2.0-py3-none-any.whl": ""}).encode()
+    chunked: Final[bytes] = f"{len(html):x}\r\n".encode() + html + b"\r\n0\r\n\r\n"
     # http.client ignores Content-Length on a chunked response, so the truncation check must too
-    headers: Final = {"Content-Type": "text/html", "Transfer-Encoding": "chunked", "Content-Length": "99999"}
+    headers: Final[dict[str, str]] = {
+        "Content-Type": "text/html",
+        "Transfer-Encoding": "chunked",
+        "Content-Length": "99999",
+    }
     server.pages["/simple/pip/"] = _Page(200, headers, chunked)
 
-    result: Final = yanked_files("pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull})
+    result: Final[frozenset[str] | None] = yanked_files(
+        "pip", {"PIP_INDEX_URL": f"{server.url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    )
 
     assert result == {"pip-2.0-py3-none-any.whl"}
 
 
 def test_yanked_files_takes_the_password_for_a_url_user_from_netrc(server: _Server, tmp_path: Path) -> None:
-    netrc_file: Final = tmp_path / "netrc"
+    netrc_file: Final[Path] = tmp_path / "netrc"
     netrc_file.write_text("machine 127.0.0.1 login user password secret\n", encoding="utf-8")
     server.auth = f"Basic {b64encode(b'user:secret').decode()}"
     server.pages["/simple/pip/"] = _page(_html({"pip-2.0-py3-none-any.whl": ""}))
-    index: Final = f"http://user@{server.url.removeprefix('http://')}/simple/"
+    index: Final[str] = f"http://user@{server.url.removeprefix('http://')}/simple/"
 
-    result: Final = yanked_files(
+    result: Final[frozenset[str] | None] = yanked_files(
         "pip", {"PIP_INDEX_URL": index, "PIP_CONFIG_FILE": os.devnull, "NETRC": str(netrc_file)}
     )
 
@@ -533,8 +559,8 @@ def test_yanked_files_reports_every_failure_as_unknown(
     server.pages["/simple/pip/"] = failure.page
     server.auth = failure.auth
     _forget_home(monkeypatch, failure.homeless)
-    defaults: Final = {"PIP_INDEX_URL": "{url}/simple/", "PIP_CONFIG_FILE": os.devnull}
-    env: Final = {
+    defaults: Final[dict[str, str]] = {"PIP_INDEX_URL": "{url}/simple/", "PIP_CONFIG_FILE": os.devnull}
+    env: Final[dict[str, str]] = {
         key: value.format(url=server.url, tmp=tmp_path, tmp_uri=tmp_path.as_uri())
         for key, value in {**defaults, **failure.env}.items()
     }

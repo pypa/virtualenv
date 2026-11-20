@@ -3,9 +3,9 @@ index 2fd3ac26..5347c551 100644
 --- a/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
 +++ b/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
 @@ -215,7 +215,7 @@ class PipInstall(ABC):
-                 linked: Final = entry.is_symlink()
+                 linked: Final[bool] = entry.is_symlink()
                  # Unlinking the final link leaves its target intact; parent links still affect containment.
-                 resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
+                 resolved: Final[Path] = entry.parent.resolve() / entry.name if linked else entry.resolve()
 -                if root not in resolved.parents or resolved in metadata_parents:
 +                if resolved in metadata_parents:
                      LOGGER.warning(

@@ -20,7 +20,7 @@ from virtualenv.util.error import ProcessCallFailedError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def test_module_entry_removes_implicit_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    original: Final = sys.path.copy()
+    original: Final[list[str]] = sys.path.copy()
     monkeypatch.setattr(sys, "path", [str(tmp_path), *original])
     assert (module_entry_version(), sys.path) == (0, original)
 
@@ -51,7 +51,7 @@ def test_module_entry_keeps_other_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    original: Final = sys.path.copy()
+    original: Final[list[str]] = sys.path.copy()
     monkeypatch.setattr(sys, "path", [str(tmp_path / "other"), *original])
     assert (module_entry_version(), sys.path) == (0, [str(tmp_path / "other"), *original])
 
@@ -60,7 +60,7 @@ def test_module_entry_keeps_other_directory(
 def test_module_entry_without_working_directory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
-    directory: Final = tmp_path / "removed"
+    directory: Final[Path] = tmp_path / "removed"
     directory.mkdir()
     monkeypatch.chdir(directory)
     directory.rmdir()
@@ -129,7 +129,7 @@ def test_upgrade_embed_wheels_exits_without_error(
     mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # manual_upgrade returns None, so a finished upgrade exits with SystemExit(None)
-    upgrade: Final = mocker.patch("virtualenv.run.manual_upgrade", return_value=None, autospec=True)
+    upgrade: Final[MockType] = mocker.patch("virtualenv.run.manual_upgrade", return_value=None, autospec=True)
     with pytest.raises(SystemExit) as context:
         run_with_catch(["--upgrade-embed-wheels", "--app-data", str(tmp_path)])
     assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (None, 1, ("", ""))
@@ -200,9 +200,9 @@ def test_module_entry_from_target_install(tmp_path: Path) -> None:
 def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pythonpath: str) -> None:
     # venv from inside a virtualenv on 3.10 and earlier records the virtualenv as home, which only works where the
     # interpreter's compiled-in prefix exists
-    bare: Final = tmp_path / "bare"
+    bare: Final[Path] = tmp_path / "bare"
     check_output([sys.executable, "-m", "virtualenv", str(bare), "--no-seed", "--activators="])
-    executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    executable: Final[Path] = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     check_output(
         [str(executable), *flags, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
         cwd=target,
@@ -215,7 +215,7 @@ def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pyth
 
 
 def _copy_target_install(tmp_path: Path) -> Path:
-    target: Final = tmp_path / "target"
+    target: Final[Path] = tmp_path / "target"
     target.mkdir()
     shutil.copytree(Path(virtualenv.__file__).parent, target / "virtualenv")
     copied: Final[set[str]] = {"virtualenv"}
@@ -239,9 +239,9 @@ def _copy_target_install(tmp_path: Path) -> Path:
 
 @pytest.mark.skipif(sys.version_info < (3, 11), reason="requires -P")
 def test_module_entry_from_target_install_safe_path(tmp_path: Path) -> None:
-    target: Final = _copy_target_install(tmp_path)
+    target: Final[Path] = _copy_target_install(tmp_path)
     # with only the metadata left in the working directory, dropping that explicit entry loses the discovery plugin
-    library: Final = tmp_path / "library"
+    library: Final[Path] = tmp_path / "library"
     library.mkdir()
     (target / "virtualenv").rename(library / "virtualenv")
     _create_env_from_target(tmp_path, target, flags=["-P"], pythonpath=os.pathsep.join(map(str, [target, library])))

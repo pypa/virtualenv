@@ -27,8 +27,8 @@ def cache_dir_with_migration() -> str:
     :returns: the cache directory path
 
     """
-    new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
-    old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
+    new_dir: Final[str] = user_cache_dir(appname="virtualenv", appauthor="pypa")
+    old_dir: Final[str] = user_data_dir(appname="virtualenv", appauthor="pypa")
     if new_dir == old_dir:
         return new_dir
     if os.path.isdir(old_dir) and os.path.isfile(os.path.join(old_dir, _MIGRATION_MARKER)) and os.path.isdir(new_dir):
@@ -58,10 +58,10 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 
 
 def _migrate_into_nested(old_dir: str, new_dir: str) -> None:
-    marker: Final = pathlib.Path(old_dir, _MIGRATION_MARKER)
+    marker: Final[pathlib.Path] = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
     os.makedirs(new_dir, exist_ok=True)
-    skipped_entries: Final = {os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0], _MIGRATION_MARKER}
+    skipped_entries: Final[set[str]] = {os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0], _MIGRATION_MARKER}
     moved: Final[list[str]] = []
     try:
         for entry in os.listdir(old_dir):

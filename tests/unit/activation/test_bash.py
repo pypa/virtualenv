@@ -19,6 +19,8 @@ from virtualenv.run import cli_run
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from virtualenv.run.session import Session
+
 
 _BASH: Final[str | None] = shutil.which("bash")
 
@@ -61,8 +63,8 @@ def test_bash_clears_pythonhome(tmp_path: Path, original: str) -> None:
     ],
 )
 def test_bash_prepends_bin_to_path(tmp_path: Path, original: str, suffix: str) -> None:
-    session: Final = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / "env")])
-    result: Final = subprocess.run(
+    session: Final[Session] = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / "env")])
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             _BASH,
             "--norc",
@@ -93,7 +95,7 @@ def test_bash_prepends_bin_to_path(tmp_path: Path, original: str, suffix: str) -
     ],
 )
 def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup: str, expected: str) -> None:
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         str(tmp_path / "env"),
         "--creator",
         current_fastest,
@@ -104,7 +106,7 @@ def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup
         "--prompt",
         "example",
     ])
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             _BASH,
             "--norc",
@@ -186,7 +188,7 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, expected_snippets: l
     assert "export PKG_CONFIG_PATH" in content
     assert 'PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"' in content
 
-    missing: Final = [snippet for snippet in expected_snippets if snippet not in content]
+    missing: Final[list[str]] = [snippet for snippet in expected_snippets if snippet not in content]
     assert not missing, (missing, content)
 
 
@@ -298,7 +300,7 @@ def test_bash_activate_relocation_resolves_virtual_env(
 
 @pytest.fixture
 def moved_bash_activate(tmp_path: Path, current_fastest: str) -> Path:
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         "--without-pip",
         str(tmp_path / "original"),
         "--creator",
@@ -335,8 +337,8 @@ def test_bash_relocation_stops_when_unavailable(
     prepare: Callable[[Path], None],
 ) -> None:
     prepare(moved_bash_activate)
-    path: Final = path_of(tmp_path)
-    result: Final = subprocess.run(
+    path: Final[str] = path_of(tmp_path)
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             _BASH,
             "-c",
@@ -362,7 +364,7 @@ def git_bash() -> Path:
 
 @pytest.mark.skipif(not IS_WIN, reason="needs Git Bash and a Scripts directory")
 def test_bash_relocation_resolves_under_git_bash(git_bash: Path, moved_bash_activate: Path) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [str(git_bash), "-c", 'source "$1" && cygpath -w "$VIRTUAL_ENV"', "bash", str(moved_bash_activate)],
         capture_output=True,
         text=True,
@@ -594,7 +596,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 def test_bash_relocation_eval_without_source_preserves_path(moved_bash_activate: Path) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             _BASH,
             "--noprofile",
@@ -615,7 +617,7 @@ def test_bash_relocation_eval_without_source_preserves_path(moved_bash_activate:
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 def test_bash_relocation_stdin_without_source_preserves_path(moved_bash_activate: Path) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [_BASH, "--noprofile", "--norc"],
         input=f'{moved_bash_activate.read_text(encoding="utf-8")}\nprintf "%s|%s" "$PATH" "${{VIRTUAL_ENV-unset}}"',
         env={"PATH": "/usr/bin:/bin"},
@@ -629,9 +631,9 @@ def test_bash_relocation_stdin_without_source_preserves_path(moved_bash_activate
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> None:
-    wrapper: Final = moved_bash_activate.with_name("wrapper")
+    wrapper: Final[Path] = moved_bash_activate.with_name("wrapper")
     wrapper.write_text('eval "$(cat "$1")"\n', encoding="utf-8")
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             "bash",
             "-c",
@@ -652,7 +654,7 @@ def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> N
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 @pytest.mark.parametrize("setup", [pytest.param("", id="default"), pytest.param("BASH_COMPAT=42; ", id="compat42")])
 def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             "bash",
             "--norc",
@@ -702,7 +704,7 @@ def test_bash_child_shell_draws_inherited_prompt(tmp_path: Path, child: list[str
 
 @pytest.mark.skipif(IS_WIN or shutil.which("zsh") is None, reason="requires zsh")
 def test_zsh_deactivate_restores_psvar(tmp_path: Path) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             "zsh",
             "-f",

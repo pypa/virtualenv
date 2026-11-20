@@ -23,9 +23,12 @@ from virtualenv.version import __version__
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from importlib.machinery import ModuleSpec
     from types import ModuleType
 
     from pytest_mock import MockerFixture, MockType
+
+    from tasks.make_zipapp import LockedPackage
 
 _HERE: Final[Path] = Path(__file__).parent
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
@@ -121,11 +124,11 @@ def test_zipapp_loader_context(zipapp: Path, monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
     monkeypatch.delitem(sys.modules, "filelock", raising=False)
     with _ZIPAPP_MAIN.VersionedFindLoad():
-        spec: Final = importlib.util.find_spec("filelock")
+        spec: Final[ModuleSpec | None] = importlib.util.find_spec("filelock")
         assert spec is not None
         assert spec.origin is not None
         assert spec.origin.startswith(str(zipapp))
-    restored: Final = importlib.util.find_spec("filelock")
+    restored: Final[ModuleSpec | None] = importlib.util.find_spec("filelock")
     assert restored is not None
     assert restored.origin is not None
     assert not restored.origin.startswith(str(zipapp))
@@ -161,7 +164,7 @@ def test_zipapp_update_command(
 
 @pytest.mark.timeout(600)
 def test_zipapp_update_without_installed_package(zipapp: Path, zipapp_test_env: Path, tmp_path: Path) -> None:
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             str(zipapp_test_env),
             "-I",
@@ -293,7 +296,7 @@ def fetch(mocker: MockerFixture, make_zipapp: ModuleType) -> MockType:
 
 @pytest.fixture
 def download(make_zipapp: ModuleType) -> Callable[[Path], Path]:
-    package: Final = {
+    package: Final[LockedPackage] = {
         "name": "demo",
         "version": "1.0",
         "wheels": [
@@ -304,7 +307,7 @@ def download(make_zipapp: ModuleType) -> Callable[[Path], Path]:
         ],
     }
     # only a full zipapp build reaches the download otherwise
-    function: Final = make_zipapp._download_locked_wheel  # ruff:ignore[private-member-access]
+    function: Final[Callable[[LockedPackage, Path], Path]] = make_zipapp._download_locked_wheel  # ruff:ignore[private-member-access]
     return lambda into: function(package, into)
 
 
@@ -318,7 +321,7 @@ def test_locked_wheel_reused_from_cache_when_hash_matches(
 
 
 def test_locked_wheel_fetched_into_new_cache(download: Callable[[Path], Path], fetch: MockType, tmp_path: Path) -> None:
-    cache: Final = tmp_path / "cache"
+    cache: Final[Path] = tmp_path / "cache"
 
     assert download(cache).read_bytes() == _LOCKED_CONTENT
     assert [path.name for path in cache.iterdir()] == [_LOCKED_NAME]
@@ -347,7 +350,7 @@ def test_locked_wheel_not_matching_lock_is_rejected(
 
 @pytest.mark.skipif(sys.platform != "win32", reason="only Windows reads a backslash as a separator")
 def test_locked_wheel_outside_the_folder_rejected(make_zipapp: ModuleType, fetch: MockType, tmp_path: Path) -> None:
-    package: Final = {
+    package: Final[LockedPackage] = {
         "name": "demo",
         "version": "1.0",
         "wheels": [{"url": "https://files.example/..\\demo-1.0-py3-none-any.whl", "hashes": {"sha256": "0"}}],
@@ -406,7 +409,7 @@ def test_locked_wheel_replace_refused_without_cached_copy_raises(
     ],
 )
 def test_tox_built_wheel_needs_the_package(tmp_path: Path, files: dict[str, str], found: bool) -> None:
-    wheel: Final = tmp_path / f"virtualenv-{__version__}-py3-none-any.whl"
+    wheel: Final[Path] = tmp_path / f"virtualenv-{__version__}-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         for name, content in files.items():
             archive.writestr(name, content)

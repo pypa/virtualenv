@@ -45,7 +45,7 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
         :returns: the paths of the generated scripts, empty when they were removed
 
         """
-        values: Final = super().replacements(creator, creator.bin_dir)
+        values: Final[dict[str, str]] = super().replacements(creator, creator.bin_dir)
         if any("\n" in values[key] for key in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__")):
             _LOGGER.warning("skipping csh activation scripts: a filesystem path contains a newline")
             for template in self.templates():
@@ -73,7 +73,7 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
         """
         # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
         # Backslashes outside quotes retain their meaning with tcsh's backslash_quote option.
-        quoted: Final = shlex.quote(string)
+        quoted: Final[str] = shlex.quote(string)
         return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
@@ -86,11 +86,13 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
 
         """
         # Normalize display text without changing the filesystem paths used by activation.
-        values: Final = {
+        values: Final[dict[str, str]] = {
             **replacements,
             "__VIRTUAL_PROMPT__": collapse_line_boundaries(replacements["__VIRTUAL_PROMPT__"]),
         }
-        display: Final = collapse_line_boundaries(creator.env_name if self.flag_prompt is None else self.flag_prompt)
+        display: Final[str] = collapse_line_boundaries(
+            creator.env_name if self.flag_prompt is None else self.flag_prompt
+        )
         return {
             **super().substitutions(values, creator),
             "__VIRTUAL_PROMPT_DISPLAY_TCSH__": _prompt_literal(display, tcsh=True),
