@@ -85,7 +85,7 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
         data = super().substitutions(replacements, creator)
         for name in ("__TCL_LIBRARY__", "__TK_LIBRARY__"):
             if os.name != "nt" and not replacements[name].isascii():
-                data[name] = f"__import__('os').fsdecode({replacements[name].encode('utf-8')!r})"
+                data[name] = f"__import__('os').fsdecode(bytes.fromhex('{replacements[name].encode('utf-8').hex()}'))"
         return data
 
 
