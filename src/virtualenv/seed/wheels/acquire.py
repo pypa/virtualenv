@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
-#: The command that runs pip as a module, with the empty path entries removed.
+#: Pip bootstrap code that selects the wheel after startup, before importing pip.
 PIP_RUN: Final[str] = (
-    "import sys; sys.path = [p for p in sys.path if p]; "
+    "import os, sys; sys.path = [os.environ['VIRTUALENV_PIP_WHEEL'], *(p for p in sys.path if p)]; "
     "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
 )
 
@@ -239,7 +239,13 @@ def pip_wheel_env_run(
 
     """
     env = env.copy()
-    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
+    env.update({
+        "PIP_USE_WHEEL": "1",
+        "PIP_USER": "0",
+        "PIP_NO_INPUT": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONSAFEPATH": "1",
+    })
     wheel = get_wheel(
         distribution="pip",
         version=None,
@@ -253,7 +259,9 @@ def pip_wheel_env_run(
     if wheel is None:
         msg = "could not find the embedded pip"
         raise RuntimeError(msg)
-    env["PYTHONPATH"] = str(wheel.path)
+    # Python splits PYTHONPATH before startup, so a separator in the wheel path would create new import entries.
+    env.pop("PYTHONPATH", None)
+    env["VIRTUALENV_PIP_WHEEL"] = str(wheel.path)
     return env
 
 
