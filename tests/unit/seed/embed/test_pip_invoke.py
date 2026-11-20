@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import select
+import signal
 import subprocess
 import sys
 from pathlib import Path
 from shutil import copyfile, copytree
+from time import monotonic
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -221,6 +224,112 @@ def test_pip_reseed_reports_process_failure(tmp_path: Path, mocker: MockerFixtur
     process.return_value.configure_mock(returncode=7)
     with pytest.raises(RuntimeError, match="failed seed with code 7"):
         cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"),
+    reason="requires Linux process descriptors",
+)
+def test_pip_interrupt_reaps_child_before_temp_cleanup(tmp_path: Path) -> None:
+    assert _interrupt_pip_seed(tmp_path) == {"virtualenv_exit": 1, "child_exited": True, "folder_exists": False}
+
+
+def _interrupt_pip_seed(tmp_path: Path) -> dict[str, int | bool]:
+    parent = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "virtualenv",
+            "--seeder",
+            "pip",
+            "--pip",
+            "embed",
+            "--no-download",
+            "--no-periodic-update",
+            "--quiet",
+            str(tmp_path / "env"),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    parent_fd = os.pidfd_open(parent.pid)
+    child_pid = None
+    child_fd = None
+    try:
+        deadline = monotonic() + 20
+        while monotonic() < deadline:
+            assert not select.select([parent_fd], [], [], 0)[0], "virtualenv exited before starting pip"
+            for child in Path(f"/proc/{parent.pid}/task/{parent.pid}/children").read_text(encoding="ascii").split():
+                args = Path(f"/proc/{child}/cmdline").read_bytes().split(b"\0")
+                if b"--find-links" in args:
+                    child_pid = int(child)
+                    child_fd = os.pidfd_open(child_pid)
+                    folder = Path(os.fsdecode(args[args.index(b"--find-links") + 1]))
+                    break
+            if child_fd is not None:
+                break
+            select.select([parent_fd], [], [], 0.01)
+        assert child_fd is not None, "pip child did not start"
+        assert not select.select([child_fd], [], [], 0.1)[0], "pip exited before the interrupt"
+        parent.send_signal(signal.SIGINT)
+        return {
+            "virtualenv_exit": parent.wait(timeout=20),
+            "child_exited": bool(select.select([child_fd], [], [], 0)[0]),
+            "folder_exists": folder.exists(),
+        }
+    finally:
+        parent.kill()
+        parent.wait(timeout=5)
+        os.close(parent_fd)
+        if child_fd is not None:
+            if not select.select([child_fd], [], [], 0)[0]:
+                signal.pidfd_send_signal(child_fd, signal.SIGTERM)
+            os.close(child_fd)
+
+
+def test_pip_interrupt_reaps_child_after_second_interrupt(tmp_path: Path, mocker: MockerFixture) -> None:
+    assert _interrupt_pip_seed_twice(tmp_path, mocker) == {
+        "kill_calls": 2,
+        "child_exited": True,
+        "folder_exists": False,
+    }
+
+
+def _interrupt_pip_seed_twice(tmp_path: Path, mocker: MockerFixture) -> dict[str, int | bool]:
+    child: subprocess.Popen[bytes] | None = None
+    folder: Path | None = None
+    kill_calls = 0
+
+    def start_pip(cmd: list[str], env: dict[str, str]) -> subprocess.Popen[bytes]:
+        nonlocal child, folder
+        child = subprocess.Popen(cmd, env=env)
+        folder = Path(cmd[cmd.index("--find-links") + 1])
+        original_kill = child.kill
+
+        def interrupt_kill() -> None:
+            nonlocal kill_calls
+            kill_calls += 1
+            if kill_calls == 1:
+                raise KeyboardInterrupt
+            original_kill()
+
+        mocker.patch.object(child, "communicate", autospec=True, side_effect=KeyboardInterrupt)
+        mocker.patch.object(child, "kill", autospec=True, side_effect=interrupt_kill)
+        return child
+
+    mocker.patch("virtualenv.seed.embed.pip_invoke.Popen", autospec=True, side_effect=start_pip)
+    try:
+        with pytest.raises(KeyboardInterrupt):
+            cli_run([str(tmp_path / "env"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+        return {
+            "kill_calls": kill_calls,
+            "child_exited": child is not None and child.poll() is not None,
+            "folder_exists": folder is not None and folder.exists(),
+        }
+    finally:
+        if child is not None and child.poll() is None:
+            subprocess.Popen.kill(child)
+            child.wait()
 
 
 def test_pip_reseed_reports_missing_wheel(tmp_path: Path) -> None:

@@ -219,14 +219,25 @@ class PipInvoke(BaseEmbed):
                         entry.unlink()
 
     @staticmethod
-    def _execute(cmd: list[str], env: dict[str, str]) -> Popen[bytes]:
+    def _execute(cmd: list[str], env: dict[str, str]) -> None:
         logging.getLogger(__name__).debug("pip seed by running: %s", LogCmd(cmd, env))
         process: Final[Popen[bytes]] = Popen(cmd, env=env)
-        process.communicate()
+        try:
+            process.communicate()
+        except BaseException:
+            # The find-links directory closes when this call unwinds.
+            while True:
+                try:
+                    if process.poll() is not None:
+                        break
+                    process.kill()
+                    process.wait()
+                except KeyboardInterrupt:
+                    continue
+            raise
         if process.returncode != 0:
             msg: Final[str] = f"failed seed with code {process.returncode}"
             raise RuntimeError(msg)
-        return process
 
     def _rewrite_launchers(self, creator: Creator, record_names: list[str]) -> None:
         for record_name in record_names:
