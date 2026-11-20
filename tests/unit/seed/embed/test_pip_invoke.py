@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
-from shutil import copytree
+from shutil import copyfile, copytree
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -268,6 +269,38 @@ def test_pip_invoke_uses_selected_wheel(
         check=True,
     )
     assert os.path.normcase(str(session.creator.purelib)) in os.path.normcase(result.stdout)
+
+
+@pytest.mark.usefixtures("_no_coverage")
+def test_pip_invoke_uses_selected_archive_with_configured_links(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    wheel = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}")
+    env_links = tmp_path / "env-links"
+    env_links.mkdir()
+    config_links = tmp_path / "config-links"
+    config_links.mkdir()
+    competing_name = wheel.name.replace("-py3-none-any.whl", "-1-py3-none-any.whl")
+    copyfile(wheel.path, env_links / competing_name)
+    copyfile(wheel.path, config_links / competing_name)
+    (tmp_path / "pip.conf").write_text(f"[global]\nfind-links = {config_links}\n", encoding="utf-8")
+    monkeypatch.setenv("PIP_FIND_LINKS", str(env_links))
+    monkeypatch.setenv("PIP_CONFIG_FILE", str(tmp_path / "pip.conf"))
+    monkeypatch.setenv("PIP_REPORT", str(tmp_path / "report.json"))
+
+    cli_run([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+        "--no-download",
+    ])
+
+    installed = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["install"][0]
+    assert (installed["download_info"]["url"].rsplit("/", 1)[-1], installed["is_direct"]) == (wheel.name, False)
 
 
 @pytest.mark.parametrize(
