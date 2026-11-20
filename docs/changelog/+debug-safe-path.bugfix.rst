@@ -1,2 +1,2 @@
-Stop the target debug report (``-vv`` and ``Creator.debug``) from dropping the first real ``sys.path`` entry when
-``PYTHONSAFEPATH`` is set. The report removes the debug script's directory, which safe-path mode never adds.
+Keep the first configured import path in the target debug report (``-vv`` and ``Creator.debug``) when the interpreter
+uses ``PYTHONSAFEPATH`` or an isolated ``._pth`` file.

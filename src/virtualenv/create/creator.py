@@ -454,8 +454,6 @@ def get_env_debug_info(
     """  # simplint: ignore[function-docstring]  # existing docs
     env = env.copy()
     env.pop("PYTHONPATH", None)
-    # safe-path mode would leave out the script directory, which is dropped from the path below
-    env.pop("PYTHONSAFEPATH", None)
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
@@ -463,13 +461,10 @@ def get_env_debug_info(
         code, out, err = run_cmd(cmd, env)
 
     try:
-        result = _parse_debug_output(code, out, err)
+        return _parse_debug_output(code, out, err)
     # a failure to parse the debug output is reported with the raw streams instead
     except Exception as exception:  # ruff:ignore[blind-except]
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
-    if "sys" in result and "path" in result["sys"]:
-        del result["sys"]["path"][0]
-    return result
 
 
 def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:
