@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # fmt: skip
 _NON_ASCII: Final[re.Pattern[str]] = re.compile(r"[^\x00-\x7f]")
+_STATEFUL_UTF8: Final[re.Pattern[bytes]] = re.compile(rb"\x88[\xa3\xa5\xa7]")
 
 
 class CShellActivator(ViaTemplateActivator):  # fmt: skip
@@ -95,12 +96,24 @@ class CShellActivator(ViaTemplateActivator):  # fmt: skip
         display: Final[str] = collapse_line_boundaries(
             creator.env_name if self.flag_prompt is None else self.flag_prompt
         )
-        literals = {
-            **super().substitutions(values, creator),
-            "__VIRTUAL_PROMPT_DISPLAY_TCSH__": _prompt_literal(display, tcsh=True),
-            "__VIRTUAL_PROMPT_DISPLAY_PLAIN__": _prompt_literal(display, tcsh=False),
+        literals = super().substitutions(values, creator)
+        bmp_max: Final[int] = 0xFFFF
+        # Stateful legacy encoders can consume the shell quote after these UTF-8 suffixes or non-BMP text.
+        needs_command = (
+            any(ord(char) > bmp_max for char in display)
+            or _STATEFUL_UTF8.search(display.encode("utf-8", "surrogateescape")) is not None
+        )
+        return {
+            **{key: _NON_ASCII.sub(self._bytes_apart, literal) for key, literal in literals.items()},
+            "__VIRTUAL_PROMPT_DISPLAY_TCSH__": "''" if needs_command else _prompt_literal(display, tcsh=True),
+            "__VIRTUAL_PROMPT_DISPLAY_PLAIN__": "''" if needs_command else _prompt_literal(display, tcsh=False),
+            "__VIRTUAL_PROMPT_PREFIX_TCSH__": _prompt_command(display, tcsh=True)
+            if needs_command
+            else """'('"$_virtualenv_prompt_tcsh:q"') '""",
+            "__VIRTUAL_PROMPT_PREFIX_PLAIN__": _prompt_command(display, tcsh=False)
+            if needs_command
+            else """'('"$_virtualenv_prompt_plain:q"') '""",
         }
-        return {key: _NON_ASCII.sub(self._bytes_apart, literal) for key, literal in literals.items()}
 
     @staticmethod
     def _bytes_apart(match: re.Match[str]) -> str:
@@ -126,6 +139,17 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:  # fmt: skip
             parts.append(char)
     parts.append("'")
     return "".join(parts)
+
+
+def _prompt_command(value: str, *, tcsh: bool) -> str:
+    escaped = value.replace("\\", "\\\\").replace("!", "\\!")
+    if tcsh:
+        escaped = escaped.replace("%", "%%").replace("^", "\\^")
+    return (
+        "`$_virtualenv_printf '%b' '"
+        + "".join(f"\\0{byte:03o}" for byte in f"({escaped})".encode("utf-8", "surrogateescape"))
+        + "'`' '"
+    )
 
 
 __all__ = [

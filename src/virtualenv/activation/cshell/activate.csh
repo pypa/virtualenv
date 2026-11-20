@@ -74,6 +74,9 @@ else
 endif
 
 # Skipped branches use a different quote scanner, so assign prompt literals before entering them.
+# PATH now starts with the environment's bin directory, so use a system printf for prompt bytes.
+set _virtualenv_printf=/usr/bin/printf
+if (! -x "$_virtualenv_printf") set _virtualenv_printf=/bin/printf
 set _virtualenv_prompt_tcsh = __VIRTUAL_PROMPT_DISPLAY_TCSH__
 set _virtualenv_prompt_plain = __VIRTUAL_PROMPT_DISPLAY_PLAIN__
 
@@ -86,9 +89,9 @@ if ( $do_prompt == "1" ) then
         if ( "$prompt:q" =~ *"$newline:q"* ) then
             :
         else if ( $?tcsh ) then
-            set prompt = '('"$_virtualenv_prompt_tcsh:q"') '"$prompt:q"
+            set prompt = __VIRTUAL_PROMPT_PREFIX_TCSH__"$prompt:q"
         else
-            set prompt = '('"$_virtualenv_prompt_plain:q"') '"$prompt:q"
+            set prompt = __VIRTUAL_PROMPT_PREFIX_PLAIN__"$prompt:q"
         endif
     endif
 endif
@@ -98,6 +101,7 @@ unset do_prompt
 unset _virtualenv_dir
 unset _virtualenv_prompt_tcsh
 unset _virtualenv_prompt_plain
+unset _virtualenv_printf
 
 alias pydoc python -m pydoc
 

@@ -280,6 +280,56 @@ def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: d
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
 
 
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("é", id="latin"),
+        pytest.param("別", id="stateful"),
+        pytest.param("別%ny", id="percent"),
+        pytest.param("別^b", id="caret"),
+        pytest.param("別!", id="history"),
+        pytest.param(r"別\p", id="backslash"),
+        pytest.param("別'quote", id="quote"),
+    ],
+)
+def test_cshell_renders_utf8_prompt(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
+    _assert_prompt_drawn(csh_venv, tmp_path, prompt, {**os.environ, "LC_ALL": "C.UTF-8"})
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+def test_cshell_prompt_ignores_printf_alias(csh_venv: _CshVenv) -> None:
+    dest, _ = csh_venv("plain", prompt="別")
+    result = run(
+        [_TCSH, "-f", "-i"],
+        input=f"alias printf echo altered\nsource {dest / 'bin' / 'activate.csh'}\nexit\n".encode(),
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, "(別) ".encode() in result.stdout, result.stderr) == (0, True, b"")
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+def test_cshell_prompt_ignores_printf_on_path(csh_venv: _CshVenv) -> None:
+    dest, _ = csh_venv("plain", prompt="別")
+    fake = dest / "bin" / "printf"
+    fake.write_text("#!/bin/sh\necho altered\n", encoding="utf-8")
+    fake.chmod(0o755)
+    result = run(
+        [_TCSH, "-f", "-i"],
+        input=f"source {dest / 'bin' / 'activate.csh'}\nexit\n".encode(),
+        env={**os.environ, "LC_ALL": "C.UTF-8"},
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, "(別) ".encode() in result.stdout, result.stderr) == (0, True, b"")
+
+
 @pytest.fixture
 def gbk_env() -> dict[str, str]:
     # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
@@ -487,6 +537,26 @@ def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: _CshVenv) -> 
         check=True,
     )
     assert result.stdout == "original\n"
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+def test_cshell_disabled_prompt_skips_legacy_literal(csh_venv: _CshVenv, big5_hkscs_env: dict[str, str]) -> None:
+    dest, _ = csh_venv("plain", prompt="別^b")
+    result = run(
+        [_TCSH, "-f"],
+        input=(
+            "set prompt = original\n"
+            "setenv VIRTUAL_ENV_DISABLE_PROMPT 1\n"
+            f"source {dest / 'bin' / 'activate.csh'}\n"
+            "echo $prompt\n"
+        ).encode(),
+        env=big5_hkscs_env,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, b"original\n", b"")
 
 
 @pytest.mark.skipif(IS_WIN or not _is_bsd_csh(), reason="requires bsd-csh")
