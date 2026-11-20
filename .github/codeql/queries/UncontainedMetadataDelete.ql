@@ -57,8 +57,8 @@ module UncontainedMetadataDeleteConfig implements DataFlow::ConfigSig {
 
   predicate isBarrier(DataFlow::Node node) {
     exists(
-      ConditionBlock guard, CompareNode check, Cmpop op, ControlFlowNode parents, DataFlow::Node checked,
-      boolean inside
+      ConditionBlock guard, CompareNode check, Cmpop op, ControlFlowNode parents,
+      DataFlow::Node checked, boolean inside
     |
       guard.getLastNode() = check and
       check.operands(_, op, parents) and
