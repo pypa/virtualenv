@@ -389,6 +389,11 @@ paths.
  Control seed packages
 ***********************
 
+If you interrupt app-data seeding with Ctrl+C, virtualenv cancels queued work and waits for active workers before
+cleaning up. Press Ctrl+C again to exit the CLI immediately. The environment may be missing seed packages and temporary
+files may remain. Rerun the command to finish seeding. Callers using ``virtualenv.cli_run`` wait for workers to finish
+before temporary app-data is removed.
+
 Pin a seed version
 ==================
 

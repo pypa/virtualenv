@@ -144,6 +144,67 @@ def test_interrupt_waits_for_seed_before_temp_cleanup(tmp_path: Path, unusable_c
     )
 
 
+def test_second_interrupt_exits_and_next_run_finishes_seed(tmp_path: Path) -> None:
+    env: Final[Path] = tmp_path / "env"
+    cache: Final[Path] = tmp_path / "cache"
+    args: Final[list[str]] = ["--app-data", str(cache), "--no-periodic-update", "--no-setuptools", str(env)]
+    script: Final[str] = """
+import os
+import sys
+from _thread import interrupt_main
+from threading import Event, Thread
+from virtualenv.__main__ import run_with_catch
+from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
+
+def block(self, archive, folder):
+    print("staging", folder, flush=True)
+    Event().wait()
+
+def watch_stdin():
+    for _ in sys.stdin:
+        interrupt_main()
+
+if os.name == "nt":
+    Thread(target=watch_stdin, daemon=True).start()
+PipInstall._populate_image = block
+run_with_catch()
+"""
+    with Popen([sys.executable, "-c", script, *args], stdin=PIPE, stdout=PIPE, stderr=STDOUT, text=True) as process:
+        assert process.stdout is not None
+        staging: list[Path] = []
+        signals: list[str] = []
+
+        def interrupt_seed() -> None:
+            for line in process.stdout:
+                if line.startswith("staging "):
+                    staging.append(Path(line.removeprefix("staging ").rstrip()))
+                    signals.append("build")
+                elif "Press Ctrl+C again" in line:
+                    signals.append("wait")
+                else:
+                    continue
+                if os.name == "nt":
+                    # A Windows console interrupt cannot target just this child in the test runner's console.
+                    assert process.stdin is not None
+                    process.stdin.write("\n")
+                    process.stdin.flush()
+                else:
+                    process.send_signal(signal.SIGINT)
+
+        watcher = Thread(target=interrupt_seed)
+        watcher.start()
+        try:
+            process.wait(timeout=30)
+        finally:
+            process.kill()
+            process.wait(timeout=5)
+            watcher.join(timeout=5)
+
+    assert (signals, process.returncode, [path.is_dir() for path in staging]) == (["build", "wait"], 130, [True])
+    session = cli_run(args)
+    assert (staging[0].exists(), (session.creator.purelib / "pip" / "__init__.py").is_file()) == (False, True)
+
+
 def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache: Path, mocker: MockerFixture) -> None:
     started, release, finished = Event(), Event(), Event()
     original_build = PipInstall.build_image
@@ -157,7 +218,7 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
     mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
     original_submit, original_wait = ThreadPoolExecutor.submit, Event.wait
     submit_calls = 0
-    wait_calls = 0
+    interrupts = 0
 
     def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
         nonlocal submit_calls
@@ -166,11 +227,11 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
         return future
 
     def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
-        nonlocal wait_calls
+        nonlocal interrupts
         if submit_calls >= 2 and current_thread() is main_thread() and event is not started:
             assert original_wait(started, timeout=30)
-            wait_calls += 1
-            if wait_calls < 3:
+            if interrupts < 2:
+                interrupts += 1
                 raise KeyboardInterrupt
             release.set()
         return original_wait(event, timeout)
@@ -182,7 +243,7 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
             env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
         )
-    assert (wait_calls, finished.is_set()) == (3, True)
+    assert (interrupts, finished.is_set()) == (2, True)
 
 
 def test_interrupt_during_worker_submission_waits_for_seed(
@@ -231,6 +292,37 @@ def test_interrupt_during_worker_submission_waits_for_seed(
             env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)},
         )
     assert (wait_interrupted, finished.is_set()) == (True, True)
+
+
+def test_interrupt_before_queueing_cancels_pending_install(tmp_path: Path, mocker: MockerFixture) -> None:
+    original_submit = ThreadPoolExecutor.submit
+    queued: list[Callable[[], None]] = []
+    calls = 0
+
+    def submit(executor: ThreadPoolExecutor, fn: Callable[..., None], *args: object, **kwargs: object) -> Future[None]:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            queued.append(fn)
+            raise KeyboardInterrupt
+        return original_submit(executor, fn, *args, **kwargs)
+
+    original_set = Event.set
+    interrupted_cancel = False
+
+    def interrupt_cancel(event: Event) -> None:
+        nonlocal interrupted_cancel
+        if queued and current_thread() is main_thread() and not interrupted_cancel:
+            interrupted_cancel = True
+            raise KeyboardInterrupt
+        original_set(event)
+
+    mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
+    mocker.patch.object(Event, "set", autospec=True, side_effect=interrupt_cancel)
+    with pytest.raises(KeyboardInterrupt):
+        cli_run([str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"])
+    queued[0]()
+    assert (interrupted_cancel, list((tmp_path / "env").rglob("pip/__init__.py"))) == (True, [])
 
 
 def test_seed_worker_runs_when_executor_rejects_submission(

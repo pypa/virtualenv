@@ -36,6 +36,7 @@ from .pip_install.symlink import SymlinkPipInstall
 if TYPE_CHECKING:
     from argparse import ArgumentParser
     from collections.abc import Callable, Generator, Iterable
+    from typing import NoReturn
 
     from python_discovery import PythonInfo
 
@@ -61,6 +62,7 @@ class FromAppData(BaseEmbed):
 
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
+        self._exit_on_interrupt: Callable[[int], NoReturn] | None = getattr(options, "exit_on_seed_interrupt", None)
         # env var and config file values skip the gate on the CLI flag, so apply it here too
         self.symlinks = options.symlink_app_data and self._can_symlink(self.app_data)
         if options.symlink_app_data and self.app_data.transient:
@@ -127,7 +129,7 @@ class FromAppData(BaseEmbed):
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
-            _run_workers(partial(_install, name, wheel) for name, wheel in name_to_whl.items())
+            self._run_workers(partial(_install, name, wheel) for name, wheel in name_to_whl.items())
             if exceptions:
                 messages = [f"failed to build image {', '.join(exceptions.keys())} because:"]
                 for value in exceptions.values():
@@ -180,7 +182,7 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
-        _run_workers(
+        self._run_workers(
             partial(_get, distribution, version) for distribution, version in self.distribution_to_versions().items()
         )
         if fail:
@@ -200,6 +202,38 @@ class FromAppData(BaseEmbed):
             return SymlinkPipInstall
         return CopyPipInstall
 
+    def _run_workers(self, work: Iterable[Callable[[], None]]) -> None:
+        with ThreadPoolExecutor() as executor:
+            workers: list[_SeedWorker] = []
+            try:
+                for task in work:
+                    worker = _SeedWorker(task)
+                    workers.append(worker)
+                    _submit_or_run(executor, worker)
+                for worker in workers:
+                    worker.wait()
+            except KeyboardInterrupt:
+                self._cancel_workers(workers)
+                raise
+            for worker in workers:
+                if worker.error is not None:
+                    raise worker.error
+
+    def _cancel_workers(self, workers: list[_SeedWorker]) -> None:
+        while True:
+            try:
+                for worker in workers:
+                    worker.skip()
+                if self._exit_on_interrupt is not None:
+                    LOGGER.warning("waiting for seed workers. Press Ctrl+C again to exit immediately")
+                for worker in workers:
+                    worker.wait()
+                break
+            except KeyboardInterrupt:
+                if self._exit_on_interrupt is not None:
+                    # A normal exit would wait for the executor again at interpreter shutdown.
+                    self._exit_on_interrupt(130)
+
 
 def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -> None:
     with parent.non_reentrant_lock_for_key(name):
@@ -207,41 +241,36 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
             installer.build_image()
 
 
-def _run_workers(work: Iterable[Callable[[], None]]) -> None:
-    with ThreadPoolExecutor() as executor:
-        workers: list[_SeedWorker] = []
-        interrupted = False
-        try:
-            for task in work:
-                worker = _SeedWorker(task)
-                workers.append(worker)
-                _submit_or_run(executor, worker)
-        except KeyboardInterrupt:
-            interrupted = True
-        finally:
-            _wait_for_workers(workers, interrupted=interrupted)
-
-
 class _SeedWorker:
     def __init__(self, work: Callable[[], None]) -> None:
         self.work = work
         self.done = Event()
         self.error: BaseException | None = None
-        self._claimed = Lock()
+        self._lock = Lock()
+        self._started = False
 
     def __call__(self) -> None:
-        if self._claimed.acquire(blocking=False):
-            try:
-                self.work()
-            except BaseException as exception:
-                self.error = exception
-                raise
-            finally:
-                self.done.set()
+        with self._lock:
+            if self._started or self.done.is_set():
+                return
+            self._started = True
+        try:
+            self.work()
+        except BaseException as exception:
+            self.error = exception
+            raise
+        finally:
+            self.done.set()
 
     def skip(self) -> None:
-        if self._claimed.acquire(blocking=False):
-            self.done.set()
+        with self._lock:
+            if not self._started:
+                self.done.set()
+
+    def wait(self) -> None:
+        # Windows before Python 3.14 cannot interrupt an unbounded lock wait.
+        while not self.done.wait(timeout=0.25):
+            pass
 
 
 def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
@@ -249,24 +278,6 @@ def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
         executor.submit(worker)
     except RuntimeError:
         worker()
-
-
-def _wait_for_workers(workers: list[_SeedWorker], *, interrupted: bool) -> None:
-    while True:
-        try:
-            if interrupted:
-                for worker in workers:
-                    worker.skip()
-            for worker in workers:
-                worker.done.wait()
-            break
-        except KeyboardInterrupt:
-            interrupted = True
-    if interrupted:
-        raise KeyboardInterrupt
-    for worker in workers:
-        if worker.error is not None:
-            raise worker.error
 
 
 __all__ = [
