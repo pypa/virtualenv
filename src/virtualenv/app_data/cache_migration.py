@@ -219,7 +219,12 @@ def _preserve_cache_permissions(old_dir: str, new_dir: str) -> None:
     old_info: Final[os.stat_result] = os.stat(old_dir)
     if os.stat(new_dir).st_gid != old_info.st_gid:
         os.chown(new_dir, -1, old_info.st_gid)
-    os.chmod(new_dir, stat.S_IMODE(old_info.st_mode))
+    os.chmod(new_dir, _migrated_cache_mode(old_info))
+
+
+def _migrated_cache_mode(info: os.stat_result) -> int:
+    mode = stat.S_IMODE(info.st_mode)
+    return mode if info.st_mode & stat.S_ISGID else mode & ~(stat.S_IRWXG | stat.S_IRWXO)
 
 
 def _move_cache_entry(source: str, target: str) -> bool:
@@ -259,7 +264,25 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
 
 def _move_cache(old_dir: str, new_dir: str) -> None:
     _prepare_cache_parent(old_dir, new_dir)
-    shutil.move(old_dir, new_dir)
+    if os.name != "posix" or os.path.islink(old_dir):
+        shutil.move(old_dir, new_dir)
+        return
+    old_info = os.stat(old_dir)
+    if (mode := _migrated_cache_mode(old_info)) != stat.S_IMODE(old_info.st_mode):
+        os.chmod(old_dir, mode)
+    try:
+        os.rename(old_dir, new_dir)
+    except OSError:
+        # shutil.move creates the copy with the umask before copying the private source mode.
+        os.makedirs(new_dir, mode=0o700)
+        try:
+            shutil.copytree(old_dir, new_dir, symlinks=True, dirs_exist_ok=True)
+            _preserve_cache_permissions(old_dir, new_dir)
+        except OSError:
+            with suppress(OSError):
+                shutil.rmtree(new_dir)
+            raise
+        shutil.rmtree(old_dir)
 
 
 __all__ = [
