@@ -41,6 +41,7 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from types import SimpleNamespace
 
     from pytest_mock import MockerFixture
 
@@ -489,30 +490,49 @@ def test_venv_creator_keeps_only_selected_activators(tmp_path: Path, activators:
     assert scripts == expected
 
 
-@pytest.mark.skipif(not IS_WIN or "venv" not in _CURRENT_CREATORS, reason="requires Windows stdlib venv")
-def test_venv_creator_discards_read_only_stdlib_script(tmp_path: Path, mocker: MockerFixture) -> None:
-    session: Final[Session] = session_via_cli([
-        str(tmp_path / "env"),
-        "--creator",
-        "venv",
-        "--no-seed",
-        "--activators=",
-    ])
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize("inline", [pytest.param(True, id="inline"), pytest.param(False, id="subprocess")])
+def test_venv_creator_discards_read_only_stdlib_script(tmp_path: Path, inline: bool) -> None:
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
     creator = session.creator
     assert isinstance(creator, Venv)
-    creator.can_be_inline = False
-    create = creator.create_via_sub_process
-    script: Final[Path] = creator.bin_dir / "activate.bat"
-
-    def install_read_only_script() -> None:
-        create()
-        script.chmod(S_IREAD)
-
-    mocker.patch.object(creator, "create_via_sub_process", autospec=True, side_effect=install_read_only_script)
+    creator.can_be_inline = inline
+    creator.bin_dir.mkdir(parents=True)
+    script = creator.bin_dir / "activate"
+    script.write_text("old activator", encoding="utf-8")
+    script.chmod(S_IREAD)
     with session:
         session.run()
-
     assert not script.exists()
+
+
+@pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
+def test_venv_creator_keeps_vendor_templates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import venv  # ruff:ignore[import-outside-top-level]  # optional stdlib module
+
+    templates = tmp_path / "vendor" / "scripts" / "common"
+    (templates / "tools").mkdir(parents=True)
+    (templates / "activate").write_text("stock template", encoding="utf-8")
+    (templates / "tools" / "activate").write_text("__VENV_NAME__", encoding="utf-8")
+
+    def setup_scripts(builder: venv.EnvBuilder, context: SimpleNamespace) -> None:
+        builder.install_scripts(context, str(templates.parent))
+
+    monkeypatch.setattr(venv.EnvBuilder, "setup_scripts", setup_scripts)
+    session = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    creator = session.creator
+    assert isinstance(creator, Venv)
+    creator.can_be_inline = True
+    copymode = shutil.copymode
+
+    def concurrent_cleanup(src: str, dst: str, *, follow_symlinks: bool = True) -> None:
+        (creator.bin_dir / "activate").unlink(missing_ok=True)
+        copymode(src, dst, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(shutil, "copymode", concurrent_cleanup)
+    with session:
+        session.run()
+    assert (creator.bin_dir / "tools" / "activate").read_text(encoding="utf-8") == "env"
 
 
 def _make_symlink(link: Path, stored: Path) -> None:

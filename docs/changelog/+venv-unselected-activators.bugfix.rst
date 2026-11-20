@@ -1,1 +1,2 @@
-Discard standard-library activation scripts for shells not selected when using the ``venv`` creator.
+With ``--creator venv``, install only the selected activation scripts. Remove stale standard-library activators when
+reusing an environment.
