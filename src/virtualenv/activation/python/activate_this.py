@@ -69,11 +69,15 @@ def _add_libraries() -> None:
         + lib_paths
         + [path for path in original_paths if path not in stdlib_paths and path not in lib_paths]
     )
-    prev_length = len(sys.path)
+    added_paths = []
     for path in lib_paths:
+        if path not in original_paths:
+            added_paths.append(path)
+        prev_length = len(sys.path)
         # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
         site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
-    sys.path[:] = [path for path in lib_paths if path not in original_paths] + sys.path[prev_length:] + original_paths
+        added_paths.extend(sys.path[prev_length:])
+    sys.path[:] = added_paths + original_paths
 
 
 _add_libraries()
