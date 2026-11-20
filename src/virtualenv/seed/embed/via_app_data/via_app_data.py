@@ -239,9 +239,6 @@ class _SeedWorker:
             finally:
                 self.done.set()
 
-    def wait(self) -> None:
-        self.done.wait()
-
 
 def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
     try:
@@ -256,7 +253,7 @@ def _finish_workers(executor: ThreadPoolExecutor, workers: list[_SeedWorker], in
             _submit_or_run(executor, workers[index])
             return index + 1, False
         for worker in workers:
-            worker.wait()
+            worker.done.wait()
     except KeyboardInterrupt:
         return index, True
     return None, False
