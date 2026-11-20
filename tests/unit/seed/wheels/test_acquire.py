@@ -175,13 +175,19 @@ def test_pip_helper_omits_current_directory_at_startup(session_app_data: AppData
         [],
         session_app_data,
         {
-            **os.environ,
+            **{key: value for key, value in os.environ.items() if key != "PYTHONSAFEPATH"},
             "TEST_MARKER": str(marker),
             "TEST_LINECACHE": str(Path(sysconfig.get_path("stdlib")) / "linecache.py"),
         },
     )
     result = subprocess.run(
-        [Path(sysconfig.get_config_var("BINDIR")) / Path(sys.executable).name, "-c", PIP_RUN, "--version"],
+        [
+            Path(sys.base_prefix if os.name == "nt" else sysconfig.get_config_var("BINDIR"))
+            / Path(sys.executable).name,
+            "-c",
+            PIP_RUN,
+            "--version",
+        ],
         cwd=tmp_path,
         env=env,
         capture_output=True,
