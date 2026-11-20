@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from virtualenv import session_via_cli
+from virtualenv import cli_run, session_via_cli
 from virtualenv.activation import BatchActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.info import IS_WIN
@@ -66,34 +66,26 @@ def special_char_name():
     return result
 
 
-def test_batch_pydoc_bat_quoting(tmp_path) -> None:
-    # Test that pydoc.bat properly quotes python.exe path to handle spaces.
-    # GIVEN: A mock interpreter
-    class MockInterpreter:
-        os = "nt"
-        tcl_lib = None
-        tk_lib = None
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+def test_batch_pydoc_uses_environment_python(tmp_path: Path) -> None:
+    creator = cli_run([str(tmp_path / "env space"), "--no-seed"], setup_logging=False).creator
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    (tmp_path / "pydoc_driver.bat").write_text(
+        f'@echo off\n@call "{creator.bin_dir / "pydoc.bat"}" pydoc_probe\n', encoding="utf-8"
+    )
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", "/C", "pydoc_driver.bat"],
+        cwd=tmp_path,
+        env={**os.environ, "PATH": f"{os.path.dirname(sys.executable)}{os.pathsep}{os.environ['PATH']}"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
 
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "Scripts"
-            self.bin_dir.mkdir(parents=True)
-            self.interpreter = MockInterpreter()
-            self.pyenv_cfg = {}
-            self.env_name = "test-env"
-
-    creator = MockCreator(tmp_path)
-    activator = BatchActivator(Namespace(prompt=None))
-
-    # WHEN: Generate activation scripts
-    activator.generate(creator)
-
-    # THEN: pydoc.bat should quote python.exe to handle paths with spaces
-    pydoc_content = (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
-
-    # The python.exe should be quoted to handle paths with spaces like "C:\Program Files\Python39\python.exe"
-    assert '"python.exe"' in pydoc_content, f"python.exe should be quoted in pydoc.bat. Content:\n{pydoc_content}"
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={creator.exe}" in result.stdout.splitlines()
 
 
 @pytest.mark.parametrize(
