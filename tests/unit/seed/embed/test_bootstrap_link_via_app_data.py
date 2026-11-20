@@ -676,6 +676,22 @@ def test_seed_metadata_skips_fifo(no_seed_session: Session, tmp_path: Path, meta
     ) == (0, True, False, True)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX non-blocking files")
+def test_seed_metadata_is_read_without_blocking(tmp_path: Path, mocker: MockerFixture) -> None:
+    metadata: Final[Path] = tmp_path / "RECORD"
+    metadata.write_text("seed.py,,", encoding="utf-8")
+    original_fstat = os.fstat
+    blocking: list[bool] = []
+
+    def fstat(fd: int) -> os.stat_result:
+        blocking.append(os.get_blocking(fd))
+        return original_fstat(fd)
+
+    mocker.patch.object(os, "fstat", side_effect=fstat, autospec=True)
+    content = PipInstall._read_regular_metadata(metadata)  # ruff:ignore[private-member-access]  # open descriptor
+    assert (content, blocking) == ("seed.py,,", [False])
+
+
 @pytest.mark.skipif(os.name == "nt" or not fs_supports_symlink(), reason="requires POSIX device links")
 @pytest.mark.parametrize("metadata_file", ["top_level.txt", "RECORD"])
 def test_seed_metadata_skips_device(
