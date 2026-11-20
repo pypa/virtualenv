@@ -13,7 +13,7 @@ import pytest
 from prompt_matrix import generate_script
 
 from virtualenv.activation import BashActivator
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_CPYTHON, IS_WIN
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ def tcl_locale(request: pytest.FixtureRequest) -> str:
     return selected
 
 
-@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash and Tcl")
+@pytest.mark.skipif(IS_WIN or not IS_CPYTHON or _BASH is None, reason="requires CPython's Tcl discovery and POSIX bash")
 def test_bash_keeps_nonascii_tcl_library_bytes(tmp_path: Path, tcl_locale: str) -> None:
     tcl = pytest.importorskip("tkinter").Tcl()
     library = tmp_path / "andré" / Path(tcl.eval("info library")).name
