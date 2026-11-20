@@ -580,7 +580,10 @@ def gb18030_env() -> dict[str, str]:
     return env
 
 
-@pytest.mark.skipif(sys.platform != "linux" or sys.version_info >= (3, 15), reason="requires legacy locale decoding")
+@pytest.mark.skipif(
+    sys.platform != "linux" or sys.implementation.name != "cpython" or sys.version_info >= (3, 15),
+    reason="requires CPython legacy locale decoding",
+)
 def test_trigger_update_quoted_app_data_in_gb18030(tmp_path: Path, gb18030_env: dict[str, str]) -> None:
     project = tmp_path / "中'\"project"
     project.mkdir()
