@@ -22,13 +22,22 @@ _PRINTABLE: Final[st.SearchStrategy[str]] = st.characters(blacklist_categories=(
 _KEYS: Final[st.SearchStrategy[str]] = st.text(
     st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
 ).filter(lambda key: key.strip() == key and not key.startswith("#"))
-_CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
+_CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(
+    _KEYS.filter(
+        lambda key: (
+            key
+            not in {"home", "executable", "base-prefix", "base-exec-prefix", "base-executable", "venvlauncher_command"}
+        )
+    ),
+    st.text(_PRINTABLE),
+    max_size=6,
+)
 
 
 @given(content=_CONTENTS)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
 @example(content={"prompt": f"a{chr(0x2028)}home = /attacker"})
-@example(content={"home": "a\r\nevil = 1"})
+@example(content={"command": "a\r\nevil = 1"})
 def test_writing_then_reading_never_invents_keys(content, tmp_path_factory) -> None:
     """A value must never be read back as a new configuration key."""
     read_back = _round_trip(content, tmp_path_factory.mktemp("cfg"))

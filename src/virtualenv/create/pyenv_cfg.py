@@ -94,11 +94,21 @@ class PyEnvCfg:
     def write(self) -> None:
         """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths.
 
-        :raises ValueError: when a CPython configuration would be too large to read
+        :raises ValueError: when a path changes on serialization or a CPython configuration is too large
 
         """
         _validate_path(self.path)
         LOGGER.debug("write %s", self.path)
+        write_file(self.path, self.serialize())
+
+    def serialize(self) -> bytes:
+        """Build the configuration without writing it.
+
+        :returns: the UTF-8 configuration
+
+        :raises ValueError: when a path changes on serialization or a CPython configuration is too large
+
+        """
         text = ""
         for key, value in self.content.items():
             if key == "prompt" and value:
@@ -108,7 +118,11 @@ class PyEnvCfg:
                 normalized_value = os.path.abspath(value)
             else:
                 normalized_value = value
-            line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
+            collapsed_value = collapse_line_boundaries(normalized_value)
+            if key in _PATH_KEYS and collapsed_value.strip() != normalized_value:
+                msg = f"cannot record {key} path {normalized_value!r} in {self.path}"
+                raise ValueError(msg)
+            line = f"{collapse_line_boundaries(key)} = {collapsed_value}"
             LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
@@ -121,7 +135,7 @@ class PyEnvCfg:
         ):
             msg: Final[str] = "pyvenv.cfg must be smaller than 32 KiB for CPython to start"
             raise ValueError(msg)
-        write_file(self.path, encoded)
+        return encoded
 
     def refresh(self) -> OrderedDict[str, str]:
         """Re-read the key-value pairs from the file, discarding in-memory changes.

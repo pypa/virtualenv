@@ -343,6 +343,9 @@ class Creator(ABC):
         Delete the destination first when it exists and clearing was requested.
 
         """
+        # The stdlib creator and --clear can modify the destination before the final configuration is written.
+        self.set_pyenv_cfg()
+        self.pyenv_cfg.serialize()
         if self.dest.exists() and self.clear:
             LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
@@ -353,23 +356,6 @@ class Creator(ABC):
             self.setup_ignore_vcs()
         if self.venv_redirect is not False:
             self.point_venv_redirect()
-
-    @abstractmethod
-    def create(self) -> None:
-        """Perform the virtual environment creation."""
-        raise NotImplementedError
-
-    def add_cachedir_tag(self) -> None:
-        """Generate a file indicating that this is not meant to be backed up."""
-        cachedir_tag_file = self.dest / "CACHEDIR.TAG"
-        if not cachedir_tag_file.exists():
-            cachedir_tag_text = textwrap.dedent("""
-                Signature: 8a477f597d28d172789f06886806bc55
-                # This file is a cache directory tag created by Python virtualenv.
-                # For information about cache directory tags, see:
-                #   https://bford.info/cachedir/
-            """).strip()
-            write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def set_pyenv_cfg(self) -> None:
         """Fill the ``pyvenv.cfg`` content with the home, implementation and version of the host interpreter."""
@@ -388,6 +374,23 @@ class Creator(ABC):
         self.pyenv_cfg["virtualenv"] = __version__
         if self.prompt is not None:
             self.pyenv_cfg["prompt"] = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
+
+    @abstractmethod
+    def create(self) -> None:
+        """Perform the virtual environment creation."""
+        raise NotImplementedError
+
+    def add_cachedir_tag(self) -> None:
+        """Generate a file indicating that this is not meant to be backed up."""
+        cachedir_tag_file = self.dest / "CACHEDIR.TAG"
+        if not cachedir_tag_file.exists():
+            cachedir_tag_text = textwrap.dedent("""
+                Signature: 8a477f597d28d172789f06886806bc55
+                # This file is a cache directory tag created by Python virtualenv.
+                # For information about cache directory tags, see:
+                #   https://bford.info/cachedir/
+            """).strip()
+            write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def setup_ignore_vcs(self) -> None:
         """Generate ignore instructions for version control systems."""
