@@ -694,33 +694,36 @@ def test_bash_prompt_ignores_printf_function(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
-def test_bash_activation_keeps_prompt_when_awk_unavailable(tmp_path: Path) -> None:
-    script = generate_script("bash", tmp_path / "env", "normal")
-    script.write_text(
-        script.read_text(encoding="utf-8").replace("command -p awk", "command -p virtualenv_missing_awk"),
-        encoding="utf-8",
-    )
+@pytest.mark.parametrize(
+    "setup",
+    [
+        pytest.param("set -o posix", id="posix"),
+        pytest.param("shopt -u extquote", id="extquote-off"),
+        pytest.param("readonly LC_ALL=C", id="readonly"),
+        pytest.param("{ LC_ALL=virtualenv_missing_locale; } 2>/dev/null", id="missing-locale"),
+        pytest.param("unset LC_ALL", id="unset"),
+    ],
+)
+def test_bash_prompt_preserves_locale(tmp_path: Path, setup: str) -> None:
     result = subprocess.run(
         [
-            _BASH,
+            "/bin/bash" if sys.platform == "darwin" else _BASH,
             "--norc",
             "--noprofile",
-            "-c",
+            "-ec",
             (
-                'PS1=__END__; . "$1"; rc=$?; builtin printf "%s|%s|%s|%s\\n" "$rc" "$PS1" '
-                '"$VIRTUAL_ENV" "${_VIRTUAL_REST+x}"; deactivate; builtin printf "%s|%s" "$PS1" "$VIRTUAL_ENV"'
+                f'{setup}; saved=${{LC_ALL-unset}}; . "$1"; '
+                'test "${LC_ALL-unset}" = "$saved"; builtin printf %s "$PS1"'
             ),
             "test",
-            str(script),
+            str(generate_script("bash", tmp_path / "env", "é$5")),
         ],
+        env={**os.environ, "LC_ALL": "C"},
         capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
+        check=True,
     )
 
-    assert (result.returncode, result.stdout) == (0, f"0|__END__|{tmp_path / 'env'}|\n__END__|")
-    assert "awk is unavailable" in result.stderr
+    assert (result.stdout, result.stderr) == (b"(\xc3\xa9\001\002\\$5) ", b"")
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
