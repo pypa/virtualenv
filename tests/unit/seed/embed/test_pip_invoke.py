@@ -89,6 +89,92 @@ def test_pip_reseed_replaces_nested_link(
     assert (entry.exists(), entry.is_symlink()) == (True, False)
 
 
+@pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX listing permissions that root bypasses")
+@pytest.mark.parametrize("folder", [pytest.param("", id="package"), pytest.param("_vendor", id="nested")])
+def test_pip_reseed_rejects_unlistable_folder(prepared_pip_session: Session, tmp_path: Path, folder: str) -> None:
+    unlistable: Final[Path] = prepared_pip_session.creator.purelib / "pip" / folder
+    unlistable.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (unlistable / "_internal").symlink_to(outside, target_is_directory=True)
+    unlistable.chmod(0o300)
+    try:
+        with pytest.raises(PermissionError):
+            prepared_pip_session.seeder.run(prepared_pip_session.creator)
+    finally:
+        unlistable.chmod(0o700)
+    assert list(outside.iterdir()) == []
+
+
+def test_pip_reseed_detaches_hardlinked_metadata(prepared_pip_session: Session, tmp_path: Path) -> None:
+    version: Final[str] = prepared_pip_session.creator.interpreter.version_release_str
+    metadata: Final[Path] = (
+        prepared_pip_session.creator.purelib / f"pip-{get_embed_wheel('pip', version).version}.dist-info"
+    )
+    metadata.mkdir(parents=True)
+    outside: Final[Path] = tmp_path / "notes.txt"
+    outside.write_text("original\n", encoding="utf-8")
+    os.link(outside, metadata / "REQUESTED")
+
+    prepared_pip_session.seeder.run(prepared_pip_session.creator)
+
+    assert outside.read_text(encoding="utf-8") == "original\n"
+
+
+@pytest.fixture
+def prepared_pip_session(tmp_path: Path) -> Session:
+    session: Final[Session] = session_via_cli([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ])
+    session.creator.run()
+    return session
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+def test_pip_reseed_detaches_junction(junction_seed: Path, prepared_pip_session: Session, tmp_path: Path) -> None:
+    prepared_pip_session.seeder.run(prepared_pip_session.creator)
+
+    outside: Final[Path] = tmp_path / "outside"
+    assert (
+        (outside / "REQUESTED").read_bytes(),
+        (outside / "other").read_bytes(),
+        junction_seed.resolve() == outside,
+    ) == (
+        b"original",
+        b"original",
+        False,
+    )
+
+
+@pytest.fixture(params=[pytest.param("root", id="root"), pytest.param("nested", id="nested")])
+def junction_seed(request: pytest.FixtureRequest, prepared_pip_session: Session, tmp_path: Path) -> Path:
+    outside: Final[Path] = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "REQUESTED").write_bytes(b"original")
+    os.link(outside / "REQUESTED", outside / "other")
+    if request.param == "root":
+        version: Final[str] = prepared_pip_session.creator.interpreter.version_release_str
+        junction: Final[Path] = (
+            prepared_pip_session.creator.purelib / f"pip-{get_embed_wheel('pip', version).version}.dist-info"
+        )
+    else:
+        junction = prepared_pip_session.creator.purelib / "pip" / "_internal"
+    junction.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["cmd", "/c", "mklink", "/J", str(junction), str(outside)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    return junction
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
     launcher: Final[Path] = linked_seed.creator.script_dir / _LAUNCHER_NAME
