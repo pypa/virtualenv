@@ -57,8 +57,8 @@ class XonshActivator(ViaTemplateActivator):  # fmt: skip
 
         """
         if _UNSAFE_LITERAL_PATTERN.search(string):
-            return f"''.join(map(chr, {tuple(map(ord, string))!r}))"
-        return repr(string)
+            return f"''.join(__import__('builtins').map(__import__('builtins').chr, {tuple(map(ord, string))!r}))"
+        return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         """The raw placeholder values, including the Tcl and Tk library paths.

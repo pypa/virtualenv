@@ -154,22 +154,24 @@ def test_xonsh_quote(value: str) -> None:
 
 @_NEEDS_XONSH
 @pytest.mark.parametrize(
-    ("prompt", "name", "encoding"),
+    "case",
     [
-        pytest.param("it's", "env", "gbk", id="apostrophe-gbk"),
-        pytest.param("中'\\name", "env", "gbk", id="unicode-and-quotes-gbk"),
-        pytest.param("prefix+ACc-suffix", "env", "utf-7", id="encoded-quote-utf7"),
-        pytest.param("café", "env", "utf-7", id="unicode-utf7"),
-        pytest.param("label", "env+ACc-tail", "utf-7", id="encoded-quote-destination"),
+        pytest.param(("it's", "env", "gbk", ""), id="apostrophe-gbk"),
+        pytest.param(("中'\\name", "env", "gbk", ""), id="unicode-and-quotes-gbk"),
+        pytest.param(("prefix+ACc-suffix", "env", "utf-7", ""), id="encoded-quote-utf7"),
+        pytest.param(("café", "env", "utf-7", ""), id="unicode-utf7"),
+        pytest.param(("label", "env+ACc-tail", "utf-7", ""), id="encoded-quote-destination"),
+        pytest.param(("it's", "env", "utf-7", "chr = 'shadow'\nmap = 'shadow'\n"), id="shadowed-builtins"),
     ],
 )
 def test_xonsh_keeps_prompt_with_source_encoding(
-    tmp_path: Path, xonsh: _Xonsh, prompt: str, name: str, encoding: str
+    tmp_path: Path, xonsh: _Xonsh, case: tuple[str, str, str, str]
 ) -> None:
+    prompt, name, encoding, prelude = case
     session: Final[Session] = cli_run([str(tmp_path / name), "--no-seed", "--activators", "xonsh", "--prompt", prompt])
     activate: Final[Path] = session.creator.bin_dir / "activate.xsh"
     assert xonsh(
-        f'source "{activate}"\nprint($VIRTUAL_ENV.encode("utf-8").hex())\n'
+        f'{prelude}source "{activate}"\nprint($VIRTUAL_ENV.encode("utf-8").hex())\n'
         'print($VIRTUAL_ENV_PROMPT.encode("utf-8").hex())',
         XONSH_ENCODING=encoding,
     ) == (f"{str(session.creator.dest).encode('utf-8').hex()}\n{prompt.encode('utf-8').hex()}\n")
