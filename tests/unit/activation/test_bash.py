@@ -776,7 +776,12 @@ def test_bash_prompt_escaping_across_locales(tmp_path: Path, source_locale: str,
 def _locale_env(*locales: str) -> dict[str, str]:
     for locale in locales:
         env = {**os.environ, "LC_ALL": locale}
-        if subprocess.run(["locale", "charmap"], env=env, capture_output=True, check=False).returncode:
+        if subprocess.run(
+            [sys.executable, "-c", "import locale; locale.setlocale(locale.LC_CTYPE, '')"],
+            env=env,
+            capture_output=True,
+            check=False,
+        ).returncode:
             pytest.skip(f"{locale} is unavailable")
     return {**os.environ, "LC_ALL": locales[0]}
 
