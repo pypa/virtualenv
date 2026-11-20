@@ -309,9 +309,18 @@ This convention is shared across pyenv, mise, and asdf, so the same resolution l
 Creators are responsible for constructing the virtual environment structure. virtualenv supports two types of creators:
 
 **venv creator**
-    This creator delegates the entire creation process to the standard library's ``venv`` module, following `PEP 405
-    <https://www.python.org/dev/peps/pep-0405/>`_. The venv creator requires spawning a subprocess to invoke the venv
-    module, unless virtualenv is installed in the system Python.
+    This creator delegates environment construction to the standard library's ``venv`` module, following `PEP 405
+    <https://www.python.org/dev/peps/pep-0405/>`_. The venv module runs in a subprocess unless virtualenv is installed
+    in the system Python.
+
+    On POSIX, an empty file in ``bin`` measures the permissions a new executable receives under the directory's default
+    ACL or the process umask. While copying, virtualenv temporarily removes directory access for groups or other users
+    whose access to the interpreter would otherwise exceed that policy. Shared environments retain their directory
+    permissions when the policy already allows read and execute access. If a shared directory needs restricting, its
+    owner must create the environment.
+
+    On Linux, virtualenv restores owner execute when it can verify that the directory has no default ACL. Otherwise, if
+    the owner execute bit is missing, creation stops before copying. Use ``--symlinks`` in that directory.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 

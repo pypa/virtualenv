@@ -24,7 +24,16 @@ from virtualenv.app_data.cache_migration import cache_dir_with_migration
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock, Timeout
-from virtualenv.util.path import copy, ensure_within, get_short_path_name, safe_delete, set_tree, symlink, write_file
+from virtualenv.util.path import (
+    copy,
+    ensure_within,
+    get_short_path_name,
+    owner_executable_mode,
+    safe_delete,
+    set_tree,
+    symlink,
+    write_file,
+)
 from virtualenv.util.subprocess import LogCmd, run_cmd
 
 if os.name == "nt":
@@ -43,6 +52,18 @@ _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
     pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": ""}, id="empty-override"),
     pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": " "}, id="blank-override"),
 ]
+
+
+@pytest.mark.skipif(sys.platform != "linux" or not hasattr(os, "getxattr"), reason="Linux default ACL detection")
+def test_owner_executable_mode_reports_acl_read_error(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        owner_executable_mode(tmp_path / "missing", 0o600)
+
+
+@pytest.mark.skipif(sys.platform == "linux" and hasattr(os, "getxattr"), reason="default ACL lookup available")
+def test_owner_executable_mode_refuses_unverified_acl(tmp_path: Path) -> None:
+    with pytest.raises(PermissionError, match=r"owner-executable.*--symlinks"):
+        owner_executable_mode(tmp_path, 0o600)
 
 
 def test_package_api_definition_modules() -> None:

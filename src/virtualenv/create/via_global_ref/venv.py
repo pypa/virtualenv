@@ -2,7 +2,9 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "argparse",
+    "pathlib",
     "python_discovery",
+    "uuid",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -18,7 +20,10 @@ __lazy_modules__ = [
 import logging
 import os
 from argparse import ArgumentTypeError
+from pathlib import Path
+from stat import S_IMODE, S_IRGRP, S_IROTH, S_IRWXG, S_IRWXO, S_IXGRP, S_IXOTH
 from typing import TYPE_CHECKING, Final
+from uuid import uuid4
 
 from python_discovery import PythonInfo
 
@@ -108,7 +113,9 @@ class Venv(ViaGlobalRefApi):
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
-        if self.can_be_inline:
+        if os.name == "posix":
+            self._create_with_copy_mode()
+        elif self.can_be_inline:
             self.create_inline()
         else:
             self.create_via_sub_process()
@@ -116,6 +123,46 @@ class Venv(ViaGlobalRefApi):
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
+
+    def _create_with_copy_mode(self) -> None:
+        # The empty probe receives file-only ACL entries and is unlinked before interpreter bytes are copied.
+        probe = self.bin_dir / f".virtualenv-mode-{uuid4().hex}"
+        # codeql[py/overly-permissive-file]  # ruff:ignore[commented-out-code]  # empty probe
+        descriptor = os.open(probe, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o755)
+        try:
+            probe.unlink()
+            allowed = S_IMODE(os.fstat(descriptor).st_mode) | 0o7000
+        finally:
+            os.close(descriptor)
+        if not self.symlinks:
+            # Only POSIX interpreter copies need the ACL check.
+            from virtualenv.util.path import owner_executable_mode  # ruff:ignore[import-outside-top-level]
+
+            allowed = owner_executable_mode(self.bin_dir, allowed)
+        mode = S_IMODE(self.bin_dir.stat().st_mode)
+        # stdlib chmods copies to 0755. Hide them from classes denied either read or execute until their mode is fixed.
+        removed = 0
+        if allowed & (S_IRGRP | S_IXGRP) != S_IRGRP | S_IXGRP and mode & S_IXGRP:
+            removed |= mode & S_IRWXG
+        if allowed & (S_IROTH | S_IXOTH) != S_IROTH | S_IXOTH and mode & S_IXOTH:
+            removed |= mode & S_IRWXO
+        kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
+        if removed:
+            self.bin_dir.chmod(mode & ~removed)
+        try:
+            if self.can_be_inline:
+                self.create_inline()
+            else:
+                self.create_via_sub_process()
+        finally:
+            try:
+                for path in self.bin_dir.iterdir():
+                    if path.name not in kept and path.is_file() and not path.is_symlink():
+                        path.chmod(S_IMODE(path.stat().st_mode) & allowed)
+            finally:
+                if removed:
+                    # A concurrent creator may have restored other bits.
+                    self.bin_dir.chmod(S_IMODE(self.bin_dir.stat().st_mode) | removed)
 
     def create_inline(self) -> None:
         """Create the environment with the stdlib ``venv`` module imported in this process."""
