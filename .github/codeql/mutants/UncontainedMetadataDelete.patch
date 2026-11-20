@@ -2,12 +2,11 @@ diff --git a/src/virtualenv/seed/embed/via_app_data/pip_install/base.py b/src/vi
 index 2fd3ac26..5347c551 100644
 --- a/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
 +++ b/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
-@@ -141,7 +141,7 @@ class PipInstall(ABC):
-             except OSError as exception:
-                 LOGGER.warning("skip removal of %s listed by %s: cannot resolve it: %s", entry, dist.name, exception)
+@@ -124,6 +124,7 @@ class PipInstall(ABC):
+         root: Final[Path] = env_dir.resolve()
+         metadata_parents: Final[set[Path]] = set(dist.resolve().parents)
+         for entry in sorted(paths):
++            remove_file(entry)
+             if not entry.exists() and not entry.is_symlink():
                  continue
--            if root not in resolved.parents or resolved in metadata_parents:
-+            if resolved in metadata_parents:
-                 LOGGER.warning(
-                     "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
-                     entry,
+             linked: Final[bool] = entry.is_symlink()
