@@ -8,9 +8,12 @@ This can be used when you must use an existing Python interpreter, not the virtu
 
 from __future__ import annotations
 
+__lazy_modules__ = ["collections"]
+
 import os
 import site
 import sys
+from collections import Counter
 
 # runpy.run_path returns these globals; keep the names emitted by existing activation scripts.
 try:
@@ -49,20 +52,15 @@ def _add_libraries() -> None:
             for lib in __LIB_FOLDERS__.split(os.pathsep)  # ty: ignore[unresolved-reference]  # filled in during generation
         )
     )
-    stdlib_dir = os.path.dirname(os.path.realpath(os.__file__))
-    stdlib_candidates = {
-        os.path.realpath(path)
-        for path in (
-            stdlib_dir,
-            os.path.join(stdlib_dir, "lib-dynload"),
-            os.path.join(
-                os.path.dirname(stdlib_dir),
-                f"python{sys.version_info.major}{sys.version_info.minor}{'t' if sys.implementation.cache_tag.endswith('t') else ''}.zip",
-            ),
-            os.path.join(sys.base_prefix, "DLLs"),
-        )
-    }
-    stdlib_paths = [path for path in original_paths if path and os.path.realpath(path) in stdlib_candidates]
+    base_dir = os.path.normcase(os.path.realpath(sys.base_prefix)) + os.sep
+    # GraalPy keeps implementation modules outside the standard library directory.
+    stdlib_paths = [
+        path
+        for path in original_paths
+        if path
+        and (real_path := os.path.normcase(os.path.realpath(path))).startswith(base_dir)
+        and not any(part in {"site-packages", "dist-packages"} for part in real_path.split(os.sep))
+    ]
     # .pth imports need the environment before host paths, with the standard library still first.
     sys.path[:] = (
         stdlib_paths
@@ -73,10 +71,14 @@ def _add_libraries() -> None:
     for path in lib_paths:
         if path not in original_paths:
             added_paths.append(path)
-        prev_length = len(sys.path)
+        previous_paths = Counter(sys.path)
         # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
         site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
-        added_paths.extend(sys.path[prev_length:])
+        for entry in sys.path:
+            if previous_paths[entry]:
+                previous_paths[entry] -= 1
+            else:
+                added_paths.append(entry)
     sys.path[:] = added_paths + original_paths
 
 

@@ -6,6 +6,7 @@ import subprocess
 import sys
 from argparse import Namespace
 from ast import literal_eval
+from importlib.util import find_spec
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -123,22 +124,24 @@ def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:
     assert literal_eval(out) == (dest, dest, str(activation_python.creator.platlib))
 
 
-def test_python_activator_pth_import_precedence(activation_python: Session, tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "module_name",
+    [pytest.param("activation_order_probe", id="environment"), pytest.param("colorsys", id="standard-library")],
+)
+def test_python_activator_pth_import_precedence(activation_python: Session, tmp_path: Path, module_name: str) -> None:
     purelib = activation_python.creator.purelib
     pth = purelib / "activation_order.pth"
-    env_module = purelib / "activation_order_probe.py"
+    env_module = purelib / f"{module_name}.py"
     host_module = tmp_path / env_module.name
-    env_stdlib_module = purelib / "colorsys.py"
-    pth.write_text("import activation_order_probe, colorsys\n", encoding="utf-8")
+    pth.write_text(f"import {module_name}\n", encoding="utf-8")
     env_module.write_text("", encoding="utf-8")
     host_module.write_text("", encoding="utf-8")
-    env_stdlib_module.write_text("", encoding="utf-8")
     script = activation_python.creator.bin_dir / "activate_this.py"
     code = (
         "import runpy, sys; "
-        "assert 'activation_order_probe' not in sys.modules and 'colorsys' not in sys.modules; "
+        f"assert {module_name!r} not in sys.modules; "
         f"runpy.run_path({str(script)!r}); "
-        "print(repr((sys.modules['activation_order_probe'].__file__, sys.modules['colorsys'].__file__)))"
+        f"print(sys.modules[{module_name!r}].__file__)"
     )
     try:
         result = subprocess.run(
@@ -154,9 +157,65 @@ def test_python_activator_pth_import_precedence(activation_python: Session, tmp_
         pth.unlink()
         env_module.unlink()
         host_module.unlink()
-        env_stdlib_module.unlink()
     assert result.returncode == 0, result.stderr
-    assert (literal_eval(result.stdout), result.stderr) == ((str(env_module), colorsys.__file__), "")
+    assert (result.stdout.strip(), result.stderr) == (
+        {"activation_order_probe": str(env_module), "colorsys": colorsys.__file__}[module_name],
+        "",
+    )
+
+
+@pytest.mark.skipif(sys.implementation.name != "graalpy", reason="GraalPy implementation module")
+def test_python_activator_pth_keeps_implementation_module(activation_python: Session, tmp_path: Path) -> None:
+    purelib = activation_python.creator.purelib
+    pth = purelib / "activation_order.pth"
+    env_module = purelib / "graalpy_pip_extensions.py"
+    pth.write_text("import graalpy_pip_extensions\n", encoding="utf-8")
+    env_module.write_text("", encoding="utf-8")
+    script = activation_python.creator.bin_dir / "activate_this.py"
+    code = (
+        "import runpy, sys; "
+        "assert 'graalpy_pip_extensions' not in sys.modules; "
+        f"runpy.run_path({str(script)!r}); "
+        "print(sys.modules['graalpy_pip_extensions'].__file__)"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+            check=False,
+        )
+    finally:
+        pth.unlink()
+        env_module.unlink()
+    spec = find_spec("graalpy_pip_extensions")
+    assert spec is not None
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == spec.origin
+
+
+def test_python_activator_keeps_pth_path_insertion(activation_python: Session, tmp_path: Path) -> None:
+    pth = activation_python.creator.purelib / "activation_order.pth"
+    injected = tmp_path / "injected"
+    injected.mkdir()
+    pth.write_text(f"import sys; sys.path.insert(0, {str(injected)!r})\n", encoding="utf-8")
+    script = activation_python.creator.bin_dir / "activate_this.py"
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", f"import runpy, sys; runpy.run_path({str(script)!r}); print(repr(sys.path))"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+            check=False,
+        )
+    finally:
+        pth.unlink()
+    assert result.returncode == 0, result.stderr
+    assert str(injected) in literal_eval(result.stdout)
 
 
 def test_python(raise_on_non_source_class, activation_tester) -> None:
