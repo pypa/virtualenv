@@ -13,7 +13,7 @@ import pytest
 from prompt_matrix import generate_script
 
 from virtualenv.activation import BashActivator
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_CPYTHON, IS_WIN
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
@@ -23,6 +23,62 @@ if TYPE_CHECKING:
 
 
 _BASH: Final[str | None] = shutil.which("bash")
+
+
+@pytest.fixture(params=[pytest.param("C", id="c"), pytest.param("utf8", id="utf8")])
+def tcl_locale(request: pytest.FixtureRequest) -> str:
+    if request.param == "C":
+        return "C"
+    locales = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    selected = next((name for name in locales if name.lower() in {"c.utf8", "en_us.utf8"}), None)
+    if selected is None:
+        pytest.skip("requires a UTF-8 locale")
+    return selected
+
+
+@pytest.mark.skipif(IS_WIN or not IS_CPYTHON or _BASH is None, reason="requires CPython's Tcl discovery and POSIX bash")
+def test_bash_keeps_nonascii_tcl_library_bytes(tmp_path: Path, tcl_locale: str) -> None:
+    tcl = pytest.importorskip("tkinter").Tcl()
+    library = tmp_path / "andré" / Path(tcl.eval("info library")).name
+    shutil.copytree(tcl.eval("info library"), library)
+    env = {**os.environ, "HOME": str(tmp_path), "LC_ALL": tcl_locale, "TCL_LIBRARY": str(library)}
+    env.pop("VIRTUAL_ENV", None)
+    dest = tmp_path / "env"
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "virtualenv",
+            "--no-periodic-update",
+            "--no-seed",
+            "--app-data",
+            str(tmp_path / "cache"),
+            str(dest),
+        ],
+        env=env,
+        capture_output=True,
+        timeout=60,
+        check=True,
+    )
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            '. "$1"; printf "%s\\n%s\\n" "$VIRTUAL_ENV" "$TCL_LIBRARY"; python -c "import sys, tkinter; tkinter.Tcl(); print(sys.prefix)"',
+            "test",
+            str(dest / "bin/activate"),
+        ],
+        env=env,
+        capture_output=True,
+        timeout=60,
+        check=True,
+    )
+    assert (result.stdout.splitlines(), result.stderr) == (
+        [os.fsencode(dest), os.fsencode(library), os.fsencode(dest)],
+        b"",
+    )
 
 
 @pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
