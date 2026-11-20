@@ -310,11 +310,17 @@ Creators are responsible for constructing the virtual environment structure. vir
 
 **venv creator**
     This creator delegates environment construction to the standard library's ``venv`` module, following `PEP 405
-    <https://www.python.org/dev/peps/pep-0405/>`_. On POSIX, copied interpreters follow the permissions that a new
-    executable would receive in ``bin``: its default ACL, or the current umask if no default ACL applies. An empty mode
-    probe created directly in ``bin`` determines this policy without changing the umask. Virtualenv limits access to
-    ``bin`` to that policy while the standard library writes copied interpreters. The venv module itself runs in a
-    subprocess unless virtualenv is installed in the system Python.
+    <https://www.python.org/dev/peps/pep-0405/>`_. The venv module runs in a subprocess unless virtualenv is installed
+    in the system Python.
+
+    On POSIX, an empty file in ``bin`` measures the permissions a new executable receives under the directory's default
+    ACL or the process umask. While copying, virtualenv temporarily removes directory access for groups or other users
+    whose access to the interpreter would otherwise exceed that policy. Shared environments retain their directory
+    permissions when the policy already allows read and execute access. If a shared directory needs restricting, its
+    owner must create the environment.
+
+    On Linux, the owner can still execute the copy when the umask alone removes owner execute. If the directory's policy
+    withholds owner execute and virtualenv cannot attribute that to the umask, use ``--symlinks``.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 

@@ -804,6 +804,12 @@ def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
         pytest.param(0o022, 0o755, id="shared"),
         pytest.param(0o027, 0o750, id="group"),
         pytest.param(0o077, 0o700, id="private"),
+        pytest.param(
+            0o100,
+            0o755,
+            id="owner-execute-masked",
+            marks=pytest.mark.skipif(sys.platform != "linux", reason="POSIX ACLs"),
+        ),
     ],
 )
 def test_venv_reused_interpreter_copy_keeps_umask(tmp_path: Path, mask: int, expected: int) -> None:
@@ -843,7 +849,7 @@ def test_venv_copy_respects_default_acl(tmp_path: Path) -> None:
     cli_run([str(destination), "--creator", "venv", "--symlinks", "--no-seed"])
     bin_dir = destination / "bin"
     bin_dir.chmod(0o755)
-    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::rwx,o::r-x", str(bin_dir)], check=True)
+    subprocess.run(["setfacl", "-d", "-m", "u::rwx,g::r-x,o::---", str(bin_dir)], check=True)
 
     previous = os.umask(0o077)
     try:
@@ -855,7 +861,23 @@ def test_venv_copy_respects_default_acl(tmp_path: Path) -> None:
         stat.S_IMODE(session.creator.bin_dir.stat().st_mode),
         stat.S_IMODE(session.creator.exe.stat().st_mode),
         subprocess.run([str(session.creator.exe), "-c", "print(1)"], capture_output=True, check=True).stdout,
-    ) == (0o755, 0o755, b"1\n")
+    ) == (0o755, 0o750, b"1\n")
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or _CURRENT.implementation != "CPython" or shutil.which("setfacl") is None,
+    reason="requires CPython and Linux default ACLs",
+)
+def test_venv_copy_honors_acl_denying_owner_execute(tmp_path: Path) -> None:
+    destination = tmp_path / "env"
+    bin_dir = destination / "bin"
+    bin_dir.mkdir(parents=True)
+    subprocess.run(["setfacl", "-d", "-m", "u::rw-,g::r-x,o::---", str(bin_dir)], check=True)
+    args = [str(destination), "--creator", "venv", "--no-seed"]
+    with pytest.raises(PermissionError, match=r"owner-executable.*--symlinks"):
+        cli_run([*args, "--copies"])
+    session = cli_run([*args, "--symlinks"])
+    assert session.creator.exe.is_symlink()
 
 
 @pytest.mark.skipif(
@@ -893,6 +915,30 @@ def test_venv_restores_bin_mode_after_creation_failure(
         os.umask(previous)
 
     assert (stat.S_IMODE(bin_dir.stat().st_mode), stat.S_IMODE(copied.stat().st_mode)) == (directory_mode, 0o700)
+
+
+@pytest.mark.skipif(os.name != "posix" or not _CURRENT.has_venv, reason="requires POSIX venv")
+def test_venv_shared_bin_needs_no_chmod(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    bin_dir = tmp_path / "env" / "bin"
+    bin_dir.mkdir(parents=True)
+    bin_dir.chmod(0o2775)
+    chmod = Path.chmod
+
+    def shared_chmod(path: Path, mode: int) -> None:
+        if path == bin_dir:
+            raise PermissionError(path)
+        chmod(path, mode)
+
+    monkeypatch.setattr(Path, "chmod", shared_chmod)
+    previous = os.umask(0o002)
+    try:
+        session = cli_run([str(bin_dir.parent), "--creator", "venv", "--no-seed"])
+    finally:
+        os.umask(previous)
+    assert (
+        stat.S_IMODE(bin_dir.stat().st_mode),
+        subprocess.run([str(session.creator.exe), "-c", "print(1)"], capture_output=True, check=True).stdout,
+    ) == (0o2775, b"1\n")
 
 
 @pytest.mark.skipif(os.name != "posix", reason="requires POSIX permissions")

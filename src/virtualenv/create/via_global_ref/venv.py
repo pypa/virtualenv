@@ -20,7 +20,7 @@ import logging
 import os
 from argparse import ArgumentTypeError
 from pathlib import Path
-from stat import S_IMODE
+from stat import S_IMODE, S_IRGRP, S_IROTH, S_IRWXG, S_IRWXO, S_IXGRP, S_IXOTH
 from typing import TYPE_CHECKING, Final
 from uuid import uuid4
 
@@ -131,10 +131,21 @@ class Venv(ViaGlobalRefApi):
             allowed = S_IMODE(os.fstat(descriptor).st_mode) | 0o7000
         finally:
             os.close(descriptor)
+        if not self.symlinks:
+            # Only POSIX interpreter copies need the ACL check.
+            from virtualenv.util.path import owner_executable_mode  # ruff:ignore[import-outside-top-level]
+
+            allowed = owner_executable_mode(self.bin_dir, allowed)
         mode = S_IMODE(self.bin_dir.stat().st_mode)
+        # stdlib chmods copies to 0755. Hide them from classes denied either read or execute until their mode is fixed.
+        removed = 0
+        if allowed & (S_IRGRP | S_IXGRP) != S_IRGRP | S_IXGRP and mode & S_IXGRP:
+            removed |= mode & S_IRWXG
+        if allowed & (S_IROTH | S_IXOTH) != S_IROTH | S_IXOTH and mode & S_IXOTH:
+            removed |= mode & S_IRWXO
         kept = {path.name for path in self.bin_dir.iterdir()} - {Path(self.interpreter.system_exe).name}
-        # Hide copied bytes while stdlib venv temporarily sets their mode to 0755.
-        self.bin_dir.chmod(mode & allowed)
+        if removed:
+            self.bin_dir.chmod(mode & ~removed)
         try:
             if self.can_be_inline:
                 self.create_inline()
@@ -146,8 +157,9 @@ class Venv(ViaGlobalRefApi):
                     if path.name not in kept and path.is_file() and not path.is_symlink():
                         path.chmod(S_IMODE(path.stat().st_mode) & allowed)
             finally:
-                # Restore only bits removed here; another creator may have seen the narrowed mode.
-                self.bin_dir.chmod(S_IMODE(self.bin_dir.stat().st_mode) | (mode & ~allowed))
+                if removed:
+                    # A concurrent creator may have restored other bits.
+                    self.bin_dir.chmod(S_IMODE(self.bin_dir.stat().st_mode) | removed)
 
     def create_inline(self) -> None:
         """Create the environment with the stdlib ``venv`` module imported in this process."""
