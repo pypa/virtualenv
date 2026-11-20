@@ -2,11 +2,11 @@ diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cf
 index 2e0d8692..9ef87885 100644
 --- a/src/virtualenv/create/pyenv_cfg.py
 +++ b/src/virtualenv/create/pyenv_cfg.py
-@@ -64,7 +64,7 @@ class PyEnvCfg:
-                 normalized_value = os.path.abspath(value)
-             else:
-                 normalized_value = value
--            line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
+@@ -122,7 +122,7 @@ class PyEnvCfg:
+             if key in _PATH_KEYS and collapsed_value.strip() != normalized_value:
+                 msg = f"cannot record {key} path {normalized_value!r} in {self.path}"
+                 raise ValueError(msg)
+-            line = f"{collapse_line_boundaries(key)} = {collapsed_value}"
 +            line = f"{key} = {normalized_value}"
              LOGGER.debug("\t%r", line)
              text += line
