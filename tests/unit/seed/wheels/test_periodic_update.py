@@ -1079,12 +1079,14 @@ def test_update_uses_selected_installation_and_environment(
     entry: Final[Path] = package / "__init__.py"
     entry.write_text(
         f"{entry.read_text(encoding='utf-8')}\nprint(__version__)\n"
-        "print(__import__('os').environ['VIRTUALENV_ENV_PROBE'])\n",
+        "print(__import__('os').environ['VIRTUALENV_ENV_PROBE'])\n"
+        "print('safe_path:', getattr(__import__('sys').flags, 'safe_path', False))\n",
         encoding="utf-8",
     )
     monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(root))
     monkeypatch.setenv("PIP_NO_INDEX", "1")
     monkeypatch.setenv("VIRTUALENV_ENV_PROBE", "parent")
+    monkeypatch.delenv("PYTHONSAFEPATH", raising=False)
     trigger_update(
         "pip",
         f"{sys.version_info.major}.{sys.version_info.minor}",
@@ -1094,7 +1096,8 @@ def test_update_uses_selected_installation_and_environment(
         {**os.environ, "_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1", "VIRTUALENV_ENV_PROBE": "supplied"},
         True,
     )
-    assert {"99.0.0", "supplied"} <= set(capfd.readouterr().out.splitlines())
+    expected = {"99.0.0", "supplied", f"safe_path: {hasattr(sys.flags, 'safe_path')}"}
+    assert expected <= set(capfd.readouterr().out.splitlines())
 
 
 @pytest.mark.parametrize(
