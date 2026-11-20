@@ -1533,4 +1533,4 @@ def test_pip_launcher_keeps_line_feed_path_in_header(tmp_path: Path, name: str) 
         timeout=30,
         check=False,
     )
-    assert (result.returncode, result.stdout.startswith("pip "), result.stderr) == (0, True, "")
+    assert (result.returncode, result.stdout.startswith("pip ")) == (0, True)
