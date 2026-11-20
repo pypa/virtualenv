@@ -17,7 +17,7 @@ def get_short_path_name(long_name: str) -> str:
 
     :returns: the short path name
 
-    :raises WinError: if Windows cannot shorten the path
+    :raises WinError: an OSError when Windows cannot shorten the path
 
     """
     # ctypes.windll exists only on Windows, which is the only platform this runs on
