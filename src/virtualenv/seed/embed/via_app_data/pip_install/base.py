@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Final
 
 from distlib.scripts import ScriptMaker, enquote_executable
 
-from virtualenv.util.path import remove_file, safe_delete
+from virtualenv.util.path import make_tree_read_only, remove_file, safe_delete, safe_delete_read_only
 
 from ._safe_extract_zip import extract_zip
 
@@ -262,7 +262,7 @@ class PipInstall(ABC):
         # limits hit the build the same way they would hit the image
         staging: Final[Path] = self._image_dir.parent.with_name(f"{self._image_dir.parent.name}-{self._image_dir.name}")
         if staging.exists():
-            safe_delete(staging)
+            safe_delete_read_only(staging)
         self._image_dir.parent.mkdir(parents=True, exist_ok=True)
         staging.mkdir()
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
@@ -279,7 +279,7 @@ class PipInstall(ABC):
                     built.rmdir()  # an empty image directory counts as missing, but blocks the rename on Windows
                 os.replace(folder, built)
             except BaseException:
-                safe_delete(folder)
+                safe_delete_read_only(folder)
                 raise
             # built ends in two long names again, so the files may only fit under the short path of the image itself
             self._image_dir = self._short_path_if_needed(zip_ref, built)
@@ -304,6 +304,8 @@ class PipInstall(ABC):
         extract_zip(zip_ref, folder)
         dist_info: Final[Path] = self._find_dist_info(folder)
         self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))
+        # environments link into the image, so a later write through such a link must fail instead of changing it
+        make_tree_read_only(folder)
 
     @abstractmethod
     def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
@@ -341,7 +343,7 @@ class PipInstall(ABC):
     def clear(self) -> None:
         """Remove the cached image of the wheel."""
         if self._image_dir.exists():
-            safe_delete(self._image_dir)
+            safe_delete_read_only(self._image_dir)
 
     def has_image(self) -> bool:
         """Whether the cached image of the wheel exists and holds files.

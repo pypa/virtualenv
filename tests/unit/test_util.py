@@ -28,8 +28,10 @@ from virtualenv.util.path import (
     copy,
     ensure_within,
     get_short_path_name,
+    make_tree_read_only,
     owner_executable_mode,
     safe_delete,
+    safe_delete_read_only,
     set_tree,
     symlink,
     write_file,
@@ -535,6 +537,35 @@ def test_set_tree_keeps_existing_read_restrictions(tmp_path: Path, original: int
     assert (image.stat().st_mode & 0o777, image.read_text(encoding="utf-8")) == (expected, "private image")
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX file permission bits")
+def test_make_tree_read_only_keeps_root_and_bytecode_cache_open(tmp_path: Path) -> None:
+    (cache := tmp_path / "package" / "__pycache__").mkdir(parents=True)
+    (module := tmp_path / "package" / "module.py").write_text("", encoding="utf-8")
+    (compiled := cache / "module.pyc").write_bytes(b"")
+    for path, mode in ((tmp_path, 0o755), (module.parent, 0o755), (module, 0o755), (cache, 0o755), (compiled, 0o644)):
+        path.chmod(mode)
+
+    make_tree_read_only(tmp_path)
+
+    modes: Final[list[int]] = [
+        path.stat().st_mode & 0o777 for path in (tmp_path, module.parent, module, cache, compiled)
+    ]
+    module.parent.chmod(0o755)
+    assert modes == [0o755, 0o555, 0o555, 0o755, 0o444]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="a read-only Windows directory cannot be deleted")
+def test_make_tree_read_only_leaves_windows_directories(tmp_path: Path) -> None:
+    (package := tmp_path / "package").mkdir()
+    (module := package / "module.py").write_text("", encoding="utf-8")
+
+    make_tree_read_only(tmp_path)
+
+    writable: Final[list[bool]] = [bool(path.stat().st_mode & S_IWUSR) for path in (package, module)]
+    module.chmod(S_IREAD | S_IWUSR)
+    assert writable == [True, False]
+
+
 @pytest.mark.parametrize("layout", [pytest.param(("entry", ""), id="file"), pytest.param(("", "entry"), id="tree")])
 def test_copy_replaces_contents(tmp_path: Path, layout: tuple[str, str]) -> None:
     source_rel, result_rel = layout
@@ -900,6 +931,33 @@ def test_safe_delete_removes_read_only_directory_with_file(tmp_path: Path) -> No
     safe_delete(folder)
 
     assert not folder.exists()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permissions")
+def test_safe_delete_read_only_removes_closed_directories_without_following_links(tmp_path: Path) -> None:
+    (outside := tmp_path / "outside").mkdir()
+    (outside / "kept").write_text("", encoding="utf-8")
+    (nested := tmp_path / "folder" / "nested" / "deeper").mkdir(parents=True)
+    (nested / "file").write_text("", encoding="utf-8")
+    (tmp_path / "folder" / "link").symlink_to(outside, target_is_directory=True)
+    for closed in (nested, nested.parent, outside):
+        closed.chmod(0o555)
+
+    safe_delete_read_only(tmp_path / "folder")
+
+    state: Final[tuple[bool, int, bool]] = (
+        (tmp_path / "folder").exists(),
+        outside.stat().st_mode & 0o777,
+        (outside / "kept").exists(),
+    )
+    outside.chmod(0o755)
+    assert state == (False, 0o555, True)
+
+
+def test_safe_delete_read_only_missing_path_is_noop(tmp_path: Path) -> None:
+    safe_delete_read_only(tmp_path / "does-not-exist")  # --reset-app-data before anything was cached
+
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
