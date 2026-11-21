@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "contextlib",
     "pathlib",
     "shutil",
     f"{__spec__.parent}._permission",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
@@ -12,8 +13,9 @@ import logging
 import os
 import shutil
 import sys
+from contextlib import suppress
 from pathlib import Path
-from stat import S_IMODE, S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_IMODE, S_ISDIR, S_ISLNK, S_IWUSR, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
 
 from ._permission import owner_executable_mode
@@ -178,6 +180,22 @@ class _Debug:
         return f"{'directory ' if self.src.is_dir() else ''}{self.src!s} to {self.dest!s}"
 
 
+def safe_delete_read_only(dest: Path) -> None:
+    """Delete a folder tree that may hold directories closed by ``make_tree_read_only``.
+
+    :param dest: the path to delete
+
+    """
+    if os.name == "posix":
+        with suppress(FileNotFoundError):
+            # a descriptor cannot be redirected by a link swapped in while the tree is walked
+            for _, _, _, directory in os.fwalk(str(dest)):
+                mode = os.fstat(directory).st_mode
+                if not mode & S_IWUSR:
+                    os.fchmod(directory, mode | S_IWUSR)
+    safe_delete(dest)
+
+
 def copy(src: Path, dest: Path, *, executable: bool = False) -> None:
     """Copy a file, or a folder tree, to the destination.
 
@@ -230,6 +248,7 @@ __all__ = [
     "ensure_within",
     "remove_file",
     "safe_delete",
+    "safe_delete_read_only",
     "symlink",
     "write_file",
 ]

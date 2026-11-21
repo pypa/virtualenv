@@ -1,0 +1,3 @@
+Make seed images in app-data read-only, including their directories on POSIX. In a ``--symlink-app-data`` environment
+``pip install --ignore-installed`` of a seed package now fails with a permission error instead of changing the image
+shared with other environments. Bytecode cache directories and copied seed packages stay writable.

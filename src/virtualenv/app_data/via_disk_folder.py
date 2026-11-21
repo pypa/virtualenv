@@ -47,7 +47,7 @@ from stat import S_IMODE, S_ISGID
 from typing import TYPE_CHECKING, Any, Final
 
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import safe_delete_read_only
 from virtualenv.util.zipapp import extract
 from virtualenv.version import __version__
 
@@ -102,7 +102,7 @@ class AppDataDiskFolder(AppData):
         if self._private and os.name == "posix":
             with suppress(FileNotFoundError):
                 info = os.stat(self.lock.path)
-        safe_delete(self.lock.path)
+        safe_delete_read_only(self.lock.path)
         if self._private:
             make_private_dirs(str(self.lock.path))
             if info is not None and info.st_mode & S_ISGID:
