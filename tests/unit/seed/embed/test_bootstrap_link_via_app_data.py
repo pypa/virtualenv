@@ -1541,6 +1541,72 @@ def test_reseed_legacy_linked_environment(no_seed_session: Session, tmp_path: Pa
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_retry_interrupted_linked_seed(no_seed_session: Session, tmp_path: Path, mocker: MockerFixture) -> None:
+    image = tmp_path / "image"
+    module = image / "example" / "__init__.py"
+    module.parent.mkdir(parents=True)
+    module.touch()
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir()
+    (metadata / "RECORD").touch()
+    installer = SymlinkPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image)
+
+    fail = mocker.patch.object(
+        installer, "_write_installed_record", autospec=True, side_effect=OSError(errno.ENOSPC, "full")
+    )
+    with pytest.raises(OSError, match="full"):
+        installer.install(no_seed_session.interpreter.version_info)
+    mocker.stop(fail)
+    package = no_seed_session.creator.purelib / "example"
+    (package / "local.txt").write_bytes(b"keep")
+    installer.install(no_seed_session.interpreter.version_info)
+
+    with (no_seed_session.creator.purelib / metadata.name / "RECORD").open(encoding="utf-8", newline="") as stream:
+        paths = {Path(row[0]) for row in csv.reader(stream)}
+    assert (
+        (package / module.name).samefile(module),
+        (package / "local.txt").read_bytes(),
+        Path("example/__init__.py") in paths,
+    ) == (True, b"keep", True)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize(
+    ("name", "create_conflict"),
+    [
+        pytest.param(
+            "example", lambda path, other: path.symlink_to(other, target_is_directory=True), id="directory-link"
+        ),
+        pytest.param("example/module.py", lambda path, _: path.write_bytes(b"local"), id="local-file"),
+        pytest.param("example/module.py", lambda path, other: path.symlink_to(other / "local.txt"), id="other-link"),
+    ],
+)
+def test_linked_seed_preserves_conflicting_entries(
+    no_seed_session: Session, tmp_path: Path, name: str, create_conflict: Callable[[Path, Path], None]
+) -> None:
+    image = tmp_path / "image"
+    (image / "example").mkdir(parents=True)
+    (image / "example" / "module.py").touch()
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir()
+    (metadata / "RECORD").touch()
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "local.txt").write_bytes(b"local")
+    entry = no_seed_session.creator.purelib / name
+    entry.parent.mkdir(exist_ok=True)
+    create_conflict(entry, other)
+    installer = SymlinkPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image)
+    with pytest.raises(FileExistsError):
+        installer.install(no_seed_session.interpreter.version_info)
+    assert (entry.exists(), (other / "module.py").exists(), (other / "local.txt").read_bytes()) == (
+        True,
+        False,
+        b"local",
+    )
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 def test_reseed_linked_image_with_empty_directories(no_seed_session: Session, tmp_path: Path) -> None:
     image = tmp_path / "image"
     (image / "example" / "data" / "empty").mkdir(parents=True)

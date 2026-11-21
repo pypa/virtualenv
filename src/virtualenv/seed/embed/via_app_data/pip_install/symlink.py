@@ -54,17 +54,17 @@ class SymlinkPipInstall(PipInstall):
     def _install_entry(self, src: os.DirEntry[str], parent: str, record: str | None, files: list[str]) -> None:
         dst = os.path.join(parent, src.name)
         info = src.stat(follow_symlinks=False)
-        if stat.S_ISLNK(info.st_mode) or (os.name == "nt" and info.st_reparse_tag & 0x2000_0000):
+        if self._redirects(info):
             msg = f"refusing to link a redirected seed image entry: {src.path}"
             raise RuntimeError(msg)
         if stat.S_ISDIR(info.st_mode):
             # pip unlinks files before replacement but writes through a linked directory.
-            os.mkdir(dst, (info.st_mode & 0o077) | 0o700)
+            created = self._mkdir(dst, (info.st_mode & 0o077) | 0o700)
             previous_count = len(files)
             with os.scandir(src.path) as entries:
                 for child in entries:
                     self._install_entry(child, dst, record, files)
-            if len(files) == previous_count:
+            if created and len(files) == previous_count:
                 # Empty directories have no RECORD entry to remove on a subsequent install.
                 os.rmdir(dst)
             return
@@ -73,12 +73,36 @@ class SymlinkPipInstall(PipInstall):
             raise RuntimeError(msg)
         files.append(src.path.removeprefix(f"{self._image_dir}{os.sep}"))
         if record is None:
-            os.symlink(src.path, dst)
+            self._link_file(src.path, dst)
         elif os.path.normcase(src.path) != record:
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
             mode = (info.st_mode & (S_IREAD | S_IRGRP | S_IROTH)) | S_IWUSR
             with os.fdopen(os.open(dst, flags, mode), "wb") as output, open(src.path, "rb") as source:
                 shutil.copyfileobj(source, output)
+
+    @staticmethod
+    def _redirects(info: os.stat_result) -> bool:
+        return stat.S_ISLNK(info.st_mode) or (os.name == "nt" and bool(info.st_reparse_tag & 0x2000_0000))
+
+    @staticmethod
+    def _mkdir(dst: str, mode: int) -> bool:
+        try:
+            os.mkdir(dst, mode)
+        except FileExistsError:
+            # A previous install can stop before it writes RECORD. Reuse only real directories.
+            info = os.lstat(dst)
+            if not stat.S_ISDIR(info.st_mode) or SymlinkPipInstall._redirects(info):
+                raise
+            return False
+        return True
+
+    @staticmethod
+    def _link_file(src: str, dst: str) -> None:
+        try:
+            os.symlink(src, dst)
+        except FileExistsError:
+            if not os.path.islink(dst) or not os.path.samefile(src, dst):
+                raise
 
     def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         # create the pyc files, as the build image will be R/O

@@ -396,8 +396,15 @@ virtualenv supports two seeding methods with dramatically different performance 
     environment's ``site-packages`` directory.
 
     With ``--symlink-app-data``, each environment owns its package directories and installation metadata. Package files
-    link to the read-only cache image. Reinstalling a wheel with pip replaces files in that environment. Recreate
-    environments seeded by older virtualenv versions to switch from linked package directories to linked files.
+    link to read-only files in the cache. Reinstalling a wheel with pip replaces those links in the environment. A tool
+    with permission to write through a link can still change the cached file for every environment that shares it.
+
+    Rerun virtualenv on an existing environment to switch from directory links to file links. Use the default copy mode
+    if you need to force bytecode recompilation with ``python -m compileall -f``. Python refuses to overwrite linked
+    bytecode files.
+
+    In warm-cache runs with embedded pip, median environment creation took 15 ms with file links and 18 ms with copies
+    on Linux (CPython 3.15), and 422 ms with file links and 471 ms with copies on Windows 11 (CPython 3.14).
 
     You can override the cache location using the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
 
