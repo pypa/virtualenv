@@ -395,17 +395,9 @@ virtualenv supports two seeding methods with dramatically different performance 
     in the cache. Subsequent environment creations simply link or copy these pre-built images into the virtual
     environment's ``site-packages`` directory.
 
-    Performance comparison for creating virtual environments:
-
-    .. mermaid::
-
-        xychart-beta horizontal
-            title "Seeding time (seconds, lower is better)"
-            x-axis ["pip seeder (70s)", "app-data copy Win (8s)", "app-data symlink Win (0.8s)", "app-data symlink Linux/macOS (0.1s)"]
-            y-axis "Seconds" 0 --> 80
-            bar [70, 8, 0.8, 0.1]
-
-    On platforms that support symlinks efficiently (Linux, macOS), the app-data seeder provides nearly instant seeding.
+    With ``--symlink-app-data``, each environment owns its package directories and installation metadata. Package files
+    link to the read-only cache image. Reinstalling a wheel with pip replaces files in that environment. Recreate
+    environments seeded by older virtualenv versions to switch from linked package directories to linked files.
 
     You can override the cache location using the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
 

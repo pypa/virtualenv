@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "csv",
+    "shutil",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
 ]
 
+import csv
 import os
-from stat import S_IREAD, S_IRGRP, S_IROTH
+import shutil
+import stat
+from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
 from typing import TYPE_CHECKING
 
 from virtualenv.util.error import ProcessCallFailedError
@@ -24,8 +29,45 @@ if TYPE_CHECKING:
 class SymlinkPipInstall(PipInstall):
     """Install a seed package by symlinking its image files into the environment."""
 
-    def _sync(self, src: Path, dst: Path) -> None:
-        os.symlink(str(src), str(dst))
+    def _install_files(self, dist_info: Path, /) -> list[Path]:
+        files: list[Path] = []
+        for child in self._image_dir.iterdir():
+            self._install_entry(child, self._creator.purelib / child.name, dist_info, files)
+        # Root bytecode is compiled in the target interpreter and omitted from the shared image.
+        modules = {path.stem for path in files if path.parent == self._creator.purelib and path.suffix == ".py"}
+        with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
+            for row in csv.reader(stream):
+                if not row or not row[0].startswith(f"__pycache__{os.sep}"):
+                    continue
+                cached = self._creator.purelib / row[0]
+                if cached.parent == self._creator.purelib / "__pycache__" and cached.suffix == ".pyc":
+                    module, _, tag = cached.stem.rpartition(".")
+                    if module in modules and tag:
+                        files.append(cached)
+        return files
+
+    def _install_entry(self, src: Path, dst: Path, dist_info: Path, files: list[Path]) -> None:
+        info = src.lstat()
+        if stat.S_ISLNK(info.st_mode) or (os.name == "nt" and info.st_reparse_tag & 0x2000_0000):
+            msg = f"refusing to link a redirected seed image entry: {src}"
+            raise RuntimeError(msg)
+        if stat.S_ISDIR(info.st_mode):
+            # pip unlinks files before replacement but writes through a linked directory.
+            dst.mkdir(mode=(info.st_mode & 0o077) | 0o700)
+            for child in src.iterdir():
+                self._install_entry(child, dst / child.name, dist_info, files)
+            return
+        if not stat.S_ISREG(info.st_mode):
+            msg = f"refusing to link a non-regular seed image entry: {src}"
+            raise RuntimeError(msg)
+        files.append(dst)
+        if dist_info not in src.parents:
+            dst.symlink_to(src)
+        elif src != dist_info / "RECORD":
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+            mode = (info.st_mode & (S_IREAD | S_IRGRP | S_IROTH)) | S_IWUSR
+            with os.fdopen(os.open(dst, flags, mode), "wb") as output, src.open("rb") as source:
+                shutil.copyfileobj(source, output)
 
     def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         # create the pyc files, as the build image will be R/O

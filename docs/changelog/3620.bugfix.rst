@@ -1,0 +1,2 @@
+Keep package directories local when using ``--symlink-app-data``, so reinstalling a seed package with pip cannot change
+another environment sharing the same cache image.

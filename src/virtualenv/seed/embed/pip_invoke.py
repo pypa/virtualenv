@@ -41,7 +41,7 @@ from zipfile import ZipFile
 from virtualenv.seed.wheels import get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.acquire import PIP_RUN
 from virtualenv.seed.wheels.util import Version
-from virtualenv.util.path import write_file
+from virtualenv.util.path import safe_delete, write_file
 from virtualenv.util.subprocess import LogCmd
 
 from .base_embed import BaseEmbed
@@ -223,7 +223,19 @@ class PipInvoke(BaseEmbed):
             for distribution in self.distribution_to_versions():
                 for entry in root.glob(f"{distribution.replace('-', '_')}-*"):
                     if entry.suffix in {".dist-info", ".virtualenv"} and entry.is_symlink():
-                        entry.unlink()
+                        self._remove_seed_metadata(entry)
+
+    @staticmethod
+    def _remove_seed_metadata(entry: Path) -> None:
+        if entry.suffix == ".virtualenv":
+            # Linked seed images have an environment-local metadata directory on newer installs.
+            metadata = entry.with_suffix(".dist-info")
+            if not metadata.is_symlink() and metadata.is_dir():
+                if PipInvoke._redirects_directory(metadata.lstat()):
+                    metadata.rmdir()
+                else:
+                    safe_delete(metadata)
+        entry.unlink()
 
     @staticmethod
     def _execute(cmd: list[str], env: dict[str, str]) -> None:

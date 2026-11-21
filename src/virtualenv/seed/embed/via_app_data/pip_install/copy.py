@@ -20,8 +20,9 @@ if TYPE_CHECKING:
 class CopyPipInstall(PipInstall):
     """Install a seed package by copying its image files into the environment."""
 
-    def _sync(self, src: Path, dst: Path) -> None:
-        copy(src, dst)
+    def _install_files(self, _dist_info: Path, /) -> None:
+        for filename in self._image_dir.iterdir():
+            copy(filename, self._creator.purelib / filename.name)
 
     def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         # create the pyc files

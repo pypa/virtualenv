@@ -80,14 +80,16 @@ class PipInstall(ABC):
         dist_info: Final[Path] = self._find_dist_info(self._image_dir)
         self._uninstall_previous_version(dist_info)
         # sync image
-        for filename in self._image_dir.iterdir():
-            self._sync(filename, self._creator.purelib / filename.name)
+        files = self._install_files(dist_info)
         # generate console executables
         consoles = set()
         script_dir = self._creator.script_dir
         for name, module in self._read_console_scripts(dist_info).items():
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
+        if files is not None:
+            files.extend(consoles)
+            self._write_installed_record(dist_info, files)
 
     @staticmethod
     def _find_dist_info(folder: Path) -> Path:
@@ -221,7 +223,7 @@ class PipInstall(ABC):
                 folder.rmdir()
 
     @abstractmethod
-    def _sync(self, src: Path, dst: Path) -> None:
+    def _install_files(self, dist_info: Path, /) -> list[Path] | None:
         raise NotImplementedError
 
     @staticmethod
@@ -246,6 +248,16 @@ class PipInstall(ABC):
         result = []
         result.extend(Path(i) for i in new_files)
         return result
+
+    def _write_installed_record(self, dist_info: Path, files: list[Path]) -> None:
+        with (self._creator.purelib / dist_info.name / "RECORD").open("x", encoding="utf-8", newline="") as stream:
+            stream.write(self._records_text(self._creator.purelib, files))
+
+    @staticmethod
+    def _records_text(folder: Path, files: set[Path] | list[Path]) -> str:
+        stream = io.StringIO(newline="")
+        csv.writer(stream).writerows((os.path.relpath(str(rec), str(folder)), "", "") for rec in files)
+        return stream.getvalue()
 
     def build_image(self) -> None:
         """Extract the seed wheel into a staging directory, fix up its RECORD file, then move it into place.
@@ -331,12 +343,6 @@ class PipInstall(ABC):
         finally:
             safe_delete(to_folder)
         return new_files
-
-    @staticmethod
-    def _records_text(folder: Path, files: set[Path] | list[Path]) -> str:
-        stream = io.StringIO(newline="")
-        csv.writer(stream).writerows((os.path.relpath(str(rec), str(folder)), "", "") for rec in files)
-        return stream.getvalue()
 
     def clear(self) -> None:
         """Remove the cached image of the wheel."""

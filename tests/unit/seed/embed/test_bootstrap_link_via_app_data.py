@@ -640,7 +640,11 @@ def test_seed_metadata_keeps_reseeding_supported(
     cli_run(args, setup_logging=False)
     session: Final[Session] = cli_run(args, setup_logging=False)
     package: Final[Path] = session.creator.purelib / "pip"
-    assert ((package / "__init__.py").is_file(), package.is_symlink(), "skip removal of" in caplog.text) == (
+    assert (
+        (package / "__init__.py").is_file(),
+        (package / "__init__.py").is_symlink(),
+        "skip removal of" in caplog.text,
+    ) == (
         True,
         linked,
         False,
@@ -813,7 +817,7 @@ def test_reseed_over_pip_installed_by_pip(
     # running pip writes bytecode RECORD does not list
     check_call([str(session.creator.exe), *run_args, "-m", "pip", "--version"])
     package: Final[Path] = cli_run(args, setup_logging=False).creator.purelib / "pip"
-    assert ((package / "__init__.py").is_file(), package.is_symlink()) == (True, linked)
+    assert ((package / "__init__.py").is_file(), (package / "__init__.py").is_symlink()) == (True, linked)
 
 
 @pytest.mark.usefixtures("_no_coverage")
@@ -1509,6 +1513,60 @@ def test_seed_records_quote_generated_paths(
     names = {Path(row[0]).name for row in rows}
     compiled = {name for name in names if name.startswith(f"{record_filename[:-3]}.") and name.endswith(".pyc")}
     assert ({len(row) for row in rows}, record_filename in names, len(compiled)) == ({3}, True, 1)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_reseed_legacy_linked_environment(no_seed_session: Session, tmp_path: Path) -> None:
+    purelib = no_seed_session.creator.purelib
+    image = tmp_path / "image"
+    wheel = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    installer = SymlinkPipInstall(wheel, no_seed_session.creator, image)
+    installer.build_image()
+    for entry in image.iterdir():
+        (purelib / entry.name).symlink_to(entry, target_is_directory=entry.is_dir())
+    metadata = next(image.glob("*.dist-info")).name
+    old_record = (image / metadata / "RECORD").read_bytes()
+
+    installer.install(no_seed_session.interpreter.version_info)
+
+    with (purelib / metadata / "RECORD").open(encoding="utf-8", newline="") as stream:
+        paths = {Path(row[0]) for row in csv.reader(stream)}
+    assert (
+        (purelib / "pip").is_symlink(),
+        (purelib / "pip" / "__init__.py").samefile(image / "pip" / "__init__.py"),
+        Path("pip") in paths,
+        Path("pip/__init__.py") in paths,
+        (image / metadata / "RECORD").read_bytes(),
+    ) == (False, True, False, True, old_record)
+
+
+@pytest.mark.parametrize(
+    "create_entry",
+    [
+        pytest.param(
+            lambda entry, metadata: entry.symlink_to(metadata, target_is_directory=True),
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks"),
+            id="symlink",
+        ),
+        pytest.param(
+            lambda entry, _: os.mkfifo(entry),
+            marks=pytest.mark.skipif(sys.platform == "win32", reason="POSIX FIFO"),
+            id="fifo",
+        ),
+    ],
+)
+def test_linked_seed_requires_regular_image_files(
+    no_seed_session: Session, tmp_path: Path, create_entry: Callable[[Path, Path], None]
+) -> None:
+    image = tmp_path / "image"
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "RECORD").touch()
+    create_entry(image / "example", metadata)
+    installer = SymlinkPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image)
+    with pytest.raises(RuntimeError, match="refusing to link"):
+        installer.install(no_seed_session.interpreter.version_info)
+    assert not (no_seed_session.creator.purelib / "example").exists()
 
 
 @pytest.fixture

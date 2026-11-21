@@ -6,7 +6,7 @@ import signal
 import subprocess
 import sys
 from pathlib import Path
-from shutil import copyfile, copytree
+from shutil import copyfile
 from stat import FILE_ATTRIBUTE_REPARSE_POINT
 from time import monotonic
 from typing import TYPE_CHECKING, Final
@@ -34,7 +34,7 @@ _LAUNCHER_NAME: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_keeps_shared_image(linked_seed: Session) -> None:
     package: Final[Path] = linked_seed.creator.purelib / "pip"
-    image: Final[Path] = package.resolve().parent
+    image: Final[Path] = (package / "__init__.py").resolve().parents[1]
     before: Final[dict[str, tuple[bytes, int]]] = {
         str(path.relative_to(image)): (path.read_bytes(), path.stat().st_mode)
         for path in image.rglob("*")
@@ -46,6 +46,40 @@ def test_pip_reseed_keeps_shared_image(linked_seed: Session) -> None:
         for path in image.rglob("*")
         if path.is_file()
     } == before
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_pip_reinstall_preserves_other_linked_environments(linked_seed: Session, tmp_path: Path) -> None:
+    other = cli_run([
+        str(tmp_path / "other"),
+        "--pip",
+        "embed",
+        "--symlink-app-data",
+        "--no-periodic-update",
+        "--app-data",
+        str(tmp_path / "cache"),
+    ])
+    module = linked_seed.creator.purelib / "pip" / "__init__.py"
+    shared = other.creator.purelib / "pip" / "__init__.py"
+    image = module.resolve()
+    assert shared.samefile(image)
+    wheel = get_embed_wheel("pip", linked_seed.interpreter.version_release_str)
+    assert wheel is not None
+    subprocess.check_call([
+        str(linked_seed.creator.exe),
+        "-m",
+        "pip",
+        "install",
+        "--disable-pip-version-check",
+        "--no-index",
+        "--ignore-installed",
+        str(wheel.path),
+    ])
+    assert (module.samefile(image), shared.samefile(image), module.read_bytes()) == (
+        False,
+        True,
+        image.read_bytes(),
+    )
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -82,11 +116,7 @@ def test_pip_reseed_replaces_nested_link(
     linked_seed: Session, name: str, directory: bool, remove: Callable[[Path], object]
 ) -> None:
     package: Final[Path] = linked_seed.creator.purelib / "pip"
-    source: Final[Path] = package.resolve()
-    package.unlink()
-    copytree(source, package)
-    for path in filter(Path.is_file, package.rglob("*")):
-        path.chmod(0o600)
+    source: Final[Path] = (package / "__init__.py").resolve().parent
     entry: Final[Path] = package / name
     remove(entry)
     entry.symlink_to(source / name, target_is_directory=directory)
