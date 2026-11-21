@@ -1,0 +1,19 @@
+comment_char %
+escape_char /
+% Stand-in for glibc's locales/zh_CN: ASCII character classes and a default collation.
+% How bytes are decoded depends on the charmap given to localedef.
+LC_CTYPE
+upper <U0041>..<U005A>
+lower <U0061>..<U007A>
+digit <U0030>..<U0039>
+xdigit <U0030>..<U0039>;<U0041>..<U0046>;<U0061>..<U0066>
+space <U0009>..<U000D>;<U0020>
+blank <U0009>;<U0020>
+cntrl <U0000>..<U001F>;<U007F>
+punct <U0021>..<U002F>;<U003A>..<U0040>;<U005B>..<U0060>;<U007B>..<U007E>
+END LC_CTYPE
+LC_COLLATE
+order_start forward
+UNDEFINED
+order_end
+END LC_COLLATE

@@ -309,9 +309,18 @@ This convention is shared across pyenv, mise, and asdf, so the same resolution l
 Creators are responsible for constructing the virtual environment structure. virtualenv supports two types of creators:
 
 **venv creator**
-    This creator delegates the entire creation process to the standard library's ``venv`` module, following `PEP 405
-    <https://www.python.org/dev/peps/pep-0405/>`_. The venv creator requires spawning a subprocess to invoke the venv
-    module, unless virtualenv is installed in the system Python.
+    This creator delegates environment construction to the standard library's ``venv`` module, following `PEP 405
+    <https://www.python.org/dev/peps/pep-0405/>`_. The venv module runs in a subprocess unless virtualenv is installed
+    in the system Python.
+
+    On POSIX, an empty file in ``bin`` measures the permissions a new executable receives under the directory's default
+    ACL or the process umask. While copying, virtualenv temporarily removes directory access for groups or other users
+    whose access to the interpreter would otherwise exceed that policy. Shared environments retain their directory
+    permissions when the policy already allows read and execute access. If a shared directory needs restricting, its
+    owner must create the environment.
+
+    On Linux, virtualenv restores owner execute when it can verify that the directory has no default ACL. Otherwise, if
+    the owner execute bit is missing, creation stops before copying. Use ``--symlinks`` in that directory.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 
@@ -344,6 +353,12 @@ the versioned name - and an environment offering only one of them would break th
 version-bearing names from the target interpreter and add the host executable's own file name, so a host called
 ``pypy3.11`` or ``python_d.exe`` stays reachable under the name its callers already use.
 
+On POSIX, CPython 3.11 and later can search above a copied shared library for its standard library. Both creators check
+those search directories before clearing or creating an environment. An unsafe library directory or unexpected
+standard-library zip stops creation. A warning means another account could change a search directory after creation,
+even if the directory does not exist yet. Use ``--symlinks`` or choose a destination whose parents only you or the
+administrator can change.
+
 Windows copies rather than symlinks, because symlinking the interpreter there is unreliable (`bpo-42013
 <https://bugs.python.org/issue42013>`_). From CPython 3.13 the file copied is the ``venvlauncher.exe`` redirector out of
 the host's standard library rather than the interpreter itself. The redirector reads ``pyvenv.cfg`` and hands off to the
@@ -367,6 +382,12 @@ virtualenv supports two seeding methods with dramatically different performance 
     This method uses the bundled pip wheel to install seed packages by spawning a child pip process. The subprocess
     performs a full installation, including unpacking wheels and generating metadata. This method is reliable but slow,
     typically consuming 98% of the total virtual environment creation time.
+
+    The bundled wheel starts pip, while the install uses only the seed wheels virtualenv selected and staged. It runs in
+    `pip's isolated mode <https://pip.pypa.io/en/stable/cli/pip/#cmdoption-isolated>`_ with user installs disabled. The
+    install ignores pip configuration files and inherited ``PIP_*`` variables, including ``PIP_PYTHON``. Custom wheel
+    directories still affect selection, and later pip commands keep caller settings. On SIGINT, virtualenv waits for the
+    pip child to stop before removing staged wheels.
 
 **app-data seeder**
     This method creates reusable install images in a user application data directory. The first time you create an
@@ -468,6 +489,12 @@ To keep the seed packages reasonably current without requiring users to manually
 The 28-day waiting period protects users from automatically adopting newly released packages that might contain bugs.
 The 1-hour delay after download ensures continuous integration systems don't start using different package versions
 mid-run, which could cause confusing test failures.
+
+virtualenv stops using a logged release once the package index yanks it, at the next update that finds a newer release
+or no longer sees a logged one. It reads the yank flags from the simple API of the index ``pip`` is configured with
+(``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL`` or ``pip.conf``, with credentials from the URL or ``.netrc``, ``cert`` and
+``proxy``) without running ``pip``. If an index cannot be read, for example because it needs keyring credentials or a
+client certificate, the logged releases stay.
 
 You can disable the periodic update mechanism with the ``--no-periodic-update`` flag.
 

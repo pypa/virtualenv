@@ -184,7 +184,21 @@ if ($VenvDir) {
     Write-Verbose "VenvDir=$VenvDir"
 }
 
+if ($VenvDir.Contains([string][IO.Path]::PathSeparator)) {
+    throw "Environment directory '$VenvDir' contains the PATH separator."
+}
+
 $pyvenvCfg = Get-PyVenvConfig -ConfigDir $VenvDir
+
+if ($VenvDir.Contains('%')) {
+    $PathOption = $VenvDir.Substring($VenvDir.IndexOf('%') + 1)
+    if (
+        $PathOption.StartsWith('func', [StringComparison]::Ordinal) -or
+        $PathOption.StartsWith('builtin', [StringComparison]::Ordinal)
+    ) {
+        throw "Environment directory '$VenvDir' contains a shell PATH option."
+    }
+}
 
 if ($Prompt) {
     Write-Verbose "Prompt specified as argument, using '$Prompt'"
@@ -233,7 +247,10 @@ if ($_OLD_PKG_CONFIG_PATH) {
     $env:PKG_CONFIG_PATH += __PATH_SEP__ + $_OLD_PKG_CONFIG_PATH
 }
 
-$env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__ + __PATH_SEP__ + $env:PATH
+$env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__
+if ($_OLD_VIRTUAL_PATH) {
+    $env:PATH += __PATH_SEP__ + $_OLD_VIRTUAL_PATH
+}
 
 if (!$env:VIRTUAL_ENV_DISABLE_PROMPT) {
     function global:_old_virtual_prompt {

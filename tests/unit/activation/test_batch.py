@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from virtualenv import session_via_cli
+from virtualenv import cli_run, session_via_cli
 from virtualenv.activation import BatchActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.info import IS_WIN
@@ -66,34 +66,77 @@ def special_char_name():
     return result
 
 
-def test_batch_pydoc_bat_quoting(tmp_path) -> None:
-    # Test that pydoc.bat properly quotes python.exe path to handle spaces.
-    # GIVEN: A mock interpreter
-    class MockInterpreter:
-        os = "nt"
-        tcl_lib = None
-        tk_lib = None
+def test_batch_pydoc_bat_quoting(tmp_path: Path) -> None:
+    creator = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
 
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "Scripts"
-            self.bin_dir.mkdir(parents=True)
-            self.interpreter = MockInterpreter()
-            self.pyenv_cfg = {}
-            self.env_name = "test-env"
+    assert '"%_PYDOC_BIN%python.exe" -m pydoc %*' in (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
 
-    creator = MockCreator(tmp_path)
-    activator = BatchActivator(Namespace(prompt=None))
 
-    # WHEN: Generate activation scripts
-    activator.generate(creator)
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize(
+    ("pydoc_call", "path_prefix"),
+    [
+        pytest.param('call "{pydoc}" pydoc_probe', "", id="full-path"),
+        pytest.param("call pydoc pydoc_probe", "{script_dir}{sep}", id="call-name"),
+        pytest.param('call "pydoc" pydoc_probe', "{script_dir}{sep}", id="call-quoted-name"),
+        pytest.param('call "pydoc.bat" pydoc_probe', "{script_dir}{sep}", id="call-quoted-file"),
+        pytest.param('"pydoc" pydoc_probe', "{script_dir}{sep}", id="quoted-name"),
+        pytest.param('"pydoc.bat" pydoc_probe', "{script_dir}{sep}", id="quoted-file"),
+    ],
+)
+def test_batch_pydoc_uses_environment_python(tmp_path: Path, pydoc_call: str, path_prefix: str) -> None:
+    creator = cli_run([str(tmp_path / "env space"), "--no-seed"], setup_logging=False).creator
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    (tmp_path / "pydoc_driver.bat").write_text(
+        f"@echo off\n@{pydoc_call.format(pydoc=creator.bin_dir / 'pydoc.bat')}\n", encoding="utf-8"
+    )
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", "/C", "pydoc_driver.bat"],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "PATH": (
+                f"{path_prefix.format(script_dir=creator.bin_dir, sep=os.pathsep)}"
+                f"{os.path.dirname(sys.executable)}{os.pathsep}{os.environ['PATH']}"
+            ),
+        },
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
 
-    # THEN: pydoc.bat should quote python.exe to handle paths with spaces
-    pydoc_content = (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={creator.bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
-    # The python.exe should be quoted to handle paths with spaces like "C:\Program Files\Python39\python.exe"
-    assert '"python.exe"' in pydoc_content, f"python.exe should be quoted in pydoc.bat. Content:\n{pydoc_content}"
+
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize("pydoc_call", [pytest.param("pydoc", id="path"), pytest.param('"!launcher!"', id="full-path")])
+def test_batch_pydoc_moved_env_with_exclamation_mark(tmp_path: Path, pydoc_call: str) -> None:
+    created = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    bin_dir = created.dest.rename(tmp_path / "env !q!") / created.bin_dir.name
+    (tmp_path / "pydoc_probe.py").write_text("import sys\nprint(f'INTERPRETER={sys.executable}')\n", encoding="utf-8")
+    result = subprocess.run(
+        f'"{os.environ["COMSPEC"]}" /D /V:ON /S /C "{pydoc_call} pydoc_probe"',
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "q": "X",
+            "launcher": str(bin_dir / "pydoc.bat"),
+            "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        },
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert f"INTERPRETER={bin_dir / 'python.exe'}" in result.stdout.splitlines()
 
 
 @pytest.mark.parametrize(
@@ -106,7 +149,7 @@ def test_batch_pydoc_bat_quoting(tmp_path) -> None:
                 '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"',
                 '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"',
             ],
-            ["if defined _OLD_VIRTUAL_TCL_LIBRARY", "if defined _OLD_VIRTUAL_TK_LIBRARY"],
+            ["call :assign TCL_LIBRARY _OLD_VIRTUAL_TCL_LIBRARY", "call :assign TK_LIBRARY _OLD_VIRTUAL_TK_LIBRARY"],
             id="windows",
         ),
         pytest.param(
@@ -145,12 +188,6 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, activate_lines, dea
     deactivate_content = (creator.bin_dir / "deactivate.bat").read_text(encoding="utf-8")
 
     # THEN
-    # PKG_CONFIG_PATH is always set
-    assert '@if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"' in activate_content
-    assert '@set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\\lib\\pkgconfig;%PKG_CONFIG_PATH%"' in activate_content
-    assert '@if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"' in deactivate_content
-    assert "@if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
-    assert "@set _OLD_PKG_CONFIG_PATH=" in deactivate_content
     assert [line for line in activate_lines if line not in activate_content] == []
     assert [line for line in deactivate_lines if line not in deactivate_content] == []
 
@@ -255,6 +292,84 @@ def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
         {**active, "PATH": f"{creator.bin_dir};{os.environ['SYSTEMROOT']}"},
     ]
     assert not result.stderr
+
+
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize(
+    ("delayed", "before_deactivate"),
+    [
+        pytest.param("OFF", "", id="normal"),
+        pytest.param("ON", "", id="delayed-expansion"),
+        pytest.param("OFF", "@setlocal EnableDelayedExpansion\n", id="enable-delayed-before-deactivate"),
+        pytest.param("ON", "@setlocal DisableDelayedExpansion\n", id="disable-delayed-before-deactivate"),
+    ],
+)
+@pytest.mark.parametrize("replacement", [pytest.param("", id="empty"), pytest.param("expanded", id="defined")])
+def test_batch_path_keeps_exclamation_marks(
+    tmp_path: Path, delayed: str, before_deactivate: str, replacement: str
+) -> None:
+    creator = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
+    (creator.bin_dir / "check.bat").write_text(
+        "@echo off\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PATH_UNSET=\n"
+        f"@call activate.bat\n@set PATH\n{before_deactivate}@call deactivate.bat\n@set PATH\n",
+        encoding="utf-8",
+    )
+    original = rf'"C:\Build ^ tools!q!\bin";{os.environ["SYSTEMROOT"]}\System32'
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
+        cwd=creator.bin_dir,
+        env={**os.environ, "PATH": original, "q": replacement},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert ([line for line in result.stdout.splitlines() if line.startswith("PATH=")], result.stderr) == (
+        [f"PATH={creator.bin_dir};{original}", f"PATH={original}"],
+        "",
+    )
+
+
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize("delayed", [pytest.param("OFF", id="normal"), pytest.param("ON", id="delayed-expansion")])
+def test_batch_restores_inherited_values(tmp_path: Path, delayed: str) -> None:
+    creator: Final[Creator] = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
+    names: Final[tuple[str, ...]] = ("PROMPT", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY", "PKG_CONFIG_PATH")
+    inherited: Final[dict[str, str]] = {
+        "PROMPT": '"Build ^ tools!q!"$G',
+        "PYTHONHOME": r'"C:\Build ^ tools!q!\Python"',
+        "TCL_LIBRARY": r'"C:\Build ^ tools!q!\tcl"',
+        "TK_LIBRARY": r'"C:\Build ^ tools!q!\tk"',
+        "PKG_CONFIG_PATH": r'"C:\Build ^ tools!q!\pkg"',
+    }
+    snapshot: Final[str] = (
+        f'@"{sys.executable}" -I -c "import json,os; print(json.dumps({{k:os.environ.get(k) for k in {names!r}}}))"'
+    )
+    (creator.bin_dir / "check.bat").write_text(
+        f"@echo off\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}\n", encoding="utf-8"
+    )
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
+        cwd=creator.bin_dir,
+        env={**os.environ, **inherited, "q": "X", "VIRTUAL_ENV_DISABLE_PROMPT": ""},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=True,
+    )
+    active, restored = (json.loads(line) for line in result.stdout.splitlines())
+    assert (active["PROMPT"], active["PYTHONHOME"], active["PKG_CONFIG_PATH"]) == (
+        f"(env) {inherited['PROMPT']}",
+        None,
+        f"{creator.dest}\\lib\\pkgconfig;{inherited['PKG_CONFIG_PATH']}",
+    )
+    assert (restored, result.stderr) == (inherited, "")
 
 
 def test_batch_quote_replaces_end_of_file() -> None:

@@ -10,15 +10,27 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import IS_PYPY, IS_WIN
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from virtualenv.run.session import Session
+
 
 _POWERSHELLS: Final[list[str]] = [path for path in map(shutil.which, ("pwsh", "powershell.exe")) if path]
 _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
+_INTERPRETER_INDEPENDENT: Final[pytest.MarkDecorator] = pytest.mark.skipif(
+    IS_PYPY or IS_GRAALPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix"
+)
+
+
+@pytest.fixture(autouse=True)
+def _private_pwsh_cache(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    # pwsh reads and rewrites a startup profile in its cache folder on every start, so parallel workers shared one file;
+    # while they did, every pwsh on a macOS runner crashed with FileLoadException for two minutes (CI run 44217352067)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path_factory.mktemp("pwsh-cache")))
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
@@ -40,13 +52,13 @@ _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
 def test_powershell_restores_pydoc(
     tmp_path: Path, powershell: str, define: list[str], expected: list[str], environments: list[str]
 ) -> None:
-    sessions: Final = [
+    sessions: Final[list[Session]] = [
         cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / name)]) for name in environments
     ]
-    activate: Final = [
+    activate: Final[list[str]] = [
         f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}" for session in sessions
     ]
-    driver: Final = tmp_path / "pydoc.ps1"
+    driver: Final[Path] = tmp_path / "pydoc.ps1"
     driver.write_text(
         "\n".join([
             "$ErrorActionPreference = 'Stop'",
@@ -57,7 +69,7 @@ def test_powershell_restores_pydoc(
         ]),
         encoding="utf-8-sig",
     )
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
         capture_output=True,
         text=True,
@@ -97,7 +109,41 @@ def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
     )
 
 
-@pytest.mark.skipif(IS_PYPY, reason="quoting does not depend on the interpreter, the CPython jobs run this matrix")
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.parametrize(
+    ("original", "suffix"),
+    [
+        pytest.param("", "", id="empty"),
+        pytest.param(f"{os.pathsep}first", f"{os.pathsep}{os.pathsep}first", id="leading-empty-entry"),
+        pytest.param("first", f"{os.pathsep}first", id="populated"),
+    ],
+)
+def test_powershell_prepends_bin_to_path(tmp_path: Path, powershell: str, original: str, suffix: str) -> None:
+    session: Final[Session] = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
+    driver: Final[Path] = tmp_path / "path.ps1"
+    driver.write_text(
+        f"$env:PATH = {PowerShellActivator.quote(original)}\n"
+        f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}\n"
+        "Write-Output $env:PATH\n",
+        encoding="utf-8-sig",
+    )
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (
+        0,
+        f"{session.creator.dest}/{_VENV_BIN_DIR}{suffix}\n",
+        "",
+    )
+
+
+@_INTERPRETER_INDEPENDENT
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
     ("name", "mode"),
@@ -115,30 +161,30 @@ def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
 def test_powershell_literal_destination(
     tmp_path: Path, name: str, configured_prompt: str | None, mode: str, powershell: str
 ) -> None:
-    dest: Final = os.path.join(str(tmp_path), name)
-    prompt_args: Final = {None: [], "custom": ["--prompt", "custom"]}[configured_prompt]
-    args: Final = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest, *prompt_args]
+    dest: Final[str] = os.path.join(str(tmp_path), name)
+    prompt_args: Final[list[str]] = {None: [], "custom": ["--prompt", "custom"]}[configured_prompt]
+    args: Final[list[str]] = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest, *prompt_args]
     # Simulated-platform tests change pathlib's separators at collection, so create the environment in a fresh process.
     subprocess.run([sys.executable, "-m", "virtualenv", *args], capture_output=True, check=True)
-    venv_args: Final = {
+    venv_args: Final[list[str]] = {
         "implicit": [],
         "relative": ["-VenvDir", PowerShellActivator.quote(name)],
         "drive": ["-VenvDir", PowerShellActivator.quote(f"ReviewEnv:/{name}")],
         "provider": ["-VenvDir", PowerShellActivator.quote(f"FileSystem::{dest}")],
         "home": ["-VenvDir", PowerShellActivator.quote(f"~/{os.path.relpath(dest, os.path.expanduser('~'))}")],
     }[mode]
-    activate: Final = " ".join([
+    activate: Final[str] = " ".join([
         f". {PowerShellActivator.quote(os.path.join(dest, _VENV_BIN_DIR, 'activate.ps1'))}",
         *venv_args,
     ])
-    drive_root: Final = PowerShellActivator.quote(str(tmp_path))
-    drive_lines: Final = {
+    drive_root: Final[str] = PowerShellActivator.quote(str(tmp_path))
+    drive_lines: Final[list[str]] = {
         "drive": [f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {drive_root} | Out-Null"],
     }.get(mode, [])
-    lines: Final = [*drive_lines, activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
-    driver: Final = tmp_path / "driver.ps1"
+    lines: Final[list[str]] = [*drive_lines, activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
+    driver: Final[Path] = tmp_path / "driver.ps1"
     driver.write_text("\n".join(lines), encoding="utf-8-sig")
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
         capture_output=True,
         text=True,
@@ -152,7 +198,7 @@ def test_powershell_literal_destination(
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 def test_powershell_reports_missing_config(tmp_path: Path, current_fastest: str, powershell: str) -> None:
-    session: Final = cli_run([
+    session: Final[Session] = cli_run([
         "--without-pip",
         "--no-periodic-update",
         "--activators",
@@ -162,7 +208,7 @@ def test_powershell_reports_missing_config(tmp_path: Path, current_fastest: str,
         str(tmp_path / "env"),
     ])
     (session.creator.dest / "pyvenv.cfg").unlink()
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             powershell,
             "-NoProfile",
@@ -181,6 +227,7 @@ def test_powershell_reports_missing_config(tmp_path: Path, current_fastest: str,
     assert "Cannot find configuration file" in result.stderr
 
 
+@_INTERPRETER_INDEPENDENT
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="requires PowerShell Core")
 @pytest.mark.parametrize(
     "delimiter",
@@ -333,9 +380,35 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires a POSIX directory symlink")
+def test_powershell_rejects_path_separator_in_activation_path(tmp_path: Path, powershell: str) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    alias: Final[Path] = tmp_path / "alias:qa"
+    alias.symlink_to(session.creator.dest, target_is_directory=True)
+
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f". {PowerShellActivator.quote(str(alias / _VENV_BIN_DIR / 'activate.ps1'))}",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "contains the PATH separator" in result.stderr
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
 def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
-    result: Final = subprocess.run(
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             powershell,
             "-NoProfile",
@@ -361,11 +434,48 @@ def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str
     ), result.stderr
 
 
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires a directory symlink")
+@pytest.mark.parametrize(
+    ("alias_name", "returncode"),
+    [
+        pytest.param("alias%func", 1, id="option"),
+        pytest.param("alias%func\u0301", 1, id="combining-mark"),
+        pytest.param("alias%20", 0, id="literal-percent"),
+    ],
+)
+def test_powershell_handles_shell_path_option_in_activation_path(
+    tmp_path: Path, powershell: str, alias_name: str, returncode: int
+) -> None:
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    alias: Final[Path] = tmp_path / alias_name
+    alias.symlink_to(session.creator.dest, target_is_directory=True)
+
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            f". {PowerShellActivator.quote(str(alias / _VENV_BIN_DIR / 'activate.ps1'))}",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, "shell PATH option" in result.stderr) == (returncode, returncode == 1), result.stderr
+
+
 @pytest.mark.skipif(not IS_WIN, reason="Windows registry provider")
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
 def test_powershell_home_from_registry(tmp_path: Path, powershell: str) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
-    result: Final = subprocess.run(
+    session: Final[Session] = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "powershell"])
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [
             powershell,
             "-NoProfile",

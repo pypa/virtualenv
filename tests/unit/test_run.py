@@ -20,9 +20,10 @@ from virtualenv.run import cli_run, session_via_cli
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
     from virtualenv.run.plugin.creators import CreatorInfo
+    from virtualenv.run.session import Session
 
 
 @pytest.mark.parametrize(
@@ -32,20 +33,24 @@ if TYPE_CHECKING:
         for option in ("--prompt", "--activators", "--pip", "--setuptools")
     ],
 )
-def test_missing_option_value_does_not_create_app_data(tmp_path: Path, option: str) -> None:
+def test_missing_option_value_does_not_create_app_data(
+    tmp_path: Path, option: str, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTHON_COLORS", "0")
     with pytest.raises(SystemExit) as error:
         session_via_cli([option, "--app-data", str(tmp_path / "cache"), str(tmp_path / "env")])
     assert error.value.code == 2
     assert not (tmp_path / "cache").exists()
+    assert capsys.readouterr().err == f"virtualenv: error: argument {option}: expected one argument\n"
 
 
 def test_read_only_app_data_ignores_missing_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, give_app_data: Callable[[Path], list[str]]
 ) -> None:
-    cache: Final = tmp_path / "cache"
+    cache: Final[Path] = tmp_path / "cache"
     session_via_cli(["--app-data", str(cache), str(tmp_path / "warm")])  # discovery cannot fill a read-only cache
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", str(tmp_path / "default"))
-    options: Final = VirtualEnvOptions()
+    options: Final[VirtualEnvOptions] = VirtualEnvOptions()
     session_via_cli(["--read-only-app-data", *give_app_data(cache), str(tmp_path / "env")], options)
     assert (type(options.app_data), str(options.app_data)) == (ReadOnlyAppData, str(cache))
 
@@ -64,11 +69,11 @@ def test_given_app_data_leaves_default_alone(
     give_app_data: Callable[[Path], list[str]],
     prepare_default: Callable[[Path], None],
 ) -> None:
-    default_folder: Final = tmp_path / "default"
+    default_folder: Final[Path] = tmp_path / "default"
     prepare_default(default_folder)
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", str(default_folder / "cache"))
-    cache: Final = tmp_path / "cache"
-    options: Final = VirtualEnvOptions()
+    cache: Final[Path] = tmp_path / "cache"
+    options: Final[VirtualEnvOptions] = VirtualEnvOptions()
     session_via_cli([*give_app_data(cache), str(tmp_path / "env")], options)
     assert (type(options.app_data), str(options.app_data), (default_folder / "cache").exists()) == (
         AppDataDiskFolder,
@@ -82,8 +87,8 @@ def test_read_only_app_data_rejects_missing_given_folder(
 ) -> None:
     (tmp_path / "default").mkdir()
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", str(tmp_path / "default"))
-    cache: Final = tmp_path / "cache"
-    args: Final = ["--read-only-app-data", *give_app_data(cache), str(tmp_path / "env")]
+    cache: Final[Path] = tmp_path / "cache"
+    args: Final[list[str]] = ["--read-only-app-data", *give_app_data(cache), str(tmp_path / "env")]
     with pytest.raises(RuntimeError, match=rf"^read-only app data directory {re.escape(str(cache))} does not exist$"):
         session_via_cli(args)
 
@@ -106,14 +111,27 @@ def test_reset_with_empty_app_data_override_resets_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, override: str
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    default_folder: Final = tmp_path / "cache"
+    default_folder: Final[Path] = tmp_path / "cache"
     mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(default_folder))
     mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
     # a blank value used to make the working directory the cache, so the reset deleted it
-    delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
+    delete: Final[MockType] = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", override)
     session_via_cli(["--reset-app-data", str(tmp_path / "env")])
     assert delete.call_args_list == [mocker.call(default_folder)]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows MAX_PATH")
+def test_reset_app_data_removes_files_past_max_path(tmp_path: Path) -> None:
+    cache: Final[Path] = tmp_path / "cache"
+    # a seed image built through its short path holds files that only its long path reaches, past MAX_PATH
+    image: Final[Path] = Path(f"\\\\?\\{cache}", "wheel", "i" * 120, "j" * 120)
+    image.mkdir(parents=True)
+    (image / "pip.py").write_text("", encoding="utf-8")
+
+    session_via_cli(["--app-data", str(cache), "--reset-app-data", str(tmp_path / "env")])
+
+    assert not Path(f"\\\\?\\{cache}", "wheel").exists()
 
 
 _TEST_BLANK_APP_DATA_LEAVES_WORKING_DIRECTORY_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -276,9 +294,9 @@ def set_option(
 
 @pytest.mark.parametrize("option", [pytest.param("--prompt", id="prompt"), pytest.param("--pip", id="pip")])
 def test_missing_option_value_precedes_interpreter_query(tmp_path: Path, option: str, mocker: MockerFixture) -> None:
-    executable: Final = tmp_path / "python"
+    executable: Final[Path] = tmp_path / "python"
     shutil.copy2(sys.executable, executable)
-    process: Final = mocker.patch(
+    process: Final[MockType] = mocker.patch(
         "python_discovery._cached_py_info.Popen", autospec=True, side_effect=AssertionError("interpreter query started")
     )
     with pytest.raises(SystemExit) as context:
@@ -295,5 +313,5 @@ def test_missing_option_value_precedes_interpreter_query(tmp_path: Path, option:
     ],
 )
 def test_component_option_before_discovery_option(tmp_path: Path, leading: list[str], trailing: list[str]) -> None:
-    session: Final = session_via_cli([*leading, str(tmp_path / "env"), *trailing])
+    session: Final[Session] = session_via_cli([*leading, str(tmp_path / "env"), *trailing])
     assert session.creator.dest == tmp_path / "env"

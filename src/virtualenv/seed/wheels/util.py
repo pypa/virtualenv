@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "email.parser",
+    "operator",
+    "packaging.specifiers",
+    "packaging.version",
+    "zipfile",
+]
+
 import logging
 from email.parser import HeaderParser
 from operator import attrgetter
@@ -16,9 +24,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
-# https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
-# {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
-_MIN_WHEEL_NAME_PARTS: Final[int] = 5
 
 
 def discover_wheels(from_folder: Path, distribution: str, version: str | None, for_py_version: str) -> list[Wheel]:
@@ -68,7 +73,10 @@ class Wheel:
         :returns: the wheel, ``None`` when the path is not a wheel name
 
         """
-        if path.suffix == ".whl" and len(path.stem.split("-")) >= _MIN_WHEEL_NAME_PARTS:
+        # https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
+        # {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
+        min_parts: Final[int] = 5
+        if path.suffix == ".whl" and len(path.stem.split("-")) >= min_parts:
             return cls(path)
         return None
 

@@ -40,6 +40,8 @@ set_env._COVERAGE_SRC = "{env_site_packages_dir}{/}virtualenv"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
 set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
 set_env.PYTHONWARNDEFAULTENCODING = "1"
+set_env.ZIPAPP_WHEEL_CACHE = "1"
+set_env.ZIPAPP_WHEEL_DIR = "{work_dir}{/}.pkg{/}dist"
 commands = [
   [ "coverage", "erase" ],
   [

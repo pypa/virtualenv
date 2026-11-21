@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "virtualenv.create.describe",
+    "virtualenv.create.via_global_ref.builtin.builtin_way",
+]
+
 from collections import OrderedDict, defaultdict
 from typing import TYPE_CHECKING, NamedTuple, NoReturn
 

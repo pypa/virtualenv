@@ -1,5 +1,10 @@
 from __future__ import annotations  # simplint: ignore[catch-all-module]  # imported by path across the pypy modules
 
+__lazy_modules__ = [
+    "pathlib",
+    "virtualenv.create.via_global_ref.builtin.ref",
+]
+
 import abc
 from pathlib import Path
 from typing import TYPE_CHECKING

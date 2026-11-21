@@ -20,6 +20,11 @@ Specify a Python version by name or version number:
     $ virtualenv -p pypy3 venv
     $ virtualenv -p rustpython venv
 
+When switching Python versions or implementations, use a fresh destination to avoid leftover executables. On POSIX, the
+``venv`` creator warns when files named for the previous interpreter remain in the environment. For example, changing
+from Python 3.12 to 3.14 can leave a broken ``bin/python3.12``. Virtualenv preserves the file because it cannot tell who
+installed it. Use ``--clear`` if you intend to delete everything in the old environment.
+
 Using PEP 440 specifiers
 ========================
 
@@ -130,6 +135,9 @@ Activate the environment to modify your shell's PATH and environment variables.
 
        If you encounter an execution policy error, run ``Set-ExecutionPolicy RemoteSigned`` to allow local scripts.
 
+    The path used to reach ``Activate.ps1`` cannot contain the ``PATH`` separator (``;`` on Windows, ``:`` on POSIX),
+    including in a symlink name. Use a different path if activation reports this error.
+
 .. tab:: CMD
 
     .. code-block:: console
@@ -188,6 +196,9 @@ With ``promptvars`` off, bash shows a backslash doubled and a backtick with a le
 escapes the prompt for a later ``shopt -s promptvars``. In posix mode bash shows ``!!`` as ``!``, and under root it
 shows ``#`` for a dollar sign. Zsh shows the prompt as typed under every prompt option.
 
+Bash escapes the prompt in the C locale, then restores your locale. If ``LC_ALL`` is read-only, Bash uses that locale
+for escaping too. Use a UTF-8 locale when displaying non-ASCII environment names.
+
 .. _programmatic-activation:
 
 Programmatic activation
@@ -239,6 +250,10 @@ The configuration file is named ``virtualenv.ini`` and located in the platformdi
 ``virtualenv --help`` to see the exact location for your system.
 
 Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
+
+If the user configuration path is unresolved or relative, virtualenv does not read a default configuration file. This
+can happen when the process has neither ``HOME`` nor a passwd entry, or when an XDG path resolves relative to the
+working directory. Set ``VIRTUALENV_CONFIG_FILE`` to an explicit path to use one.
 
 Configuration format
 ====================
@@ -295,6 +310,27 @@ An empty or whitespace-only ``--app-data`` value is an error, as is a whitespace
 shell variables before using ``--app-data "$CACHE"``, especially with ``--reset-app-data``, which deletes the selected
 cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DATA`` is treated as unset.
 
+When no default cache path is available, virtualenv uses temporary app-data and removes it after the run. Set
+``VIRTUALENV_OVERRIDE_APP_DATA`` or ``--app-data`` to use a persistent cache. ``--read-only-app-data`` needs an explicit
+cache path in this case.
+
+An unresolved or relative home or XDG-derived cache path is not used as a default. If the path provider falls back to an
+absolute home-based location, that location remains usable.
+
+On macOS and Windows, the legacy app-data directory can also hold ``virtualenv.ini``. When it does, migration leaves
+that file and unrelated user files there and moves only ``py_info``, ``unzip``, and ``wheel`` into the cache. If this
+migration cannot finish, writable runs use temporary app-data and warn. Read-only runs can use the legacy directory. For
+a linked legacy directory, copy any remaining cache entries and leave the link and original files in place. The warning
+gives the marker path to remove after recovering the entries.
+
+On POSIX, a writable default cache owned by the current user is restricted to owner access. When its mode changes,
+virtualenv warns. Set the cache directory's setgid bit to retain group sharing, or select an explicit ``--app-data``
+path to manage its permissions yourself.
+
+Virtualenv skips default caches owned by another non-root user, including legacy caches. If the new default cache has
+such an owner, writable runs use temporary app-data and read-only runs require an explicit cache path. A root-owned
+cache remains eligible for reading, and for writing when the user has write access.
+
 Allow unverified HTTPS for periodic updates
 ===========================================
 
@@ -305,6 +341,9 @@ with an unverified SSL context. This is an escape hatch for hosts with broken tr
 do not control. The variable accepts the standard boolean values: ``1``, ``true``, ``yes``, and ``on`` enable the
 fallback; ``0``, ``false``, ``no``, and ``off`` disable it. Values are case-insensitive. This setting is read from the
 environment, not the ini configuration file.
+
+Seed wheel downloads and periodic updates wait up to 60 seconds for PyPI metadata, including redirects. A connection
+that goes idle for 15 seconds times out sooner.
 
 Configuration priority
 ======================
@@ -389,6 +428,11 @@ paths.
  Control seed packages
 ***********************
 
+If you interrupt app-data seeding with Ctrl+C, virtualenv cancels queued work and waits for active workers before
+cleaning up. Press Ctrl+C again to exit the CLI immediately. The environment may be missing seed packages and temporary
+files may remain. Rerun the command to finish seeding. Callers using ``virtualenv.cli_run`` wait for workers to finish
+before temporary app-data is removed.
+
 Pin a seed version
 ==================
 
@@ -411,6 +455,8 @@ Update the embedded wheel files to the latest versions:
 
     $ virtualenv --upgrade-embed-wheels
 
+If an upgrade fails, the command logs the affected package and Python version and exits with status 1.
+
 Provide custom wheels
 =====================
 
@@ -425,6 +471,9 @@ Repeat the option to search more than one directory, in the given order:
 .. code-block:: console
 
     $ virtualenv venv --extra-search-dir /path/to/wheels --extra-search-dir /path/to/other/wheels
+
+Wheel search uses only existing directories. Empty entries in ``VIRTUALENV_EXTRA_SEARCH_DIR`` are ignored; use ``.``
+explicitly to search the current directory.
 
 Download latest from PyPI
 =========================

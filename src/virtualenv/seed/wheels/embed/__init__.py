@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "hashlib",
+    "typing",
+    "virtualenv.info",
+    "virtualenv.seed.wheels.util",
+    "zipfile",
+]
+
 import hashlib
 import zipfile
 from pathlib import Path

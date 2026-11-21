@@ -28,6 +28,8 @@ from virtualenv.info import IS_WIN
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from virtualenv.activation.activator import Activator
+
 
 class Shell(NamedTuple):
     activator: str
@@ -175,7 +177,7 @@ PROMPT_CASES: Final[list[tuple[str, str, str, str]]] = [
 
 
 def unavailable_mark(shell: str, action: str) -> pytest.MarkDecorator:
-    reason: Final = unavailable(shell, action)
+    reason: Final[str | None] = unavailable(shell, action)
     return pytest.mark.skipif(reason is not None, reason=str(reason))
 
 
@@ -183,7 +185,7 @@ def unavailable(shell: str, action: str) -> str | None:
     # Why the shell, or the child shell the action starts, cannot run here; None when both can.
     if shell not in {"nushell", "powershell"} and (shell == "batch") != IS_WIN:
         return f"{shell} activation needs {'Windows' if shell == 'batch' else 'a POSIX system'}"
-    child: Final = action.removeprefix("child-") if action.startswith("child-") else None
+    child: Final[str | None] = action.removeprefix("child-") if action.startswith("child-") else None
     for program in (SHELLS[shell].program, child):
         if program is not None and shutil.which(program) is None:
             return f"{program} is not installed"
@@ -192,7 +194,7 @@ def unavailable(shell: str, action: str) -> str | None:
 
 def generate_script(shell: str, root: Path, prompt: str) -> Path:
     # Render the shell's activation script in process; the scripts depend on the prompt, not on a real interpreter.
-    activator: Final = {
+    activator: Final[type[Activator]] = {
         "bash": BashActivator,
         "zsh": BashActivator,
         "fish": FishActivator,
@@ -202,7 +204,7 @@ def generate_script(shell: str, root: Path, prompt: str) -> Path:
         "xonsh": XonshActivator,
         "batch": BatchActivator,
     }[shell]
-    creator: Final = create_autospec(
+    creator: Final[Creator] = create_autospec(
         Creator,
         instance=True,
         dest=root,
@@ -218,9 +220,9 @@ def generate_script(shell: str, root: Path, prompt: str) -> Path:
 
 def run_prompt(shell: str, script: Path, state: str, action: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     # Activate under the state, apply the later action, and draw the prompt the way that shell does.
-    spec: Final = SHELLS[shell]
-    before: Final = spec.states[state]
-    after: Final = spec.actions[action]
+    spec: Final[Shell] = SHELLS[shell]
+    before: Final[str] = spec.states[state]
+    after: Final[str] = spec.actions[action]
     stdin = ""
     env: dict[str, str] | None = None
     if shell in {"bash", "zsh"}:
@@ -274,7 +276,7 @@ def run_prompt(shell: str, script: Path, state: str, action: str, cwd: Path) -> 
 def prompt_shown(shell: str, result: subprocess.CompletedProcess[str], prompt: str, state: str, action: str) -> bool:
     # Whether the shell showed the prompt the way its display rule says.
     if shell in {"bash", "zsh", "cshell"}:
-        pattern: Final = _drawn_pattern(shell, prompt, state, action)
+        pattern: Final[str] = _drawn_pattern(shell, prompt, state, action)
         return re.fullmatch(rf"\({pattern}\) __END__", drawn_prompt(shell, result)) is not None
     if shell == "nushell":
         return result.stdout.splitlines()[-1:] == [f"({prompt}) " if action == "prompt-command" else prompt]
@@ -285,7 +287,9 @@ def _drawn_pattern(shell: str, prompt: str, state: str, action: str) -> str:
     if shell != "bash":
         # zsh inserts the psvar entry and tcsh the escaped literal as data under every prompt option
         return re.escape(prompt)
-    promptvars: Final = {"promptvars-on": True, "promptvars-off": False}.get(action, "promptvars-off" not in state)
+    promptvars: Final[bool] = {"promptvars-on": True, "promptvars-off": False}.get(
+        action, "promptvars-off" not in state
+    )
     if "posix" in {state, action}:
         # posix mode draws !! as ! and a lone ! as the history number
         return "!".join(r"\d+".join(map(re.escape, piece.split("!"))) for piece in prompt.split("!!"))
@@ -295,8 +299,8 @@ def _drawn_pattern(shell: str, prompt: str, state: str, action: str) -> str:
 
 def drawn_prompt(shell: str, result: subprocess.CompletedProcess[str]) -> str:
     # The last prompt an interactive bash, zsh or tcsh drew, up to the __END__ sentinel.
-    output: Final = result.stdout if shell == "cshell" else result.stderr
-    last: Final = output.rsplit("__END__", 1)[0].rsplit("\n", 1)[-1]
+    output: Final[str] = result.stdout if shell == "cshell" else result.stderr
+    last: Final[str] = output.rsplit("__END__", 1)[0].rsplit("\n", 1)[-1]
     return f"{last.rsplit('> ', 1)[-1] if shell == 'cshell' else last}__END__"
 
 
@@ -305,7 +309,7 @@ def _printed_text(shell: str, prompt: str, action: str) -> str:
         return f"({prompt}) " if action == "none" else prompt
     if shell == "batch":
         # the activator replaces the cmd.exe operators it cannot quote with spaces
-        replaced: Final = _REPLACED_PATTERN.sub(" ", prompt)
+        replaced: Final[str] = _REPLACED_PATTERN.sub(" ", prompt)
         return f"({replaced}) "
     # a child fish or PowerShell does not run the activation script, so only the marker check applies to it
     return "" if action == "child" else f"({prompt}) "

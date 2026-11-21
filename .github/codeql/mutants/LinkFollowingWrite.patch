@@ -1,12 +1,12 @@
 diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cfg.py
 --- a/src/virtualenv/create/pyenv_cfg.py
 +++ b/src/virtualenv/create/pyenv_cfg.py
-@@ -103,7 +103,7 @@
-             LOGGER.debug("\t%r", line)
-             text += line
-             text += "\n"
--        write_file(self.path, text.encode("utf-8"))
-+        self.path.write_text(text, encoding="utf-8")
+@@ -99,7 +99,7 @@
+         """
+         _validate_path(self.path)
+         LOGGER.debug("write %s", self.path)
+-        write_file(self.path, self.serialize())
++        self.path.write_bytes(self.serialize())
 
-     def refresh(self) -> OrderedDict[str, str]:
-         """Re-read the key-value pairs from the file, discarding in-memory changes.
+     def serialize(self) -> bytes:
+         """Build the configuration before writing it.

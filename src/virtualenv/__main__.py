@@ -18,7 +18,7 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[
 
 def _run_as_module() -> None:
     try:
-        current: Final = os.getcwd()
+        current: Final[str] = os.getcwd()
     except OSError:
         pass
     else:
@@ -95,7 +95,7 @@ def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] 
     from virtualenv.config.cli.parser import VirtualEnvOptions  # ruff:ignore[import-outside-top-level]
 
     env = os.environ if env is None else env
-    options = VirtualEnvOptions()
+    options = VirtualEnvOptions(exit_on_seed_interrupt=os._exit)  # only the CLI owns the process
     try:
         run(args, options, env)
     # any failure is handed to _exit_for_exception, which reports it

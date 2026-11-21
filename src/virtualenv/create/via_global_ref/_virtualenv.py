@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = ["contextlib"]
+
 import contextlib
 import os
 import sys
@@ -23,17 +25,36 @@ def patch_dist(dist: types.ModuleType) -> None:
 
     # matches the untyped distutils parse_config_files override it replaces
     def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[imprecise-annotation]  # distutils signature
-        result = old_parse_config_files(self, *args, **kwargs)
-        install = self.get_option_dict("install")
-
-        if "prefix" in install:  # the prefix governs where to install the libraries
-            install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-        for base in ("purelib", "platlib", "headers", "scripts", "data"):
-            if (key := f"install_{base}") in install:  # do not allow global configs to hijack venv paths
-                install.pop(key, None)
+        try:
+            result = old_parse_config_files(self, *args, **kwargs)
+        except UnicodeDecodeError:
+            # Distutils keeps options from files it decoded before the error.
+            _filter_install_paths(self.command_options)
+            raise
+        _filter_install_paths(self.command_options)
         return result
 
     dist.Distribution.parse_config_files = parse_config_files
+
+
+def _filter_install_paths(command_options: dict[str, dict[str, tuple[str, str]]]) -> None:
+    install: Final[dict[str, tuple[str, str]]] = command_options.setdefault("install", {})
+    if "prefix" in install:
+        install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
+    destinations: Final[tuple[str, ...]] = (
+        "install_lib",
+        "install_purelib",
+        "install_platlib",
+        "install_headers",
+        "install_scripts",
+        "install_data",
+    )
+    for key in ("exec_prefix", "install_base", "install_platbase", *destinations):
+        install.pop(key, None)
+    # A subcommand's install_dir takes precedence over the environment's prefix.
+    for command in (*destinations, "install_egg_info"):
+        if (options := command_options.get(command)) is not None:
+            options.pop("install_dir", None)
 
 
 # Import hook that patches some modules to ignore configuration values that break package installation in case
@@ -105,11 +126,27 @@ class _Finder:
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass
+        elif sys.version_info < (3, 10):
+            # Python 3.9's zipimporter lacks exec_module.
+            if (load := getattr(spec.loader, "load_module", None)) is None:
+                return spec
+
+            def load_module(name: str) -> types.ModuleType:
+                module = load(name)
+                _Finder._patch_module(module)
+                return module
+
+            with contextlib.suppress(AttributeError):
+                spec.loader.load_module = load_module  # ty: ignore[invalid-assignment]  # zipimport loader permits rebinding
         return spec
 
     @staticmethod
     def exec_module(old: Callable[[types.ModuleType], object], module: types.ModuleType) -> None:
         old(module)
+        _Finder._patch_module(module)
+
+    @staticmethod
+    def _patch_module(module: types.ModuleType) -> None:
         try:
             distutils_patch = _DISTUTILS_PATCH
         except NameError:
@@ -119,4 +156,6 @@ class _Finder:
                 patch_dist(module)
 
 
-sys.meta_path.insert(0, _Finder())
+# A newer interpreter can still load a .pth file retained from a Python 3.9 environment.
+if sys.version_info < (3, 10):
+    sys.meta_path.insert(0, _Finder())

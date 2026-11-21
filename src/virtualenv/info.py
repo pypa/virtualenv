@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "tempfile",
+    "typing",
+]
+
 import logging
 import os
 import platform

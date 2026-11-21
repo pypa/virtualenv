@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "ast",
+    "collections",
+    "json",
+    "textwrap",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+    "virtualenv.util.text",
+    "virtualenv.version",
+    f"{__spec__.parent}.pyenv_cfg",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import json
 import logging
 import os
@@ -94,7 +107,7 @@ class Creator(ABC):
 
     def _args(self) -> list[tuple[str, str | bool]]:
         return [
-            ("dest", str(self.dest)),
+            ("dest", _printable(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
             ("venv_redirect", self.venv_redirect),
@@ -194,12 +207,12 @@ class Creator(ABC):
                 values: str | Sequence[str] | None,
                 option_string: str | None = None,
             ) -> None:
-                raw: Final = cast("str", values)
+                raw: Final[str] = cast("str", values)
                 try:
                     namespace.dest = cls.validate_dest(raw)
                 except ArgumentTypeError as exception:
                     parser.error(f"argument {option_string or self.dest}: {exception}")
-                destination: Final = Path(os.path.abspath(raw))
+                destination: Final[Path] = Path(os.path.abspath(raw))
                 namespace.dest_is_link = destination.is_symlink() or (
                     os.name == "nt"
                     and destination.exists()
@@ -245,7 +258,7 @@ class Creator(ABC):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
-        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able.
+        """Not blank, a directory if it exists, safe for activation, valid chars and must be write-able.
 
         :param raw_value: the destination as given on the command line
 
@@ -265,7 +278,7 @@ class Creator(ABC):
             msg = f"the destination {value} already exists and is not a directory"
             raise ArgumentTypeError(msg)
         dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
-        cls._check_path_separator(raw_value, dest)
+        cls._check_activation_path(raw_value, dest)
         cls._ensure_writable(dest)
         return str(dest)
 
@@ -291,14 +304,20 @@ class Creator(ABC):
             raise ArgumentTypeError(msg)
 
     @staticmethod
-    def _check_path_separator(raw_value: str, dest: Path) -> None:
-        for destination in (raw_value, str(dest)):
+    def _check_activation_path(raw_value: str, dest: Path) -> None:
+        resolved = str(dest)
+        for destination in (raw_value, resolved):
             if os.pathsep in destination:
                 msg = (
                     f"destination {destination!r} must not contain the path separator ({os.pathsep})"
                     f" as this would break the activation scripts"
                 )
                 raise ArgumentTypeError(msg)
+        # dash reads the first percent sign in a PATH entry as an option delimiter.
+        # Git for Windows ships dash too, and MSYS keeps the % in the converted PATH entry.
+        if resolved.partition("%")[2].startswith(("func", "builtin")):
+            msg = f"destination {resolved!r} must not contain a shell PATH option (%func or %builtin)"
+            raise ArgumentTypeError(msg)
 
     @classmethod
     def _ensure_writable(cls, dest: Path) -> None:
@@ -329,6 +348,9 @@ class Creator(ABC):
         Delete the destination first when it exists and clearing was requested.
 
         """
+        # The stdlib creator and --clear can modify the destination before the final configuration is written.
+        self.set_pyenv_cfg()
+        self.pyenv_cfg.serialize()
         if self.dest.exists() and self.clear:
             LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
@@ -339,23 +361,6 @@ class Creator(ABC):
             self.setup_ignore_vcs()
         if self.venv_redirect is not False:
             self.point_venv_redirect()
-
-    @abstractmethod
-    def create(self) -> None:
-        """Perform the virtual environment creation."""
-        raise NotImplementedError
-
-    def add_cachedir_tag(self) -> None:
-        """Generate a file indicating that this is not meant to be backed up."""
-        cachedir_tag_file = self.dest / "CACHEDIR.TAG"
-        if not cachedir_tag_file.exists():
-            cachedir_tag_text = textwrap.dedent("""
-                Signature: 8a477f597d28d172789f06886806bc55
-                # This file is a cache directory tag created by Python virtualenv.
-                # For information about cache directory tags, see:
-                #   https://bford.info/cachedir/
-            """).strip()
-            write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def set_pyenv_cfg(self) -> None:
         """Fill the ``pyvenv.cfg`` content with the home, implementation and version of the host interpreter."""
@@ -374,6 +379,23 @@ class Creator(ABC):
         self.pyenv_cfg["virtualenv"] = __version__
         if self.prompt is not None:
             self.pyenv_cfg["prompt"] = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
+
+    @abstractmethod
+    def create(self) -> None:
+        """Perform the virtual environment creation."""
+        raise NotImplementedError
+
+    def add_cachedir_tag(self) -> None:
+        """Generate a file indicating that this is not meant to be backed up."""
+        cachedir_tag_file = self.dest / "CACHEDIR.TAG"
+        if not cachedir_tag_file.exists():
+            cachedir_tag_text = textwrap.dedent("""
+                Signature: 8a477f597d28d172789f06886806bc55
+                # This file is a cache directory tag created by Python virtualenv.
+                # For information about cache directory tags, see:
+                #   https://bford.info/cachedir/
+            """).strip()
+            write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def setup_ignore_vcs(self) -> None:
         """Generate ignore instructions for version control systems."""
@@ -405,14 +427,14 @@ class Creator(ABC):
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
             LOGGER.warning(
                 "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
-                redirect,
-                self.dest,
+                _printable(redirect),
+                _printable(self.dest),
             )
             return
         try:
             write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
-            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+            LOGGER.warning("could not point %s at %s - %s", _printable(redirect), _printable(self.dest), exc)
 
     @staticmethod
     def _points_at_virtualenv(redirect: Path) -> bool:
@@ -424,6 +446,11 @@ class Creator(ABC):
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
         except (OSError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
+
+
+def _printable(path: Path) -> str:
+    text = str(path)
+    return text if text.isprintable() else repr(text)
 
 
 def get_env_debug_info(
@@ -448,13 +475,10 @@ def get_env_debug_info(
         code, out, err = run_cmd(cmd, env)
 
     try:
-        result = _parse_debug_output(code, out, err)
+        return _parse_debug_output(code, out, err)
     # a failure to parse the debug output is reported with the raw streams instead
     except Exception as exception:  # ruff:ignore[blind-except]
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
-    if "sys" in result and "path" in result["sys"]:
-        del result["sys"]["path"][0]
-    return result
 
 
 def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:

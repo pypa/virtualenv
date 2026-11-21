@@ -1,0 +1,9 @@
+<code_set_name> GB18030
+<comment_char> %
+<escape_char> /
+<mb_cur_min> 1
+<mb_cur_max> 4
+% Only ASCII is listed: at run time glibc decodes with its own GB18030 module, which the code set name selects.
+CHARMAP
+<U0000>..<U007F> /x00
+END CHARMAP

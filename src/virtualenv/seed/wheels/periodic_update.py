@@ -2,6 +2,33 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "configparser",
+    "contextlib",
+    "hashlib",
+    "http.client",
+    "itertools",
+    "json",
+    "pathlib",
+    "queue",
+    "shutil",
+    "ssl",
+    "subprocess",
+    "textwrap",
+    "threading",
+    "urllib.error",
+    "urllib.request",
+    "virtualenv.app_data",
+    "virtualenv.config.convert",
+    "virtualenv.config.env_var",
+    "virtualenv.info",
+    "virtualenv.util.subprocess",
+    f"{__spec__.parent}.embed",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.index",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
+import configparser
 import hashlib
 import json
 import logging
@@ -10,8 +37,10 @@ import ssl
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
+from http.client import HTTPException
 from itertools import groupby
 from pathlib import Path
+from queue import Empty, SimpleQueue
 from shutil import copy2
 from subprocess import DEVNULL, Popen
 from textwrap import dedent, indent
@@ -28,6 +57,7 @@ from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 from .embed import BUNDLE_SUPPORT
+from .index import yanked_files
 from .util import Wheel
 
 if TYPE_CHECKING:
@@ -126,38 +156,45 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
     :param periodic: ``True`` when the update is a periodic check rather than a manual one
 
     """
-    wheel_path = None if wheel is None else str(wheel.path)
-    code = (
-        dedent(
-            """\
+    code = dedent(
+        """\
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
+        distribution, for_py_version, wheel_path, app_data, periodic, *search_dirs = sys.argv[2:]
+        do_update(distribution, for_py_version, wheel_path or None, app_data, search_dirs, periodic == 'True')
         """
-        )
-        .strip()
-        .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic)
-    )
+    ).strip()
     code = (
-        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(code, '    ')}"
+        f"import runpy\nwith runpy.run_path(sys.argv[1], run_name='__loader__')['VersionedFindLoad']():\n{indent(code, '    ')}"
         if IS_ZIPAPP
         else "import importlib.util\n"
-        f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
+        "spec = importlib.util.spec_from_file_location('virtualenv', sys.argv[1])\n"
         "package = importlib.util.module_from_spec(spec)\n"
         "sys.modules['virtualenv'] = package\n"
         "spec.loader.exec_module(package)\n"
         f"{code}"
     )
-    # drop the implicit working-directory entry before anything else is imported, as sys is built in
-    cmd: Final = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
+    # Keep the -c filter for interpreters that ignore PYTHONSAFEPATH.
+    cmd: Final[list[str]] = [
+        sys.executable,
+        "-c",
+        f"import sys\nsys.path = [p for p in sys.path if p]\n{code}",
+        ROOT if IS_ZIPAPP else str(Path(ROOT) / "virtualenv" / "__init__.py"),
+        distribution,
+        for_py_version,
+        "" if wheel is None else str(wheel.path),
+        str(app_data),
+        str(periodic),
+        *(str(path) for path in search_dirs),
+    ]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
     # kwargs mixes pipe and creationflags, which ty cannot match to one Popen overload
-    process = Popen(cmd, env=env, **kwargs)  # ty: ignore[no-matching-overload]
+    process = Popen(cmd, env={**env, "PYTHONSAFEPATH": "1"}, **kwargs)  # ty: ignore[no-matching-overload]
     LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
@@ -419,11 +456,6 @@ DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-va
 _PyPIJson = dict[str, object]
 
 
-#: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON
-#: API that has not caught up with a fresh upload.
-_DIGEST_RETRY_DELAYS: Final[tuple[float, ...]] = (1.0, 2.0, 4.0)
-
-
 def verify_wheel_digest(wheel: Wheel) -> None:
     """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
 
@@ -439,7 +471,8 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
     """
     expected = _pypi_sha256_for_wheel(wheel)
-    for delay in _DIGEST_RETRY_DELAYS:
+    # ride out a brief PyPI outage or a JSON API that has not caught up with a fresh upload before refusing the wheel
+    for delay in (1.0, 2.0, 4.0):
         if expected is not None:
             break
         LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
@@ -473,7 +506,19 @@ def _pypi_get_distribution_info_cached(distribution: str) -> _PyPIJson | None:
 
 
 def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
-    content, url = None, f"https://pypi.org/pypi/{distribution}/json"
+    url = f"https://pypi.org/pypi/{distribution}/json"
+    result: SimpleQueue[_PyPIJson | None] = SimpleQueue()
+    # urllib's socket timeout starts over for each read, including reads made while following redirects.
+    Thread(target=_request_pypi_json, args=(url, result), daemon=True).start()
+    try:
+        return result.get(timeout=_PYPI_DEADLINE)
+    except Empty:
+        LOGGER.warning("timed out waiting %s seconds for %s", _PYPI_DEADLINE, url)
+        return None
+
+
+def _request_pypi_json(url: str, result: SimpleQueue[_PyPIJson | None]) -> None:
+    content = None
     try:
         for context in _request_context():
             if (content := _fetch_pypi_json(url, context)) is not None:
@@ -482,7 +527,7 @@ def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
     except Exception as exception:  # ruff:ignore[blind-except]
         # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
-    return content
+    result.put(content)
 
 
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
@@ -498,7 +543,7 @@ def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
 def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | None:
     try:
         # url is a fixed https://pypi.org address, not user input
-        with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
+        with urlopen(url, timeout=15, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
             return json.load(file_handler)
     except URLError as exception:
         # the log line carries the exception repr, a traceback adds nothing
@@ -510,30 +555,49 @@ class UnverifiedWheelError(RuntimeError):
     """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
 
 
+_PYPI_DEADLINE: Final[float] = 60
 _PYPI_CACHE: Final[dict[str, _PyPIJson | None]] = {}
 
 
-def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
+def manual_upgrade(app_data: AppData, env: dict[str, str]) -> int:
     """Update the bundled wheels of every supported Python version now, in parallel.
 
     :param app_data: the application data folder
     :param env: the environment variables for the update
 
-    """
-    threads = []
+    :returns: ``0`` when every update succeeded, ``1`` when any failed
 
+    """
+    failed: list[str] = []
+
+    threads = []
     for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
         # load extra search dir for the given for_py
         for distribution in distribution_to_package:
-            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env))
+            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env, failed))
             thread.start()
             threads.append(thread)
 
     for thread in threads:
         thread.join()
+    return 1 if failed else 0
 
 
-def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
+def _run_manual_upgrade(
+    app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str], failed: list[str]
+) -> None:
+    try:
+        _manual_upgrade_one(app_data, distribution, for_py_version, env)
+    # Worker exceptions do not propagate through join(), so record them for the exit status.
+    except Exception as exception:  # ruff:ignore[blind-except]
+        details = getattr(exception, "stderr", None) or ""
+        LOGGER.error(  # ruff: ignore[error-instead-of-exception]  # avoid a worker traceback for update failures
+            "could not upgrade %s for python %s: %s %s", distribution, for_py_version, exception, details
+        )
+        failed.append(f"{distribution} for python {for_py_version}")
+
+
+def _manual_upgrade_one(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
     start = datetime.now(tz=timezone.utc)
     # bundle imports this module, so the import must wait until it is needed
     from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]
@@ -638,9 +702,10 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
 
     if wheel_filename is not None and not (wheelhouse / wheel_filename.name).exists():
         copy2(str(wheel_filename), str(wheelhouse))
-    versions = _download_newer_versions(
+    versions, newest = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
+    update_versions = _drop_yanked(distribution, update_versions, versions, newest, embed_version)
     filenames = {version.filename for version in versions}
     u_log.periodic = periodic
     if not u_log.periodic:
@@ -662,11 +727,11 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
     update_versions: list[NewVersion],
     source: str,
     now: datetime,
-) -> list[NewVersion]:
+) -> tuple[list[NewVersion], PackagingVersion | None]:
     # acquire imports this module, so the import must wait until it is needed
     from . import acquire  # ruff:ignore[import-outside-top-level]
 
-    last, last_version, versions = None, None, []
+    newest, last, last_version, versions = None, None, None, []
     while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now(tz=timezone.utc)
         dest = acquire.download_wheel(
@@ -678,6 +743,8 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
             to_folder=app_data.house,
             env=os.environ,  # ty: ignore[invalid-argument-type]  # os.environ is a Mapping, not a dict
         )
+        if newest is None and dest is not None:
+            newest = dest.parsed_version
         if (
             dest is None
             or (update_versions and update_versions[0].filename == dest.name)
@@ -692,7 +759,7 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
         last_version = last_wheel.version
         if embed_version is not None and embed_version >= last_wheel.parsed_version:
             break  # stop download if we reach the embed version
-    return versions
+    return versions, newest
 
 
 def release_date_for_wheel_path(dest: Path) -> datetime | None:
@@ -716,6 +783,34 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
             # the log line carries the exception repr, a traceback adds nothing
             LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
+
+
+def _drop_yanked(
+    distribution: str,
+    update_versions: list[NewVersion],
+    versions: list[NewVersion],
+    newest: PackagingVersion | None,
+    embed_version: PackagingVersion | None,
+) -> list[NewVersion]:
+    # pip skips yanked releases, so a logged one above its newest offer or below a new find may be yanked; the
+    # bundled wheel beats any release at or below it
+    above_bundle: Final[set[str]] = {
+        version.filename
+        for version in update_versions
+        if embed_version is None or version.wheel.parsed_version > embed_version
+    }
+    if above_bundle and (
+        versions or (newest is not None and any(version.wheel.parsed_version > newest for version in update_versions))
+    ):
+        try:
+            yanked = yanked_files(distribution, os.environ)
+        # an error yanked_files does not turn into None must not lose the update log
+        except (OSError, ValueError, LookupError, RuntimeError, HTTPException, configparser.Error) as exception:
+            LOGGER.warning("could not check %s for yanked releases, keeping them: %r", distribution, exception)
+            return update_versions
+        dropped = above_bundle & (yanked or frozenset())
+        return [version for version in update_versions if version.filename not in dropped]
+    return update_versions
 
 
 __all__ = [

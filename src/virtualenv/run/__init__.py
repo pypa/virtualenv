@@ -1,8 +1,24 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "argparse",
+    "functools",
+    "logging",
+    "virtualenv.app_data",
+    "virtualenv.config.cli.parser",
+    "virtualenv.report",
+    "virtualenv.seed.wheels.periodic_update",
+    "virtualenv.version",
+    f"{__spec__.parent}.plugin.activators",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.creators",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.discovery",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.plugin.seeders",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.session",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import os
-from argparse import ArgumentParser
+from argparse import SUPPRESS, ArgumentParser
 from functools import partial
 from typing import TYPE_CHECKING, Final
 
@@ -21,6 +37,7 @@ from .plugin.seeders import SeederSelector as SeederSelector
 from .session import Session as Session
 
 if TYPE_CHECKING:
+    from argparse import Action
     from collections.abc import MutableMapping
 
     from .plugin.base import ComponentBuilder
@@ -151,7 +168,8 @@ def build_parser(
 
 def _validate_option_values(args: list[str] | None) -> None:
     # Staged parsing can act on later options before noticing that an earlier option lacks its value.
-    parser: Final = ArgumentParser(prog="virtualenv", add_help=False)
+    # This parser covers only early options, so its usage text would misdescribe the command.
+    parser: Final[ArgumentParser] = ArgumentParser(prog="virtualenv", add_help=False, usage=SUPPRESS)
     parser.add_argument("-v", "-q", action="count")
     for option in (
         "--app-data",
@@ -228,7 +246,7 @@ def load_app_data(
     options, _ = parser.parse_known_args(args, namespace=options)
 
     # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
-    app_data: Final = parser.add_argument(
+    app_data: Final[Action] = parser.add_argument(
         "--app-data",
         help="a data folder used as cache by the virtualenv",
         type=partial(make_app_data, read_only=options.read_only_app_data, env=options.env),

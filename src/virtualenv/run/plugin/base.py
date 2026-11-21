@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "importlib.metadata",
+]
+
 import sys
 from collections import OrderedDict
 from importlib.metadata import entry_points

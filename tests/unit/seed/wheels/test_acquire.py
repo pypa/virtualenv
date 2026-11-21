@@ -3,12 +3,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 import sys
+import sysconfig
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from subprocess import CalledProcessError, Popen
 from typing import TYPE_CHECKING, Final, NamedTuple
+from zipfile import ZipFile
 
 import pytest
 
@@ -38,9 +41,43 @@ def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
 
 @pytest.mark.parametrize("for_py_version", [MIN, MAX])
 def test_pip_wheel_env_run_uses_pip_for_target_version(session_app_data, for_py_version: str) -> None:
-    env: Final = pip_wheel_env_run([], session_app_data, os.environ, for_py_version)
+    env: Final[dict[str, str]] = pip_wheel_env_run([], session_app_data, os.environ, for_py_version)
 
-    assert Path(env["PYTHONPATH"]).name == get_embed_wheel("pip", for_py_version).name
+    assert (Path(env["VIRTUALENV_PIP_WHEEL"]).name, "PYTHONPATH" in env) == (
+        get_embed_wheel("pip", for_py_version).name,
+        False,
+    )
+
+
+def test_pip_helper_keeps_wheel_path_with_separator(tmp_path: Path) -> None:
+    prefix = tmp_path / "date"
+    prefix.mkdir()
+    marker = tmp_path / "sitecustomize-ran"
+    (prefix / "sitecustomize.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('ran')\n", encoding="utf-8"
+    )
+    search_dir = tmp_path / f"date{os.pathsep}time" / "wheels"
+    search_dir.mkdir(parents=True)
+    wheel = search_dir / "pip-99.0-py3-none-any.whl"
+    embedded = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}")
+    with ZipFile(embedded.path) as source, ZipFile(wheel, "w") as target:
+        for name in source.namelist():
+            content = source.read(name)
+            if name.endswith(".dist-info/METADATA"):
+                content = content.replace(f"Version: {embedded.version}".encode(), b"Version: 99.0")
+            target.writestr(name.replace(f"pip-{embedded.version}.dist-info", "pip-99.0.dist-info"), content)
+    env = pip_wheel_env_run([search_dir], AppDataDiskFolder(str(tmp_path / "cache")), os.environ)
+
+    result = subprocess.run(
+        [sys.executable, "-c", PIP_RUN, "--version"],
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert (str(wheel) in result.stdout, marker.exists()) == (True, False)
 
 
 @pytest.mark.parametrize(
@@ -59,7 +96,9 @@ def test_download_wheel_uses_staged_archive(
     version_spec: Callable[[Wheel], str | None],
 ) -> None:
     _, expected, _ = download_process
-    result: Final = download_wheel("pip", version_spec(expected), for_py_version, [], session_app_data, tmp_path, {})
+    result: Final[Wheel] = download_wheel(
+        "pip", version_spec(expected), for_py_version, [], session_app_data, tmp_path, {}
+    )
     assert (result.path, result.path.read_bytes(), list(tmp_path.iterdir())) == (
         tmp_path / expected.name,
         expected.path.read_bytes(),
@@ -111,14 +150,60 @@ def test_download_wheel_skips_local_pip_module(
     (tmp_path / "pip" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
     monkeypatch.chdir(tmp_path)
     mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest", autospec=True)
-    embedded: Final = get_embed_wheel("pip", for_py_version)
-    env: Final = {**os.environ, "PIP_NO_INDEX": "1", "PIP_FIND_LINKS": str(BUNDLE_FOLDER)}
+    embedded: Final[Wheel | None] = get_embed_wheel("pip", for_py_version)
+    env: Final[dict[str, str]] = {**os.environ, "PIP_NO_INDEX": "1", "PIP_FIND_LINKS": str(BUNDLE_FOLDER)}
 
-    result: Final = download_wheel(
+    result: Final[Wheel] = download_wheel(
         "pip", f"=={embedded.version}", for_py_version, [], session_app_data, tmp_path / "house", env
     )
 
     assert result.path == tmp_path / "house" / embedded.name
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython", reason="CPython startup import")
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="PYTHONSAFEPATH is new in Python 3.11")
+def test_pip_helper_omits_current_directory_at_startup(session_app_data: AppDataDiskFolder, tmp_path: Path) -> None:
+    marker = tmp_path / "loaded"
+    (tmp_path / "linecache.py").write_text(
+        "import os\n"
+        "with open(os.environ['TEST_MARKER'], 'w', encoding='utf-8') as output: output.write('loaded')\n"
+        "with open(os.environ['TEST_LINECACHE'], encoding='utf-8') as source: "
+        "exec(compile(source.read(), source.name, 'exec'))\n",
+        encoding="utf-8",
+    )
+    env = pip_wheel_env_run(
+        [],
+        session_app_data,
+        {
+            **{key: value for key, value in os.environ.items() if key != "PYTHONSAFEPATH"},
+            "TEST_MARKER": str(marker),
+            "TEST_LINECACHE": str(Path(sysconfig.get_path("stdlib")) / "linecache.py"),
+        },
+    )
+    # The tox Python loads coverage code before the helper source.
+    result = subprocess.run(
+        [
+            sys._base_executable,  # ruff: ignore[private-member-access]  # Homebrew lacks BINDIR/python
+            "-c",
+            PIP_RUN,
+            "--version",
+        ],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+        timeout=10,
+    )
+
+    assert (
+        get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").name in result.stdout,
+        marker.exists(),
+    ) == (
+        True,
+        False,
+    )
 
 
 def test_download_fails(
@@ -130,7 +215,7 @@ def test_download_fails(
     download_process[0].return_value.configure_mock(returncode=7)
     with pytest.raises(CalledProcessError) as context:
         download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
-    error: Final = context.value
+    error: Final[CalledProcessError] = context.value
     assert (error.output, error.stderr, error.returncode, error.cmd[:3], list(tmp_path.iterdir())) == (
         "progress complete",
         "",
@@ -181,7 +266,7 @@ def test_download_wheel_preserves_custom_index_policy(
     env_var: str,
 ) -> None:
     download_process[2].extend(b"\n")
-    result: Final = download_wheel(
+    result: Final[Wheel] = download_wheel(
         "pip",
         None,
         for_py_version,
@@ -195,11 +280,11 @@ def test_download_wheel_preserves_custom_index_policy(
 
 @pytest.fixture
 def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadProcess:
-    wheel: Final = get_embed_wheel("pip", for_py_version)
+    wheel: Final[Wheel | None] = get_embed_wheel("pip", for_py_version)
     assert wheel is not None
-    payload: Final = bytearray(wheel.path.read_bytes())
+    payload: Final[bytearray] = bytearray(wheel.path.read_bytes())
     # PyPy can retain the hash input buffer until garbage collection.
-    metadata: Final = json.dumps({
+    metadata: Final[bytes] = json.dumps({
         "releases": {
             wheel.version: [
                 {
@@ -210,7 +295,7 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadPro
         }
     }).encode()
 
-    def metadata_response(*_args: str, **_kwargs: SSLContext | None) -> BytesIO:
+    def metadata_response(*_args: str, **_kwargs: SSLContext | int | None) -> BytesIO:
         return BytesIO(metadata)
 
     mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=metadata_response)
@@ -219,7 +304,9 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadPro
         (Path(cmd[cmd.index("-d") + 1]) / wheel.name).write_bytes(payload)
         return process.return_value
 
-    process: Final = mocker.patch("virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=downloaded)
+    process: Final[MockType] = mocker.patch(
+        "virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=downloaded
+    )
     process.return_value.configure_mock(**{"communicate.return_value": ("progress complete", ""), "returncode": 0})
     return _DownloadProcess(process, wheel, payload)
 

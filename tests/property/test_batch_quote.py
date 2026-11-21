@@ -10,11 +10,6 @@ from virtualenv.activation.batch import BatchActivator
 
 pytestmark: Final[pytest.MarkDecorator] = pytest.mark.property
 
-# Confirmed live syntax inside @set "VAR=value" on a real Windows runner, independently of this fix's
-# own implementation - this is not just re-asserting quote()'s source. `!` only turns live when the
-# caller already has delayed expansion enabled, but a crafted prompt then leaks the value of whatever
-# variable it names, confirmed the same way.
-_DANGEROUS: Final[str] = '"&|<>^!'
 _SAFE_IN_THIS_CONTEXT: Final[str] = "()"
 _LINE_BOUNDARIES: Final[str] = f"\n\r\v\f\x1c\x1d\x1e\x85{chr(0x2028)}{chr(0x2029)}"
 
@@ -32,7 +27,11 @@ _VALUES: Final[st.SearchStrategy[str]] = st.text(st.characters(blacklist_categor
 def test_quote_strips_every_dangerous_character(value: str) -> None:
     quoted = BatchActivator.quote(value)
 
-    assert not (set(quoted) & set(_DANGEROUS))
+    # Confirmed live syntax inside @set "VAR=value" on a real Windows runner, independently of this fix's
+    # own implementation - this is not just re-asserting quote()'s source. `!` only turns live when the
+    # caller already has delayed expansion enabled, but a crafted prompt then leaks the value of whatever
+    # variable it names, confirmed the same way.
+    assert not (set(quoted) & set('"&|<>^!'))
     assert not (set(quoted) & set(_LINE_BOUNDARIES))
 
 

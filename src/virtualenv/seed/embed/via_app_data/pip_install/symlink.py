@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "virtualenv.util.error",
+    "virtualenv.util.path",
+    "virtualenv.util.subprocess",
+]
+
 import os
 import posixpath
 from stat import S_IREAD, S_IRGRP, S_IROTH
@@ -34,7 +40,7 @@ class SymlinkPipInstall(PipInstall):
             ),
             str(folder),
         ]
-        code, out, err = run_cmd(cmd, env=self._creator.env)
+        code, out, err = run_cmd(cmd, env={**self._creator.env, "PYTHONSAFEPATH": "1"})
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
         # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for close

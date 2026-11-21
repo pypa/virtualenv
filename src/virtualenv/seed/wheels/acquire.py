@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "packaging.specifiers",
+    "packaging.utils",
+    "pathlib",
+    "subprocess",
+    "tempfile",
+    f"{__spec__.parent}.bundle",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.periodic_update",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+    f"{__spec__.parent}.util",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 import logging
 import re
 import sys
@@ -22,21 +33,11 @@ if TYPE_CHECKING:
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
-#: The command that runs pip as a module, with the empty path entries removed.
+#: Pip bootstrap code that selects the wheel after startup, before importing pip.
 PIP_RUN: Final[str] = (
-    "import sys; sys.path = [p for p in sys.path if p]; "
+    "import os, sys; sys.path = [os.environ['VIRTUALENV_PIP_WHEEL'], *(p for p in sys.path if p)]; "
     "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
 )
-
-# A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
-# filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
-# for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
-# exactly the source it was configured to come from, not a compromised one.
-#
-# This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
-# invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either way:
-# it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
-_CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
 
 
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
@@ -144,7 +145,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
         raise ValueError(msg)
     _check_version_spec(version_spec)
-    to_download: Final = f"{distribution}{version_spec or ''}"
+    to_download: Final[str] = f"{distribution}{version_spec or ''}"
     if to_download.lower().endswith((
         ".zip",
         ".whl",
@@ -162,11 +163,21 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
-    verify_against_pypi: Final = not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
+    # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and filename PyPI
+    # also uses - an internal mirror re-signing or re-packaging a release for policy reasons, for example. Verifying
+    # that file against PyPI's own digest would then reject a wheel that came from exactly the source it was configured
+    # to come from, not a compromised one.
+    #
+    # This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
+    # invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either
+    # way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
+    verify_against_pypi: Final[bool] = not any(
+        env.get(var) for var in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
+    )
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
-        cmd: Final = [
+        cmd: Final[list[str]] = [
             sys.executable,
             "-c",
             PIP_RUN,
@@ -182,17 +193,19 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
             staging,
             to_download,
         ]
-        process: Final = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
+        process: Final[Popen[str]] = Popen(
+            cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8"
+        )
         out, err = process.communicate()
         if process.returncode != 0:
             raise CalledProcessError(process.returncode, cmd, output=out, stderr=err)
-        result: Final = _downloaded_wheel(Path(staging), distribution, version_spec)
+        result: Final[Wheel] = _downloaded_wheel(Path(staging), distribution, version_spec)
         if verify_against_pypi:
             verify_wheel_digest(result)
         if not result.support_py(for_py_version):
             msg = f"downloaded wheel {result.name} does not support Python {for_py_version}"
             raise RuntimeError(msg)
-        destination: Final = to_folder / result.name
+        destination: Final[Path] = to_folder / result.name
         result.path.replace(destination)
         return Wheel(destination)
 
@@ -226,7 +239,13 @@ def pip_wheel_env_run(
 
     """
     env = env.copy()
-    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
+    env.update({
+        "PIP_USE_WHEEL": "1",
+        "PIP_USER": "0",
+        "PIP_NO_INPUT": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONSAFEPATH": "1",
+    })
     wheel = get_wheel(
         distribution="pip",
         version=None,
@@ -240,16 +259,18 @@ def pip_wheel_env_run(
     if wheel is None:
         msg = "could not find the embedded pip"
         raise RuntimeError(msg)
-    env["PYTHONPATH"] = str(wheel.path)
+    # Python splits PYTHONPATH before startup, so a separator in the wheel path would create new import entries.
+    env.pop("PYTHONPATH", None)
+    env["VIRTUALENV_PIP_WHEEL"] = str(wheel.path)
     return env
 
 
 def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
-    files: Final = list(folder.iterdir())
+    files: Final[list[Path]] = list(folder.iterdir())
     if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
         msg = f"could not find downloaded wheel for {distribution}: expected one archive"
         raise RuntimeError(msg)
-    result: Final = Wheel.from_path(files[0])
+    result: Final[Wheel | None] = Wheel.from_path(files[0])
     if (
         result is None
         or canonicalize_name(result.distribution) != canonicalize_name(distribution)

@@ -15,7 +15,9 @@ from virtualenv.run import session_via_cli
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from virtualenv.create.creator import Creator
     from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
+    from virtualenv.run.session import Session
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -63,6 +65,43 @@ def test_ini_empty_env_var_uses_default(
         f"\nconfig file {tmp_path / 'config' / 'virtualenv.ini'} missing (change via env var VIRTUALENV_CONFIG_FILE)",
         [],
     )
+
+
+@pytest.mark.parametrize(
+    "no_home",
+    [
+        pytest.param("~/.config/virtualenv", id="unexpanded"),
+        pytest.param("./~/.config/virtualenv", id="relative"),
+        pytest.param(RuntimeError("no home directory"), id="unavailable"),
+    ],
+)
+def test_ini_without_home_ignores_working_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, no_home: str | RuntimeError
+) -> None:
+    config_file = tmp_path / "~/.config/virtualenv/virtualenv.ini"
+    config_file.parent.mkdir(parents=True)
+    config_file.write_text("[virtualenv]\nclear = True\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, side_effect=[no_home])
+
+    config = IniConfig(env={})
+
+    assert (config.config_file, config.has_config_file, bool(config), config.epilog) == (
+        None,
+        False,
+        False,
+        "\nconfig file unavailable without a home directory (change via env var VIRTUALENV_CONFIG_FILE)",
+    )
+
+
+def test_ini_explicit_path_without_home(tmp_path: Path, mocker: MockerFixture) -> None:
+    config_file = tmp_path / "virtualenv.ini"
+    config_file.write_text("[virtualenv]\nclear = True\n", encoding="utf-8")
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, side_effect=RuntimeError("no home directory"))
+
+    config = IniConfig(env={"VIRTUALENV_CONFIG_FILE": str(config_file)})
+
+    assert (config.config_file, config.has_config_file, bool(config)) == (config_file, True, True)
 
 
 def test_ini_that_fails_to_parse_does_not_break_the_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -125,7 +164,7 @@ def test_ini_value_is_read_literally(tmp_path: Path, monkeypatch: pytest.MonkeyP
     config_file.write_text(f"[virtualenv]\nclear = True\nprompt = {prompt}\n", encoding="utf-8")
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
 
-    creator: Final = session_via_cli(["venv"]).creator
+    creator: Final[Creator] = session_via_cli(["venv"]).creator
     assert (creator.prompt, creator.clear) == (prompt, True)
 
 
@@ -134,6 +173,6 @@ def test_ini_activators_on_separate_lines(tmp_path: Path, monkeypatch: pytest.Mo
     custom_ini.write_text("[virtualenv]\nactivators =\n    bash\n    python\n", encoding="utf-8")
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(custom_ini))
 
-    session: Final = session_via_cli([str(tmp_path / "venv")])
+    session: Final[Session] = session_via_cli([str(tmp_path / "venv")])
 
     assert [type(activator).__name__ for activator in session.activators] == ["BashActivator", "PythonActivator"]

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "pathlib",
+    "virtualenv.info",
+    "virtualenv.util.path",
+]
+
 import logging
 from abc import ABC
 from pathlib import Path

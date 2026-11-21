@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "virtualenv.util.path",
+    f"{__spec__.parent}.ref",  # ty: ignore[missing-union-attribute]  # imported modules have a spec
+]
+
 from abc import ABC
 from typing import TYPE_CHECKING
 

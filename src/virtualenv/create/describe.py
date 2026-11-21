@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "collections",
+    "pathlib",
+]
+
 from abc import ABC
 from collections import OrderedDict
 from pathlib import Path

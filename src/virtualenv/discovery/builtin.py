@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = [
+    "python_discovery",
+    "virtualenv.config.cli.parser",
+]
+
 import sys
 from typing import TYPE_CHECKING
 
-from python_discovery import get_interpreter as _get_interpreter
+import python_discovery
 
 from virtualenv.config.cli.parser import ExtendAction
 
@@ -112,7 +117,7 @@ def get_interpreter(
     :returns: the interpreter, ``None`` when none matches
 
     """
-    return _get_interpreter(key, try_first_with, cache or app_data, env)
+    return python_discovery.get_interpreter(key, try_first_with, cache or app_data, env)
 
 
 __all__ = [
