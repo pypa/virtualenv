@@ -32,7 +32,7 @@ from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall, shel
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.embed.via_app_data.pip_install.symlink import SymlinkPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SHA256, BUNDLE_SUPPORT, get_embed_wheel
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import copy, safe_delete
 from virtualenv.version import __version__
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from importlib.metadata import PackagePath
     from subprocess import CompletedProcess
 
-    from pytest_mock import MockerFixture, MockType, SpyType
+    from pytest_mock import MockerFixture, MockType
 
     from virtualenv.run.session import Session
 
@@ -1666,16 +1666,18 @@ def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixtur
         autospec=True,
         side_effect=lambda _zip_ref, folder: folder.with_name(folder.name.upper()),
     )
-    synced: Final[SpyType] = mocker.spy(CopyPipInstall, "_sync")
+    copied: Final[MockType] = mocker.patch(
+        "virtualenv.seed.embed.via_app_data.pip_install.copy.copy", autospec=True, side_effect=copy
+    )
     built: Final[CopyPipInstall] = CopyPipInstall(wheel, no_seed_session.creator, image)
     built.build_image()
     built.install(no_seed_session.interpreter.version_info)
-    read_after_build: Final[set[str]] = {str(call.args[1].parent) for call in synced.call_args_list}
-    synced.reset_mock()
+    read_after_build: Final[set[str]] = {str(call.args[0].parent) for call in copied.call_args_list}
+    copied.reset_mock()
     reused: Final[CopyPipInstall] = CopyPipInstall(wheel, no_seed_session.creator, image)
     found: Final[bool] = reused.has_image()
     reused.install(no_seed_session.interpreter.version_info)
-    read_on_reuse: Final[set[str]] = {str(call.args[1].parent) for call in synced.call_args_list}
+    read_on_reuse: Final[set[str]] = {str(call.args[0].parent) for call in copied.call_args_list}
     short: Final[str] = str(image.with_name(image.name.upper()))
     assert (read_after_build, found, read_on_reuse) == ({short}, True, {short})
 
