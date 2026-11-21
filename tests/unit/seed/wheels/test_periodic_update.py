@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
-from shutil import copytree, ignore_patterns
+from shutil import copy2, copytree, ignore_patterns
 from textwrap import dedent, indent
 from threading import Event, Thread
 from types import MappingProxyType
@@ -104,6 +104,13 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version) -> Non
     assert packages == expected
 
 
+def test_custom_upgrade_requires_dedicated_directory(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    app_data = AppDataDiskFolder(str(tmp_path), private=True)
+    assert manual_upgrade(app_data, {"PIP_INDEX_URL": "https://packages.example/simple"}) == 1
+    assert "use --app-data" in caplog.text
+    assert not list(tmp_path.iterdir())
+
+
 def test_manual_upgrade_reports_failure(session_app_data, caplog, mocker) -> None:
     def _do_update(distribution, **_kwargs):
         if distribution == "pip":
@@ -120,15 +127,15 @@ def test_manual_upgrade_reports_failure(session_app_data, caplog, mocker) -> Non
     assert "upgraded setuptools" in caplog.text
 
 
-@pytest.mark.usefixtures("session_app_data")
-def test_pick_periodic_update(tmp_path, mocker, for_py_version) -> None:
+def test_pick_periodic_update(tmp_path, mocker, for_py_version, session_app_data) -> None:
     embed, current = get_embed_wheel("setuptools", "3.6"), get_embed_wheel("setuptools", for_py_version)
+    copy2(current.path, session_app_data.house / current.name)
     mocker.patch("virtualenv.seed.wheels.bundle.load_embed_wheel", return_value=embed, autospec=True)
     completed = datetime.now(tz=timezone.utc) - timedelta(days=29)
     u_log = UpdateLog(
         started=datetime.now(tz=timezone.utc) - timedelta(days=30),
         completed=completed,
-        versions=[NewVersion(filename=current.path, found_date=completed, release_date=completed, source="periodic")],
+        versions=[NewVersion(filename=current.name, found_date=completed, release_date=completed, source="periodic")],
         periodic=True,
     )
     read_dict = mocker.patch(
@@ -162,7 +169,7 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
         completed=completed,
         versions=[
             NewVersion(wheel_path(current, (1,)), completed, now - timedelta(days=1), "periodic"),
-            NewVersion(current.path, completed, now - timedelta(days=2), "periodic"),
+            NewVersion(current.name, completed, now - timedelta(days=2), "periodic"),
             NewVersion(wheel_path(current, (-1,)), completed, now - timedelta(days=30), "periodic"),
         ],
         periodic=True,
@@ -175,7 +182,7 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
 
 def wheel_path(wheel, of, pre_release=""):
     new_version = ".".join(str(i) for i in (tuple(sum(x) for x in zip_longest(wheel.version_tuple, of, fillvalue=0))))
-    return str(wheel.path.parent / wheel.name.replace(wheel.version, new_version + pre_release))
+    return wheel.name.replace(wheel.version, new_version + pre_release)
 
 
 def test_periodic_update_keeps_newer_bundle(app_data: AppDataDiskFolder) -> None:
@@ -200,6 +207,7 @@ def test_periodic_update_keeps_newer_bundle(app_data: AppDataDiskFolder) -> None
 def test_periodic_update_pinned_matches_equal_version(app_data: AppDataDiskFolder, logged: str, pinned: str) -> None:
     completed: Final[datetime] = datetime.now(tz=timezone.utc) - timedelta(days=30)
     filename: Final[str] = f"pip-{logged}-py3-none-any.whl"
+    (app_data.house / filename).touch()
     app_data.embed_update_log("pip", "3.9").write(
         UpdateLog(completed, completed, [NewVersion(filename, completed, completed, "manual")], True).to_dict()
     )
@@ -222,6 +230,7 @@ def test_do_update_ignores_download_below_bundle(app_data: AppDataDiskFolder, mo
 def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_version) -> None:
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 2))
+    (session_app_data.house / expected_path).touch()
     now = datetime.now(tz=timezone.utc)
     completed = now - timedelta(hours=2)
     u_log = UpdateLog(
@@ -231,18 +240,19 @@ def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_versi
         versions=[
             NewVersion(expected_path, completed, now - timedelta(days=1), "periodic"),
             NewVersion(wheel_path(current, (0, 1, 1)), completed, now - timedelta(days=30), "periodic"),
-            NewVersion(str(current.path), completed, now - timedelta(days=31), "periodic"),
+            NewVersion(current.name, completed, now - timedelta(days=31), "periodic"),
         ],
     )
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict(), autospec=True)
 
     result = periodic_update("setuptools", None, for_py_version, current, [], session_app_data, False, os.environ)
-    assert str(result.path) == expected_path
+    assert result.path == session_app_data.house / expected_path
 
 
 def test_periodic_update_latest_per_patch_prev_is_manual(mocker, session_app_data, for_py_version) -> None:
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 2))
+    (session_app_data.house / expected_path).touch()
     now = datetime.now(tz=timezone.utc)
     completed = now - timedelta(hours=2)
     u_log = UpdateLog(
@@ -253,18 +263,19 @@ def test_periodic_update_latest_per_patch_prev_is_manual(mocker, session_app_dat
             NewVersion(expected_path, completed, completed, "periodic"),
             NewVersion(wheel_path(current, (0, 1, 1)), completed, now - timedelta(days=10), "manual"),
             NewVersion(wheel_path(current, (0, 1, 0)), completed, now - timedelta(days=11), "periodic"),
-            NewVersion(str(current.path), completed, now - timedelta(days=12), "manual"),
+            NewVersion(current.name, completed, now - timedelta(days=12), "manual"),
         ],
     )
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict(), autospec=True)
 
     result = periodic_update("setuptools", None, for_py_version, current, [], session_app_data, False, os.environ)
-    assert str(result.path) == expected_path
+    assert result.path == session_app_data.house / expected_path
 
 
 def test_manual_update_honored(mocker, session_app_data, for_py_version) -> None:
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 1))
+    (session_app_data.house / expected_path).touch()
     now = datetime.now(tz=timezone.utc)
     completed = now
     u_log = UpdateLog(
@@ -275,13 +286,13 @@ def test_manual_update_honored(mocker, session_app_data, for_py_version) -> None
             NewVersion(wheel_path(current, (0, 1, 2)), completed, completed, "periodic"),
             NewVersion(expected_path, completed, now - timedelta(days=10), "manual"),
             NewVersion(wheel_path(current, (0, 1, 0)), completed, now - timedelta(days=11), "periodic"),
-            NewVersion(str(current.path), completed, now - timedelta(days=12), "manual"),
+            NewVersion(current.name, completed, now - timedelta(days=12), "manual"),
         ],
     )
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict(), autospec=True)
 
     result = periodic_update("setuptools", None, for_py_version, current, [], session_app_data, False, os.environ)
-    assert str(result.path) == expected_path
+    assert result.path == session_app_data.house / expected_path
 
 
 _UP_NOW: Final[datetime] = datetime.now(tz=timezone.utc)
@@ -360,6 +371,60 @@ def test_periodic_update_drops_malformed_log(
         False,
         ["removing malformed embed update log of pip"],
     )
+
+
+@pytest.mark.parametrize(
+    ("pin", "expected"),
+    [
+        pytest.param(None, "public", id="unpinned"),
+        pytest.param("99", "public", id="verified-pin"),
+        pytest.param("100", "custom", id="missing-pin"),
+    ],
+)
+def test_offline_private_updates_only_fill_missing_pins(tmp_path: Path, pin: str | None, expected: str) -> None:
+    app_data = AppDataDiskFolder(str(tmp_path))
+    private = app_data.for_wheel_index({"PIP_INDEX_URL": "https://packages.example/simple"})
+    verified_name = "demo-99-py3-none-any.whl"
+    (app_data.house / verified_name).write_text("public", encoding="utf-8")
+    app_data.embed_update_log("demo", "3.11").write(
+        UpdateLog(None, None, [NewVersion(verified_name, _UP_NOW, None, "manual")], False).to_dict()
+    )
+    digest = hashlib.sha256(b"custom").hexdigest()
+    (private.house / digest).mkdir()
+    versions = []
+    for name in ("demo-100-py3-none-any.whl", verified_name):
+        (private.house / digest / name).write_bytes(b"custom")
+        versions.append(NewVersion(f"{digest}/{name}", _UP_NOW, None, "manual"))
+    private.embed_update_log("demo", "3.11").write(UpdateLog(None, None, versions, False).to_dict())
+
+    wheel = periodic_update("demo", pin, "3.11", None, [], app_data, False, {})
+    assert wheel is not None
+    assert wheel.path.read_text(encoding="utf-8") == expected
+
+
+@pytest.mark.parametrize(
+    ("filename", "env", "expected"),
+    [
+        pytest.param("../other/pip-1-py3-none-any.whl", {}, "malformed", id="parent"),
+        pytest.param("demo-1-py3-none-any.whl", {}, "malformed", id="wrong-project"),
+        pytest.param("pip-1-py3-none-any.whl", {}, "missing", id="missing-file"),
+        pytest.param("pip-1-py3-none-any.whl", {"PIP_INDEX_URL": "example"}, "malformed", id="private-flat-name"),
+        pytest.param(f"{'0' * 64}/pip-1-py3-none-any.whl", {"PIP_INDEX_URL": "example"}, "changed", id="partial-file"),
+    ],
+)
+def test_cached_wheel_requires_valid_record(
+    tmp_path: Path, filename: str, env: dict[str, str], expected: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    app_data = AppDataDiskFolder(str(tmp_path)).for_wheel_index(env)
+    app_data.embed_update_log("pip", "3.11").write(
+        UpdateLog(None, None, [NewVersion(filename, _UP_NOW, None, "manual")], False).to_dict()
+    )
+    partial = app_data.house / ("0" * 64) / "pip-1-py3-none-any.whl"
+    partial.parent.mkdir()
+    partial.write_bytes(b"partial")
+
+    assert periodic_update("pip", "1", "3.11", None, [], app_data, False, env) is None
+    assert expected in caplog.text
 
 
 def test_periodic_update_auto_update_drops_malformed_log(
@@ -670,13 +735,11 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
         "virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict(), autospec=True
     )
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write", autospec=True)
-    copy = mocker.patch("virtualenv.seed.wheels.periodic_update.copy2", autospec=True)
 
     versions = do_update("pip", "3.9", str(pip_version_remote[-1][0]), str(app_data_outer), [str(extra)], True)
 
     assert download_wheel.call_count == len(pip_version_remote)
     assert url_o.call_count == 1
-    assert copy.call_count == 1
 
     expected = [
         NewVersion(Path(wheel).name, _UP_NOW, release and release.replace(microsecond=0), "periodic")
@@ -1088,7 +1151,7 @@ def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mo
     time_freeze(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
-    pip_version_remote = [wheel_path(wheel, (0, 1, 1)), wheel_path(wheel, (0, 1, 0)), wheel_path(wheel, (0, -1, 0))]
+    pip_version_remote = [wheel_path(wheel, (0, 1, 1)), wheel_path(wheel, (0, 1, 0)), wheel_path(wheel, (-1,))]
     rel_date_remote = [_UP_NOW - timedelta(days=1), _UP_NOW - timedelta(days=30), _UP_NOW - timedelta(days=40)]
     downloaded_versions = [
         NewVersion(Path(pip_version_remote[2]).name, rel_date_remote[2], None, "download"),
@@ -1277,6 +1340,7 @@ def test_periodic_update_seeds_replacement_of_yanked(
     released: Final[datetime] = _UP_NOW - timedelta(days=40)
     replacement: Final[Wheel] = Wheel(Path(wheel_path(current, (0, 1, 2))))
     yanked: Final[Wheel] = Wheel(Path(wheel_path(current, (0, 2))))
+    (app_data.house / replacement.name).touch()
     # the day-old replacement is usable only once no yanked entry sits between it and its minor's older patch
     app_data.embed_update_log("pip", "3.9").write(
         UpdateLog(

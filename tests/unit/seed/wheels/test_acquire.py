@@ -15,7 +15,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.app_data import AppDataDiskFolder, make_app_data
 from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, MAX, MIN, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
@@ -370,6 +370,99 @@ def test_get_wheel_unverified_pinned_version_fails(
         get_wheel("setuptools", "0.0.0", for_py_version, [], True, session_app_data, False, os.environ)
 
 
+@pytest.mark.parametrize(
+    ("folder", "override", "reusable"),
+    [
+        pytest.param(None, {}, False, id="default"),
+        pytest.param("cache", {}, True, id="explicit"),
+        pytest.param(None, {"VIRTUALENV_OVERRIDE_APP_DATA": "cache"}, True, id="override"),
+    ],
+)
+def test_custom_wheel_offline_lookup_requires_explicit_cache(  # ruff:ignore[too-many-arguments]  # fixtures and cache options
+    tmp_path: Path,
+    mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    folder: str | None,
+    override: dict[str, str],
+    reusable: bool,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.app_data.cache_dir_with_migration", autospec=True, return_value=str(tmp_path / "cache"))
+    app_data = make_app_data(folder, read_only=False, env=override)
+    name = "demo-1.0-py3-none-any.whl"
+
+    def download(cmd: list[str], **_kwargs: object) -> MockType:
+        with ZipFile(Path(cmd[cmd.index("-d") + 1]) / name, "w") as archive:
+            archive.writestr("demo-1.0.dist-info/METADATA", "Name: demo\nVersion: 1.0\n")
+        return process.return_value
+
+    process = mocker.patch("virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=download)
+    process.return_value.configure_mock(**{"communicate.return_value": ("", ""), "returncode": 0})
+    env = {"PIP_INDEX_URL": "https://packages.example/simple"}
+    downloaded = get_wheel("demo", "1.0", "3.11", [], True, app_data, False, env)
+    assert downloaded is not None
+    assert app_data.for_wheel_index(env).embed_update_log("demo", "3.11").exists() == reusable
+    selected = get_wheel("demo", "1.0", "3.11", [], False, app_data, False, {})
+    assert (selected is not None) == reusable
+    implicit = make_app_data(None, read_only=False, env={})
+    assert get_wheel("demo", "1.0", "3.11", [], False, implicit, False, env) is None
+    assert get_wheel("demo", "1.0", "3.11", [], False, implicit, False, {}) is None
+    process.assert_called_once()
+
+
+def test_pin_prefers_verified_or_bundled_wheel_over_private_build(
+    tmp_path: Path, download_process: _DownloadProcess, for_py_version: str
+) -> None:
+    app_data = AppDataDiskFolder(str(tmp_path))
+    verified = get_wheel("pip", "bundle", for_py_version, [], True, app_data, False, {})
+    assert verified is not None
+    data = BytesIO()
+    with ZipFile(data, "w") as archive:
+        archive.writestr(f"pip-{verified.version}.dist-info/METADATA", f"Name: pip\nVersion: {verified.version}\n")
+    download_process.payload[:] = data.getvalue()
+    env = {"PIP_INDEX_URL": "https://packages.example/simple"}
+    private = get_wheel("pip", "bundle", for_py_version, [], True, app_data, False, env)
+    assert private is not None
+    pinned = get_wheel("pip", verified.version, for_py_version, [], False, app_data, False, {})
+    assert pinned is not None
+    assert (pinned.path, pinned.path.read_bytes(), private.path.read_bytes()) == (
+        verified.path,
+        download_process.wheel.path.read_bytes(),
+        data.getvalue(),
+    )
+    verified.path.unlink()
+    bundled = get_wheel("pip", verified.version, for_py_version, [], False, app_data, False, {})
+    assert bundled is not None
+    assert bundled.path == download_process.wheel.path
+    entry = app_data.for_wheel_index(env).embed_update_log("pip", for_py_version).read()["versions"][0]
+    assert entry["verification"] == "UNVERIFIED"
+    assert download_process.process.call_count == 2
+
+
+def test_legacy_wheelhouse_and_update_records_are_ignored(tmp_path: Path) -> None:
+    house = tmp_path / "wheel" / "house"
+    house.mkdir(parents=True)
+    filename = "demo-1.0-py3-none-any.whl"
+    (house / filename).touch()
+    log = tmp_path / "wheel" / "3.11" / "embed" / "3" / "demo.json"
+    log.parent.mkdir(parents=True)
+    log.write_text(
+        json.dumps({
+            "versions": [
+                {
+                    "filename": filename,
+                    "found_date": "2025-01-01T00:00:00.000000Z",
+                    "release_date": None,
+                    "source": "manual",
+                }
+            ]
+        }),
+        encoding="utf-8",
+    )
+
+    assert get_wheel("demo", "1.0", "3.11", [], False, AppDataDiskFolder(str(tmp_path)), False, {}) is None
+
+
 def test_get_wheel_download_cached(
     tmp_path: Path,
     mocker: MockerFixture,
@@ -383,6 +476,7 @@ def test_get_wheel_download_cached(
 
     app_data = AppDataDiskFolder(folder=str(tmp_path))
     expected = downloaded_wheel[0]
+    (app_data.house / expected.name).touch()
     write = mocker.spy(JSONStoreDisk, "write")
     # 1st call, not cached, download is called
     wheel = get_wheel(expected.distribution, expected.version, for_py_version, [], True, app_data, False, os.environ)
