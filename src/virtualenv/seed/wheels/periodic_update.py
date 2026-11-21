@@ -111,7 +111,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
         handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
     stores = [app_data]
-    if app_data.wheel_index == "pypi" and app_data.reuse_custom_wheels:
+    if app_data.wheel_index == "pypi" and app_data.reuse_custom_wheels and of_version is not None and wheel is None:
         custom = app_data.for_wheel_index(env, cached_custom=True)
         if custom.embed_update_log(distribution, for_py_version).exists():
             stores.append(custom)
@@ -129,8 +129,8 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
             continue
         if store is not app_data:
             LOGGER.warning("using unverified custom-index wheel %s from the selected app-data directory", selected.name)
-        wheel = selected
         LOGGER.debug("using updated wheel %s", path)
+        return selected
     return wheel
 
 

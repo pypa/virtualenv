@@ -1,2 +1,3 @@
-Keep custom-index seed wheels and update records separate from PyPI-verified wheels. Rebuild the cached seed image when
-a wheel's contents change under the same filename.
+Isolate custom-index seed wheels in app-data. Without a custom index setting, a private wheel can fill a missing pin in
+a dedicated cache. Upgraders must download pins missing from the bundle again before going offline. Old cached wheels
+and images remain on disk.

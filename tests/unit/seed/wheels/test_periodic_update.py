@@ -374,6 +374,35 @@ def test_periodic_update_drops_malformed_log(
 
 
 @pytest.mark.parametrize(
+    ("pin", "expected"),
+    [
+        pytest.param(None, "public", id="unpinned"),
+        pytest.param("99", "public", id="verified-pin"),
+        pytest.param("100", "custom", id="missing-pin"),
+    ],
+)
+def test_offline_private_updates_only_fill_missing_pins(tmp_path: Path, pin: str | None, expected: str) -> None:
+    app_data = AppDataDiskFolder(str(tmp_path))
+    private = app_data.for_wheel_index({"PIP_INDEX_URL": "https://packages.example/simple"})
+    verified_name = "demo-99-py3-none-any.whl"
+    (app_data.house / verified_name).write_text("public", encoding="utf-8")
+    app_data.embed_update_log("demo", "3.11").write(
+        UpdateLog(None, None, [NewVersion(verified_name, _UP_NOW, None, "manual")], False).to_dict()
+    )
+    digest = hashlib.sha256(b"custom").hexdigest()
+    (private.house / digest).mkdir()
+    versions = []
+    for name in ("demo-100-py3-none-any.whl", verified_name):
+        (private.house / digest / name).write_bytes(b"custom")
+        versions.append(NewVersion(f"{digest}/{name}", _UP_NOW, None, "manual"))
+    private.embed_update_log("demo", "3.11").write(UpdateLog(None, None, versions, False).to_dict())
+
+    wheel = periodic_update("demo", pin, "3.11", None, [], app_data, False, {})
+    assert wheel is not None
+    assert wheel.path.read_text(encoding="utf-8") == expected
+
+
+@pytest.mark.parametrize(
     ("filename", "env", "expected"),
     [
         pytest.param("../other/pip-1-py3-none-any.whl", {}, "malformed", id="parent"),

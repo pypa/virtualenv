@@ -401,6 +401,7 @@ def test_custom_wheel_offline_lookup_requires_explicit_cache(  # ruff:ignore[too
     env = {"PIP_INDEX_URL": "https://packages.example/simple"}
     downloaded = get_wheel("demo", "1.0", "3.11", [], True, app_data, False, env)
     assert downloaded is not None
+    assert app_data.for_wheel_index(env).embed_update_log("demo", "3.11").exists() == reusable
     selected = get_wheel("demo", "1.0", "3.11", [], False, app_data, False, {})
     assert (selected is not None) == reusable
     implicit = make_app_data(None, read_only=False, env={})
@@ -409,7 +410,7 @@ def test_custom_wheel_offline_lookup_requires_explicit_cache(  # ruff:ignore[too
     process.assert_called_once()
 
 
-def test_pinned_private_wheel_with_bundled_version_remains_available_offline(
+def test_pin_prefers_verified_or_bundled_wheel_over_private_build(
     tmp_path: Path, download_process: _DownloadProcess, for_py_version: str
 ) -> None:
     app_data = AppDataDiskFolder(str(tmp_path))
@@ -424,11 +425,15 @@ def test_pinned_private_wheel_with_bundled_version_remains_available_offline(
     assert private is not None
     pinned = get_wheel("pip", verified.version, for_py_version, [], False, app_data, False, {})
     assert pinned is not None
-    assert (pinned.path, pinned.path.read_bytes(), verified.path.read_bytes()) == (
-        private.path,
-        data.getvalue(),
+    assert (pinned.path, pinned.path.read_bytes(), private.path.read_bytes()) == (
+        verified.path,
         download_process.wheel.path.read_bytes(),
+        data.getvalue(),
     )
+    verified.path.unlink()
+    bundled = get_wheel("pip", verified.version, for_py_version, [], False, app_data, False, {})
+    assert bundled is not None
+    assert bundled.path == download_process.wheel.path
     entry = app_data.for_wheel_index(env).embed_update_log("pip", for_py_version).read()["versions"][0]
     assert entry["verification"] == "UNVERIFIED"
     assert download_process.process.call_count == 2

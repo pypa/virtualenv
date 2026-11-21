@@ -467,15 +467,19 @@ cached or extra search directory wheels. For example, a request for ``26.3.0`` c
 spelling.
 
 With the default app-data directory, a download using ``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL`` or ``PIP_INDEX`` serves
-only the current creation. For offline reuse, give one trusted source its own ``--app-data`` directory or set
-``VIRTUALENV_OVERRIDE_APP_DATA``. A pinned version can then select that source's private build even after you remove the
-index setting. Sharing the directory allows other projects to select that build too. Verified PyPI wheels remain in a
-separate store. An index set only in pip's configuration still requires PyPI digest verification.
+only the current creation. A pin missing from the bundle and extra search directories requires another network download
+on each run. The wheel and its extracted image stay on disk until you remove the cache. Setting an index only in pip's
+configuration still requires PyPI digest verification.
 
-Automatic custom-index upgrades need a dedicated directory. ``--upgrade-embed-wheels`` reports an error without one.
-Older caches record no source. Before going offline after upgrading virtualenv, download any pinned seed versions
-missing from the bundle or supply them with ``--extra-search-dir``. Repopulate read-only image caches with the new
-virtualenv before making them read-only.
+For offline reuse, give each trusted index a dedicated ``--app-data`` directory or set ``VIRTUALENV_OVERRIDE_APP_DATA``.
+Different custom indexes using the same directory share their builds. Without a custom index setting, virtualenv uses a
+private build only for an explicit pin missing from both the bundle and the verified cache. Custom-index background
+updates and ``--upgrade-embed-wheels`` require a dedicated directory.
+
+Older caches contain no source records. After upgrading, download any pinned seed versions missing from the bundle
+before going offline, or supply their wheels with ``--extra-search-dir``. Old wheels and images remain on disk. Existing
+environments may still link to their images. Repopulate read-only image caches with the new virtualenv before making
+them read-only.
 
 Periodic update mechanism
 =========================
