@@ -29,12 +29,17 @@ if TYPE_CHECKING:
 class SymlinkPipInstall(PipInstall):
     """Install a seed package by symlinking its image files into the environment."""
 
-    def _install_files(self, dist_info: Path, /) -> list[Path]:
-        files: list[Path] = []
-        for child in self._image_dir.iterdir():
-            self._install_entry(child, self._creator.purelib / child.name, dist_info, files)
+    def _install_files(self, dist_info: Path, /) -> list[str]:
+        files: list[str] = []
+        modules: set[str] = set()
+        purelib = str(self._creator.purelib)
+        record = os.path.normcase(dist_info / "RECORD")
+        with os.scandir(self._image_dir) as entries:
+            for entry in entries:
+                self._install_entry(entry, purelib, record if entry.name == dist_info.name else None, files)
+                if entry.name.endswith(".py") and entry.is_file(follow_symlinks=False):
+                    modules.add(entry.name[:-3])
         # Root bytecode is compiled in the target interpreter and omitted from the shared image.
-        modules = {path.stem for path in files if path.parent == self._creator.purelib and path.suffix == ".py"}
         with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
             for row in csv.reader(stream):
                 if not row or not row[0].startswith(f"__pycache__{os.sep}"):
@@ -43,30 +48,36 @@ class SymlinkPipInstall(PipInstall):
                 if cached.parent == self._creator.purelib / "__pycache__" and cached.suffix == ".pyc":
                     module, _, tag = cached.stem.rpartition(".")
                     if module in modules and tag:
-                        files.append(cached)
+                        files.append(row[0])
         return files
 
-    def _install_entry(self, src: Path, dst: Path, dist_info: Path, files: list[Path]) -> None:
-        info = src.lstat()
+    def _install_entry(self, src: os.DirEntry[str], parent: str, record: str | None, files: list[str]) -> None:
+        dst = os.path.join(parent, src.name)
+        info = src.stat(follow_symlinks=False)
         if stat.S_ISLNK(info.st_mode) or (os.name == "nt" and info.st_reparse_tag & 0x2000_0000):
-            msg = f"refusing to link a redirected seed image entry: {src}"
+            msg = f"refusing to link a redirected seed image entry: {src.path}"
             raise RuntimeError(msg)
         if stat.S_ISDIR(info.st_mode):
             # pip unlinks files before replacement but writes through a linked directory.
-            dst.mkdir(mode=(info.st_mode & 0o077) | 0o700)
-            for child in src.iterdir():
-                self._install_entry(child, dst / child.name, dist_info, files)
+            os.mkdir(dst, (info.st_mode & 0o077) | 0o700)
+            previous_count = len(files)
+            with os.scandir(src.path) as entries:
+                for child in entries:
+                    self._install_entry(child, dst, record, files)
+            if len(files) == previous_count:
+                # Empty directories have no RECORD entry to remove on a subsequent install.
+                os.rmdir(dst)
             return
         if not stat.S_ISREG(info.st_mode):
-            msg = f"refusing to link a non-regular seed image entry: {src}"
+            msg = f"refusing to link a non-regular seed image entry: {src.path}"
             raise RuntimeError(msg)
-        files.append(dst)
-        if dist_info not in src.parents:
-            dst.symlink_to(src)
-        elif src != dist_info / "RECORD":
+        files.append(src.path.removeprefix(f"{self._image_dir}{os.sep}"))
+        if record is None:
+            os.symlink(src.path, dst)
+        elif os.path.normcase(src.path) != record:
             flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
             mode = (info.st_mode & (S_IREAD | S_IRGRP | S_IROTH)) | S_IWUSR
-            with os.fdopen(os.open(dst, flags, mode), "wb") as output, src.open("rb") as source:
+            with os.fdopen(os.open(dst, flags, mode), "wb") as output, open(src.path, "rb") as source:
                 shutil.copyfileobj(source, output)
 
     def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:

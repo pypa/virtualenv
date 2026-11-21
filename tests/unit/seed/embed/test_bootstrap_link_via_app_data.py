@@ -1540,6 +1540,23 @@ def test_reseed_legacy_linked_environment(no_seed_session: Session, tmp_path: Pa
     ) == (False, True, False, True, old_record)
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_reseed_linked_image_with_empty_directories(no_seed_session: Session, tmp_path: Path) -> None:
+    image = tmp_path / "image"
+    (image / "example" / "data" / "empty").mkdir(parents=True)
+    module = image / "example" / "__init__.py"
+    module.touch()
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir()
+    (metadata / "RECORD").touch()
+    installer = SymlinkPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image)
+    installer.install(no_seed_session.interpreter.version_info)
+    installer.install(no_seed_session.interpreter.version_info)
+
+    package = no_seed_session.creator.purelib / "example"
+    assert ((package / "__init__.py").samefile(module), (package / "data").exists()) == (True, False)
+
+
 @pytest.mark.parametrize(
     "create_entry",
     [
@@ -1550,7 +1567,7 @@ def test_reseed_legacy_linked_environment(no_seed_session: Session, tmp_path: Pa
         ),
         pytest.param(
             lambda entry, _: os.mkfifo(entry),
-            marks=pytest.mark.skipif(sys.platform == "win32", reason="POSIX FIFO"),
+            marks=pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires FIFOs"),
             id="fifo",
         ),
     ],

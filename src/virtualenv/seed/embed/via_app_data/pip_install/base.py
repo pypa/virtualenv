@@ -88,7 +88,7 @@ class PipInstall(ABC):
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
         if files is not None:
-            files.extend(consoles)
+            files.extend(os.path.relpath(script, self._creator.purelib) for script in consoles)
             self._write_installed_record(dist_info, files)
 
     @staticmethod
@@ -223,7 +223,7 @@ class PipInstall(ABC):
                 folder.rmdir()
 
     @abstractmethod
-    def _install_files(self, dist_info: Path, /) -> list[Path] | None:
+    def _install_files(self, dist_info: Path, /) -> list[str] | None:
         raise NotImplementedError
 
     @staticmethod
@@ -249,9 +249,9 @@ class PipInstall(ABC):
         result.extend(Path(i) for i in new_files)
         return result
 
-    def _write_installed_record(self, dist_info: Path, files: list[Path]) -> None:
+    def _write_installed_record(self, dist_info: Path, files: list[str]) -> None:
         with (self._creator.purelib / dist_info.name / "RECORD").open("x", encoding="utf-8", newline="") as stream:
-            stream.write(self._records_text(self._creator.purelib, files))
+            csv.writer(stream).writerows((name, "", "") for name in files)
 
     @staticmethod
     def _records_text(folder: Path, files: set[Path] | list[Path]) -> str:
