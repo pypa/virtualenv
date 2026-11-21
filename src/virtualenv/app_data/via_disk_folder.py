@@ -7,14 +7,14 @@ r"""A rough layout of the current storage goes as:
     │  └── *.json/lock
     ├── wheel <cache wheels used for seeding>
     │   ├── house
-    │   │   └── *.whl <wheels downloaded go here>
+    │   │   └── <index> -> verified PyPI or a custom index configuration
     │   └── <python major.minor> -> 3.9
     │       ├── img-<version>
     │       │   └── image
     │       │           └── <install class> -> CopyPipInstall / SymlinkPipInstall
-    │       │               └── <wheel name> -> pip-20.1.1-py2.py3-none-any
+    │       │               └── <wheel sha256>
     │       └── embed
-    │           └── 3 -> json format versioning
+    │           └── 4/<index> -> json format version and index
     │               └── *.json -> for every distribution contains data about newer embed versions and releases
 
     └─── unzip <in zip app we cannot refer to some internal files, so first extract them>
@@ -68,6 +68,7 @@ class AppDataDiskFolder(AppData):
     :param private: whether reset must restore the default cache's access policy
 
     :var transient: always ``False``, the data persists across runs
+    :var reuse_custom_wheels: whether the directory was selected explicitly
     :var can_update: always ``True``, the data can be updated
     :var lock: the lock guarding the folder
 
@@ -79,6 +80,7 @@ class AppDataDiskFolder(AppData):
     def __init__(self, folder: str, *, private: bool = False) -> None:
         self.lock = ReentrantFileLock(folder)
         self._private = private
+        self.reuse_custom_wheels = not private
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.lock.path})"
@@ -89,7 +91,7 @@ class AppDataDiskFolder(AppData):
     @property
     def house(self) -> Path:
         """The wheel house folder, created when first accessed, holding the downloaded wheels."""
-        path = self.lock.path / "wheel" / "house"
+        path = self.lock.path / "wheel" / "house" / self.wheel_index
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -181,8 +183,9 @@ class AppDataDiskFolder(AppData):
         :returns: the embed update log store
 
         """
-        # the lock's / operator returns PathLockBase, which the store does not take
-        return EmbedDistributionUpdateStoreDisk(self.lock / "wheel" / for_py_version / "embed" / "3", distribution)  # ty: ignore[invalid-argument-type]
+        root = self.lock / "wheel" / for_py_version / "embed" / "4" / self.wheel_index
+        # The lock preserves its concrete type when joined.
+        return EmbedDistributionUpdateStoreDisk(root, distribution)  # ty: ignore[invalid-argument-type]
 
     def wheel_image(self, for_py_version: str, name: str) -> Path:
         """Return the path of an installed wheel image.

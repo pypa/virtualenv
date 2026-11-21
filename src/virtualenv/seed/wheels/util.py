@@ -4,12 +4,14 @@ from __future__ import annotations
 
 __lazy_modules__ = [
     "email.parser",
+    "hashlib",
     "operator",
     "packaging.specifiers",
     "packaging.version",
     "zipfile",
 ]
 
+import hashlib
 import logging
 from email.parser import HeaderParser
 from operator import attrgetter
@@ -55,13 +57,15 @@ class Wheel:
     """Wheel file of a distribution, parsed from its file name.
 
     :param path: the path to the wheel file
+    :param cache_name: the relative path recorded for a downloaded wheel
 
     :var path: the path to the wheel file
 
     """
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, cache_name: str | None = None) -> None:
         self.path = path
+        self.cache_name = cache_name or path.name
         self._parts = path.stem.split("-")
 
     @classmethod
@@ -85,6 +89,15 @@ class Wheel:
 
     def __str__(self) -> str:
         return str(self.path)
+
+    @property
+    def sha256(self) -> str:
+        """The digest of the wheel contents on disk."""
+        digest = hashlib.sha256()
+        with self.path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1 << 20), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     @property
     def version_tuple(self) -> tuple[int, ...]:

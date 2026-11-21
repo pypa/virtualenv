@@ -35,6 +35,7 @@ def app_data(tmp_path_factory, for_py_version, next_pip_wheel):
     temp_folder = tmp_path_factory.mktemp("module-app-data")
     now = dump_datetime(datetime.now(tz=timezone.utc))
     app_data_ = AppDataDiskFolder(str(temp_folder))
+    (app_data_.house / next_pip_wheel.name).touch()
     app_data_.embed_update_log("pip", for_py_version).write(
         {
             "completed": now,
