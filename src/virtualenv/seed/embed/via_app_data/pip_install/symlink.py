@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "posixpath",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
@@ -20,6 +21,8 @@ from .base import PipInstall
 if TYPE_CHECKING:
     import zipfile
     from pathlib import Path
+
+    from python_discovery import PythonInfo
 
 
 class SymlinkPipInstall(PipInstall):
@@ -62,12 +65,12 @@ class SymlinkPipInstall(PipInstall):
         return new_files
 
     def _image_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
-        names: Final = super()._image_names(zip_ref)
-        version: Final = self._creator.interpreter.version_info
-        tag: Final = f"{self._creator.interpreter.implementation.lower()}-{version.major}{version.minor}"
+        names: Final[list[str]] = super()._image_names(zip_ref)
+        interpreter: Final[PythonInfo] = self._creator.interpreter
+        version: Final[str] = f"{interpreter.version_info.major}{interpreter.version_info.minor}"
         # compileall writes each pyc into the image through a temporary file that adds a dot and an id of up to 20
         # digits; four spare ones cover a longer cache tag, such as GraalPy's, which carries its own version
-        compiled: Final = f".{tag}.pyc.{'0' * 24}"
+        compiled: Final[str] = f".{interpreter.implementation.lower()}-{version}.pyc.{'0' * 24}"
         return [
             *names,
             *(

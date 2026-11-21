@@ -1599,17 +1599,19 @@ def test_seed_image_short_path_counts_compiled_files(  # ruff:ignore[too-many-ar
     longest: str,
     shortened: int,
 ) -> None:
-    image: Final = tmp_path / "image"
+    image: Final[Path] = tmp_path / "image"
     image.mkdir()
     (image / "content").touch()
     # the symlink installer compiles inside the image, writing each compiled file through a temporary one with a longer
     # name, so a module whose source or compiled file is the longest that fits under MAX_PATH needs the short path there
-    module: Final = "m" * (258 - len(str(image)) - len(longest.format("")))
-    wheel: Final = tmp_path / "pkg.whl"
+    module: Final[str] = "m" * (258 - len(str(image)) - len(longest.format("")))
+    wheel: Final[Path] = tmp_path / "pkg.whl"
     with zipfile.ZipFile(str(wheel), "w") as archive:
         archive.writestr(f"{module}.py", "payload")
-    shorten: Final = mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image))
-    found: Final = installer_class(wheel, no_seed_session.creator, image).has_image()
+    shorten: Final[MockType] = mocker.patch(
+        "virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(image)
+    )
+    found: Final[bool] = installer_class(wheel, no_seed_session.creator, image).has_image()
     assert (found, shorten.call_count) == (True, shortened)
 
 
@@ -1631,15 +1633,15 @@ def test_seed_image_build_measures_compiled_files(
     installer_class: type[CopyPipInstall | SymlinkPipInstall],
     compiled: list[str],
 ) -> None:
-    wheel: Final = tmp_path / "pkg-1-py3-none-any.whl"
+    wheel: Final[Path] = tmp_path / "pkg-1-py3-none-any.whl"
     with zipfile.ZipFile(str(wheel), "w") as archive:
         archive.writestr("pkg/mod.py", "")
         archive.writestr("pkg-1.dist-info/RECORD", "")
-    measured: Final = mocker.spy(PipInstall, "_short_path_if_needed")
-    image: Final = tmp_path / "image" / installer_class.__name__ / wheel.stem
+    measured: Final[SpyType] = mocker.spy(PipInstall, "_short_path_if_needed")
+    image: Final[Path] = tmp_path / "image" / installer_class.__name__ / wheel.stem
     installer_class(wheel, no_seed_session.creator, image).build_image()
     # the staging folder and the built image are both measured
-    names: Final = [
+    names: Final[list[list[str]]] = [
         [_COMPILED_SUFFIX.sub(".<tag>.pyc.<id>", name) for name in call.args[0]] for call in measured.call_args_list
     ]
     assert names == [["pkg/mod.py", "pkg-1.dist-info/RECORD", *compiled]] * 2
