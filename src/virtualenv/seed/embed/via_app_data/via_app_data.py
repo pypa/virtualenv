@@ -118,7 +118,7 @@ class FromAppData(BaseEmbed):
                 LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                 try:
                     wheel_img = self.app_data.wheel_image(
-                        creator.interpreter.version_release_str, Path(installer_class.__name__) / wheel.path.stem
+                        creator.interpreter.version_release_str, Path(installer_class.__name__) / wheel.sha256
                     )
                     installer = installer_class(wheel.path, creator, wheel_img)
                     _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)

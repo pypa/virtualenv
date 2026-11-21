@@ -82,6 +82,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
 
     """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
+    app_data = app_data.for_wheel_index(env)
     wheel = None
 
     if not download or version != Version.bundle:
@@ -106,7 +107,11 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
                 raise
             LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
             return from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
-        if wheel is not None and app_data.can_update:
+        if (
+            wheel is not None
+            and app_data.can_update
+            and (app_data.wheel_index == "pypi" or app_data.reuse_custom_wheels)
+        ):
             add_wheel_to_update_log(wheel, for_py_version, app_data)
 
     return wheel
@@ -171,9 +176,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     # This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
     # invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either
     # way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
-    verify_against_pypi: Final[bool] = not any(
-        env.get(var) for var in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
-    )
+    verify_against_pypi: Final[bool] = app_data.for_wheel_index(env).wheel_index == "pypi"
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
@@ -205,9 +208,11 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         if not result.support_py(for_py_version):
             msg = f"downloaded wheel {result.name} does not support Python {for_py_version}"
             raise RuntimeError(msg)
-        destination: Final[Path] = to_folder / result.name
+        cache_name = result.name if verify_against_pypi else f"{result.sha256}/{result.name}"
+        destination: Final[Path] = to_folder / cache_name
+        destination.parent.mkdir(exist_ok=True)
         result.path.replace(destination)
-        return Wheel(destination)
+        return Wheel(destination, cache_name=cache_name)
 
 
 def _check_version_spec(version_spec: str | None) -> None:

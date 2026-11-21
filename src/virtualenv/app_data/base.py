@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = ["virtualenv.info"]
+__lazy_modules__ = ["copy", "virtualenv.info"]
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from copy import copy
 from typing import TYPE_CHECKING
 
 from virtualenv.info import IS_ZIPAPP
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Mapping
     from pathlib import Path
     from typing import Any
 
 
 class AppData(ABC):
-    """Abstract storage interface for the virtualenv application."""
+    """Abstract storage interface for the virtualenv application.
+
+    :var reuse_custom_wheels: whether the user selected a cache for private index builds
+    :var wheel_index: the namespace for downloaded wheels and update records
+
+    """
+
+    reuse_custom_wheels: bool = False
+    wheel_index: str = "pypi"
 
     @property
     def can_update(self) -> bool:
@@ -33,6 +42,23 @@ class AppData(ABC):
     def transient(self) -> bool:
         """``True`` if this app data store is transient and does not persist across runs."""
         raise NotImplementedError
+
+    def for_wheel_index(self, env: Mapping[str, str], *, cached_custom: bool = False) -> AppData:
+        """Select separate wheel archives and update records for the configured index.
+
+        :param env: the environment used by pip
+        :param cached_custom: look for a private wheel saved in a user-selected directory
+
+        :returns: the store for these wheels
+
+        """
+        custom = cached_custom or any(env.get(key) for key in ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX"))
+        index = "unverified" if custom else "pypi"
+        if index == self.wheel_index:
+            return self
+        scoped = copy(self)
+        scoped.wheel_index = index
+        return scoped
 
     @abstractmethod
     def close(self) -> None:

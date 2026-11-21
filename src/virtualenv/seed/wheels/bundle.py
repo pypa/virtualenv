@@ -71,8 +71,7 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
     wheel = get_embed_wheel(distribution, for_py_version)
     if wheel is not None:
         if version is None or wheel.has_version(version):
-            # callers pass a callable for the folder, despite the Path | None annotation
-            with app_data.ensure_extracted(wheel.path, lambda: app_data.house) as wheel_path:  # ty: ignore[invalid-argument-type]
+            with app_data.ensure_extracted(wheel.path) as wheel_path:
                 wheel = Wheel(wheel_path)
         else:  # if version does not match ignore
             wheel = None

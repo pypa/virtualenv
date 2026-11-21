@@ -466,6 +466,17 @@ cached or extra search directory wheels. For example, a request for ``26.3.0`` c
 ``pip-26.3-py3-none-any.whl``. This avoids downloading a release already available locally under an equivalent version
 spelling.
 
+With the default app-data directory, a download using ``PIP_INDEX_URL``, ``PIP_EXTRA_INDEX_URL`` or ``PIP_INDEX`` serves
+only the current creation. For offline reuse, give one trusted source its own ``--app-data`` directory or set
+``VIRTUALENV_OVERRIDE_APP_DATA``. A pinned version can then select that source's private build even after you remove the
+index setting. Sharing the directory allows other projects to select that build too. Verified PyPI wheels remain in a
+separate store. An index set only in pip's configuration still requires PyPI digest verification.
+
+Automatic custom-index upgrades need a dedicated directory. ``--upgrade-embed-wheels`` reports an error without one.
+Older caches record no source. Before going offline after upgrading virtualenv, download any pinned seed versions
+missing from the bundle or supply them with ``--extra-search-dir``. Repopulate read-only image caches with the new
+virtualenv before making them read-only.
+
 Periodic update mechanism
 =========================
 
