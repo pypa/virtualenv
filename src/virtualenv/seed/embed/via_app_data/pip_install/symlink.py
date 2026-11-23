@@ -28,6 +28,28 @@ if TYPE_CHECKING:
 class SymlinkPipInstall(PipInstall):
     """Install a seed package by symlinking its image files into the environment."""
 
+    def _staging_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        names: Final[list[str]] = super()._staging_names(zip_ref)
+        interpreter: Final[PythonInfo] = self._creator.interpreter
+        # Windows reads environment variable names case-insensitively, and CPython stores the level as a C int.
+        optimize: Final[bool] = any(
+            name.upper() == "PYTHONOPTIMIZE" and value for name, value in self._creator.env.items()
+        )
+        optimization: Final[str] = ".opt-0000000000" if optimize else ""
+        version = interpreter.version_info
+        # Allow 20 digits for the atomic write's temporary suffix and four for longer cache tags.
+        suffix: Final[str] = (
+            f".{interpreter.implementation.lower()}-{version.major}{version.minor}{optimization}.pyc.{'0' * 24}"
+        )
+        return [
+            *names,
+            *(
+                posixpath.join(posixpath.dirname(name), "__pycache__", f"{posixpath.basename(name)[:-3]}{suffix}")
+                for name in names
+                if name.endswith(".py")
+            ),
+        ]
+
     def _sync(self, src: Path, dst: Path) -> None:
         os.symlink(str(src), str(dst))
 
@@ -63,22 +85,6 @@ class SymlinkPipInstall(PipInstall):
                 pass
             new_files.add(file)
         return new_files
-
-    def _image_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
-        names: Final[list[str]] = super()._image_names(zip_ref)
-        interpreter: Final[PythonInfo] = self._creator.interpreter
-        version: Final[str] = f"{interpreter.version_info.major}{interpreter.version_info.minor}"
-        # compileall writes each pyc into the image through a temporary file that adds a dot and an id of up to 20
-        # digits; four spare ones cover a longer cache tag, such as GraalPy's, which carries its own version
-        compiled: Final[str] = f".{interpreter.implementation.lower()}-{version}.pyc.{'0' * 24}"
-        return [
-            *names,
-            *(
-                posixpath.join(posixpath.dirname(name), "__pycache__", f"{posixpath.basename(name)[:-3]}{compiled}")
-                for name in names
-                if name.endswith(".py")
-            ),
-        ]
 
     def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
         extra_record_data.update(folder.iterdir())
