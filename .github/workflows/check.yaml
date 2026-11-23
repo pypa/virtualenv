@@ -208,13 +208,13 @@ jobs:
           key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
           enableCrossOsArchive: true
       - name: 🧪 Verify pytest diagnostics
-        if: matrix.diagnostics && matrix.py == '3.13t'
+        if: matrix.diagnostics
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            python_path=./.tox/3.13t/Scripts/python.exe
+            python_path="./.tox/$TOXENV/Scripts/python.exe"
           else
-            python_path=./.tox/3.13t/bin/python
+            python_path="./.tox/$TOXENV/bin/python"
           fi
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
