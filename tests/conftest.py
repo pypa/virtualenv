@@ -8,13 +8,16 @@ from argparse import ArgumentTypeError
 from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
 import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_supports_symlink
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # the build and CI tooling tests do not depend on the interpreter; the tasks tox environment runs them once
 collect_ignore: Final[tuple[str, ...]] = ("tasks",)
@@ -174,7 +177,8 @@ def change_os_environ(key, value):
 
 
 @pytest.fixture(autouse=True)
-def _check_os_environ_stable():
+def _check_os_environ_stable(_ensure_py_info_cache_empty: None) -> Iterator[None]:
+    # The first cache clear can set PLAT through distutils.
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
     to_clean = {k for k in os.environ if k.startswith(("VIRTUALENV_", "TOX_")) or "VIRTUAL_ENV" in k}
