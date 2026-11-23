@@ -47,6 +47,7 @@ jobs:
           - macos-26
           - windows-2025-vs2026
         include:
+          - {os: windows-2025-vs2026, py: "3.10", diagnostics: true}
           - {os: windows-2025-vs2026, py: "3.13t", diagnostics: true}
           - {os: macos-26, py: "3.13t", diagnostics: true}
           - {os: ubuntu-24.04, py: graalpy, group: "1/4"}
@@ -206,7 +207,7 @@ jobs:
           key: zipapp-wheels-${{ hashFiles('pylock.zipapp.toml') }}
           enableCrossOsArchive: true
       - name: 🧪 Verify pytest diagnostics
-        if: matrix.diagnostics
+        if: matrix.diagnostics && matrix.py == '3.13t'
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -249,8 +250,8 @@ jobs:
           path: |
             .tox/hang-diagnostics/
             .tox/diagnostics-self-test/**/diagnostics/*.log
-            .tox/3.13t/log/
-            .tox/junit.3.13t.xml
+            .tox/${{ env.TOXENV }}/log/
+            .tox/junit.${{ env.TOXENV }}.xml
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
