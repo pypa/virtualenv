@@ -16,8 +16,8 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }} ${{ matrix.group }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    # a PyPy leg passes in 8 to 18 minutes; a hung one froze its runner until the job limit, so that limit stays tight
-    timeout-minutes: ${{ matrix.py == 'graalpy' && 25 || startsWith(matrix.py, 'pypy') && 20 || 40 }}
+    # PyPy can spend 18 minutes in pytest alone. Leave time for setup, coverage, and an artifact upload retry.
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 25 || startsWith(matrix.py, 'pypy') && 28 || 40 }}
     permissions:
       contents: read
     env:
@@ -217,7 +217,7 @@ jobs:
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: ${{ matrix.py == 'graalpy' && 22 || startsWith(matrix.py, 'pypy') && 18 || 30 }}
+        timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
           GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
