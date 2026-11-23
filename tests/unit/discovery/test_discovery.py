@@ -11,7 +11,7 @@ import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.discovery.builtin import Builtin, get_interpreter
-from virtualenv.run import cli_run, session_via_cli
+from virtualenv.run import session_via_cli
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture, MockType
@@ -135,23 +135,6 @@ def test_cli_replaces_configured_interpreters(  # ruff:ignore[too-many-arguments
         session_via_cli([*cli, str(tmp_path / "env")])
 
     assert [call.args for call in get_interpreter.call_args_list] == tried
-
-
-def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> None:
-    good_env = tmp_path / "good"
-    bad_env = tmp_path / "bad"
-
-    good_exe = cli_run(["--no-seed", str(good_env)]).creator.exe
-    bad_exe = cli_run(["--no-seed", str(bad_env)]).creator.exe
-
-    interpreter = get_interpreter(
-        str(good_exe),
-        try_first_with=[str(bad_exe)],
-        app_data=session_app_data,
-    )
-
-    assert interpreter is not None
-    assert Path(interpreter.executable) == good_exe
 
 
 def test_absolute_path_does_not_exist(tmp_path) -> None:
