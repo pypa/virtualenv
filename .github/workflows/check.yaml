@@ -73,6 +73,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: 🏷️ Fetch upstream tags for versioning
+        if: github.repository != 'pypa/virtualenv'
         shell: bash
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
@@ -348,6 +349,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: 🏷️ Fetch upstream tags for versioning
+        if: github.repository != 'pypa/virtualenv'
         shell: bash
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
