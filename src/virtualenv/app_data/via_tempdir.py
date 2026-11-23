@@ -9,7 +9,7 @@ import logging
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Final
 
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import safe_delete_read_only
 
 from .via_disk_folder import AppDataDiskFolder
 
@@ -40,7 +40,7 @@ class TempAppData(AppDataDiskFolder):
     def close(self) -> None:
         """Remove the temporary folder."""
         LOGGER.debug("remove temporary app data folder %s", self.lock.path)
-        safe_delete(self.lock.path)
+        safe_delete_read_only(self.lock.path)
 
     def embed_update_log(self, distribution: str, for_py_version: str) -> NoReturn:
         """Refuse to provide an embed update log, since it is not kept for temporary folders.

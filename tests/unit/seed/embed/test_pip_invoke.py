@@ -85,6 +85,9 @@ def test_pip_reseed_replaces_nested_link(
     source: Final[Path] = package.resolve()
     package.unlink()
     copytree(source, package)
+    # the copy keeps the modes of the read-only image
+    for path in filter(Path.is_dir, (package, *package.rglob("*"))):
+        path.chmod(0o700)
     for path in filter(Path.is_file, package.rglob("*")):
         path.chmod(0o600)
     entry: Final[Path] = package / name

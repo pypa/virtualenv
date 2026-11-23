@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 import os
 import sys
-from stat import S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_IWGRP, S_IWOTH, S_IWUSR, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -67,8 +67,23 @@ def set_tree(folder: Path, stat: int) -> None:
             os.chmod(path, os.stat(path).st_mode & stat)
 
 
+def make_tree_read_only(folder: Path) -> None:
+    """Close a tree to writes, keeping its bytecode caches open.
+
+    :param folder: the root of the tree, which stays writable so the tree can still be moved
+
+    """
+    for root, directories, files in os.walk(str(folder)):
+        # an interpreter compiles into the cache on load, and a closed Windows directory still takes new files
+        closed: list[str] = files if os.name == "nt" else [*files, *(i for i in directories if i != "__pycache__")]
+        for name in closed:
+            path = os.path.join(root, name)
+            os.chmod(path, os.stat(path).st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH))
+
+
 __all__ = [
     "make_exe",
+    "make_tree_read_only",
     "owner_executable_mode",
     "set_tree",
 ]

@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-12:
+
+***********************
+ 21.15.12 (2026-11-21)
+***********************
+
+.. _release-21-15-12-fixed:
+
+Fixed
+-----
+
+- Make seed images in app-data read-only, including their directories on POSIX. In a ``--symlink-app-data`` environment
+  ``pip install --ignore-installed`` of a seed package now fails with a permission error instead of changing the image
+  shared with other environments. Bytecode cache directories and copied seed packages stay writable (:pr:`3757`) by
+  :user:`gaborbernat`. (:pr:`3620`)
+- Isolate custom-index seed wheels in app-data. Without a custom index setting, a private wheel can fill a missing pin
+  in a dedicated cache. Upgraders must download pins missing from the bundle again before going offline. Old cached
+  wheels and images remain on disk (:pr:`3756`) by :user:`gaborbernat`.
+
 .. _release-21-15-11:
 
 ***********************

@@ -13,7 +13,7 @@ from stat import S_IREAD, S_IRGRP, S_IROTH
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.util.error import ProcessCallFailedError
-from virtualenv.util.path import safe_delete, set_tree
+from virtualenv.util.path import safe_delete, safe_delete_read_only, set_tree
 from virtualenv.util.subprocess import run_cmd
 
 from .base import PipInstall
@@ -94,7 +94,7 @@ class SymlinkPipInstall(PipInstall):
     def clear(self) -> None:
         """Remove the cached image of the wheel, linked files included."""
         if self._image_dir.exists():
-            safe_delete(self._image_dir)
+            safe_delete_read_only(self._image_dir)
         super().clear()
 
 

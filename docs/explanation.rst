@@ -481,6 +481,15 @@ before going offline, or supply their wheels with ``--extra-search-dir``. Old wh
 environments may still link to their images. Repopulate read-only image caches with the new virtualenv before making
 them read-only.
 
+Seed images in the app-data directory are read-only. virtualenv clears the write permission of their files and, except
+on Windows, of their directories. Bytecode cache directories stay writable, so an interpreter can still compile into
+them, and copy mode creates writable files in the environment. With ``--symlink-app-data`` the environment links to the
+image, so ``pip install --ignore-installed`` of a seed package fails with a permission error instead of changing the
+image other environments share. Use ``--force-reinstall`` there: pip removes the link and installs a copy for that
+environment. The permissions do not bind ``root``. To remove the cache by hand, use ``--reset-app-data`` or restore
+write permission first with ``chmod -R u+w``. Images built by earlier releases keep writable directories;
+``--reset-app-data`` rebuilds them, and environments linked to the old images must then be recreated.
+
 Periodic update mechanism
 =========================
 

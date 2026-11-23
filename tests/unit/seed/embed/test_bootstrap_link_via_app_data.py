@@ -1162,6 +1162,32 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
         assert cli_run(["--read-only-app-data", *cmd])
 
 
+@pytest.mark.skipif(os.name != "posix" or os.geteuid() == 0, reason="directory permissions that bind the current user")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_linked_seed_image_refuses_writes_and_can_be_reset(tmp_path: Path, temp_app_data: Path) -> None:
+    arguments: Final[list[str]] = ["--symlink-app-data", "--activators", "", str(tmp_path / "venv")]
+    linked: Final[Path] = cli_run(arguments).creator.purelib / "pip" / "__init__.py"
+    image: Final[Path] = linked.resolve()
+
+    with pytest.raises(PermissionError):
+        linked.unlink()
+
+    cli_run(["--reset-app-data", *arguments])
+    assert (image.exists(), linked.resolve() == image, any(temp_app_data.rglob("*.dist-info"))) == (True, True, True)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX file permission bits")
+@pytest.mark.usefixtures("temp_app_data")
+def test_copied_seed_is_writable_from_read_only_image(tmp_path: Path, temp_app_data: Path) -> None:
+    copied: Final[Path] = cli_run(["--activators", "", str(tmp_path / "venv")]).creator.purelib / "pip"
+    image: Final[Path] = next(temp_app_data.rglob("CopyPipInstall/*/pip"))
+
+    modes: Final[list[int]] = [
+        path.stat().st_mode & 0o222 for path in (image, image / "__init__.py", copied, copied / "__init__.py")
+    ]
+    assert modes == [0, 0, 0o200, 0o200]
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize("pkg", ["pip", "setuptools"])
 @pytest.mark.usefixtures("session_app_data", "current_fastest", "coverage_env")
