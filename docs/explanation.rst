@@ -490,6 +490,9 @@ environment. The permissions do not bind ``root``. To remove the cache by hand, 
 write permission first with ``chmod -R u+w``. Images built by earlier releases keep writable directories;
 ``--reset-app-data`` rebuilds them, and environments linked to the old images must then be recreated.
 
+On Windows with legacy path limits, ``--symlink-app-data`` can build the seed image through its 8.3 short path when the
+wheel or its bytecode cache needs more room. If the volume lacks short names, use a shorter ``--app-data`` path.
+
 Periodic update mechanism
 =========================
 

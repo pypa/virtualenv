@@ -267,7 +267,9 @@ class PipInstall(ABC):
         staging.mkdir()
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
             try:
-                folder: Final[Path] = self._short_path_if_needed(zip_ref, staging)
+                folder: Final[Path] = (
+                    self._short_path_if_needed(self._staging_names(zip_ref), staging) if os.name == "nt" else staging
+                )
             except BaseException:
                 safe_delete(staging)
                 raise
@@ -282,22 +284,26 @@ class PipInstall(ABC):
                 safe_delete_read_only(folder)
                 raise
             # built ends in two long names again, so the files may only fit under the short path of the image itself
-            self._image_dir = self._short_path_if_needed(zip_ref, built)
+            if os.name == "nt":
+                self._image_dir = self._short_path_if_needed(zip_ref.namelist(), built)
+            else:
+                self._image_dir = built
 
     @staticmethod
-    def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
-        if os.name != "nt":
-            return folder
-        names: Final[list[str]] = zip_ref.namelist()
-        prefix: Final[int] = len(str(folder)) + 1  # the separator before each entry
-        longest_file: Final[int] = prefix + max(len(i) for i in names)
-        longest_dir: Final[int] = prefix + max(len(posixpath.dirname(i)) for i in names)
+    def _short_path_if_needed(names: list[str], folder: Path) -> Path:
+        # Windows counts UTF-16 code units, including the separator before each entry.
+        prefix: Final[int] = len(str(folder).encode("utf-16-le", errors="surrogatepass")) // 2 + 1
+        longest_file: Final[int] = prefix + max(len(name.encode("utf-16-le")) // 2 for name in names)
+        longest_dir: Final[int] = prefix + max(len(posixpath.dirname(name).encode("utf-16-le")) // 2 for name in names)
         if longest_file < _MAX_PATH and longest_dir < _MAX_DIR_PATH:
             return folder
         # deferred, only the path-length fallback needs the short-path helper
         from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
 
         return Path(get_short_path_name(str(folder)))
+
+    def _staging_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        return zip_ref.namelist()
 
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
         LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
@@ -358,7 +364,7 @@ class PipInstall(ABC):
             return False
         if os.name == "nt":
             with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-                self._image_dir = self._short_path_if_needed(zip_ref, self._image_dir)
+                self._image_dir = self._short_path_if_needed(zip_ref.namelist(), self._image_dir)
         return True
 
 

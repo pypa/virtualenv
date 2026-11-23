@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 __lazy_modules__ = [
+    "posixpath",
     "virtualenv.util.error",
     "virtualenv.util.path",
     "virtualenv.util.subprocess",
 ]
 
 import os
+import posixpath
 from stat import S_IREAD, S_IRGRP, S_IROTH
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import safe_delete, safe_delete_read_only, set_tree
@@ -20,9 +22,33 @@ if TYPE_CHECKING:
     import zipfile
     from pathlib import Path
 
+    from python_discovery import PythonInfo
+
 
 class SymlinkPipInstall(PipInstall):
     """Install a seed package by symlinking its image files into the environment."""
+
+    def _staging_names(self, zip_ref: zipfile.ZipFile) -> list[str]:
+        names: Final[list[str]] = super()._staging_names(zip_ref)
+        interpreter: Final[PythonInfo] = self._creator.interpreter
+        # Windows reads environment variable names case-insensitively, and CPython stores the level as a C int.
+        optimize: Final[bool] = any(
+            name.upper() == "PYTHONOPTIMIZE" and value for name, value in self._creator.env.items()
+        )
+        optimization: Final[str] = ".opt-0000000000" if optimize else ""
+        version = interpreter.version_info
+        # Allow 20 digits for the atomic write's temporary suffix and four for longer cache tags.
+        suffix: Final[str] = (
+            f".{interpreter.implementation.lower()}-{version.major}{version.minor}{optimization}.pyc.{'0' * 24}"
+        )
+        return [
+            *names,
+            *(
+                posixpath.join(posixpath.dirname(name), "__pycache__", f"{posixpath.basename(name)[:-3]}{suffix}")
+                for name in names
+                if name.endswith(".py")
+            ),
+        ]
 
     def _sync(self, src: Path, dst: Path) -> None:
         os.symlink(str(src), str(dst))
