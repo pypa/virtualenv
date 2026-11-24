@@ -13,7 +13,7 @@ concurrency:
 permissions: {}
 jobs:
   test:
-    name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }} ${{ matrix.group }}
+    name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     # PyPy can spend 18 minutes in pytest alone. Leave time for setup, coverage, and an artifact upload retry.
@@ -50,14 +50,8 @@ jobs:
           - {os: windows-2025-vs2026, py: "3.10", diagnostics: true}
           - {os: windows-2025-vs2026, py: "3.13t", diagnostics: true}
           - {os: macos-26, py: "3.13t", diagnostics: true}
-          - {os: ubuntu-24.04, py: graalpy, group: "1/4"}
-          - {os: ubuntu-24.04, py: graalpy, group: "2/4"}
-          - {os: ubuntu-24.04, py: graalpy, group: "3/4"}
-          - {os: ubuntu-24.04, py: graalpy, group: "4/4"}
-          - {os: macos-26, py: graalpy, group: "1/4"}
-          - {os: macos-26, py: graalpy, group: "2/4"}
-          - {os: macos-26, py: graalpy, group: "3/4"}
-          - {os: macos-26, py: graalpy, group: "4/4"}
+          - {os: ubuntu-24.04, py: graalpy}
+          - {os: macos-26, py: graalpy}
           - {os: macos-26, py: "brew@3.14"}
           - {os: macos-26, py: "brew@3.13"}
           - {os: macos-26, py: "brew@3.12"}
@@ -221,14 +215,8 @@ jobs:
         run: tox run --skip-pkg-install
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
-          GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
-          # graalpy skips xdist: tasks/run_graalpy_tests.py runs one serial pytest process per
-          # CPU instead, each on its own --shard slice of the tests. graalpy also dropped its
-          # --timeout-method=thread override: that method spawns a watcher thread per test,
-          # and GraalVM's Context.close() treats any Python-visible thread still alive as
-          # fatal, crashing the job even after every test passed (see #3240). The default
-          # signal-based method needs no such thread. --timeout=300 stays as a safety net.
+          # GraalVM can report a shutdown error if pytest-timeout leaves a watcher thread alive (see #3240).
           PYTEST_ADDOPTS: "-vv --durations=20${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.

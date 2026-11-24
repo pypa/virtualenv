@@ -859,6 +859,7 @@ def test_venv_configuration_uses_selected_options(
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
 
 
+@pytest.mark.graalpy
 @pytest.mark.skipif(not IS_GRAALPY, reason="GraalPy records its launcher and base executable in pyvenv.cfg")
 def test_venv_configuration_records_graalpy_executable(tmp_path: Path) -> None:
     session: Final[Session] = cli_run([str(tmp_path / "env"), "--creator", "venv", "--no-seed"])

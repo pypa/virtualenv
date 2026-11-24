@@ -190,6 +190,7 @@ def test_python_activator_pth_import_precedence(activation_python: Session, tmp_
     )
 
 
+@pytest.mark.graalpy
 @pytest.mark.skipif(sys.implementation.name != "graalpy", reason="GraalPy implementation module")
 def test_python_activator_pth_keeps_implementation_module(activation_python: Session, tmp_path: Path) -> None:
     purelib = activation_python.creator.purelib
