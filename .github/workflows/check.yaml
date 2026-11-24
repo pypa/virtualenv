@@ -119,23 +119,7 @@ jobs:
           - name: 📦 Install apt packages
             if: runner.os == 'Linux'
             shell: bash
-            run: |
-              retry() {
-                local n=1
-                while ! "$@"; do
-                  if [ $n -ge 5 ]; then
-                    echo "Command failed after $n attempts: $*" >&2
-                    return 1
-                  fi
-                  echo "Attempt $n failed for: $*; retrying in 10s" >&2
-                  n=$((n + 1))
-                  sleep 10
-                done
-              }
-              # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
-              sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
-              retry sudo apt-get update -y
-              retry sudo apt-get install csh tcsh zsh locales-all -y
+            run: tasks/install_ci_apt.sh csh tcsh zsh locales-all
           - name: 📦 Install brew packages
             if: runner.os == 'macOS'
             shell: bash
@@ -216,6 +200,8 @@ jobs:
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
+          # Four Linux PyPy workers can fill a 16 GiB runner well before the suite finishes.
+          PYTEST_XDIST_AUTO_NUM_WORKERS: ${{ runner.os == 'Linux' && startsWith(matrix.py, 'pypy') && '2' || '' }}
           # GraalVM can report a shutdown error if pytest-timeout leaves a watcher thread alive (see #3240).
           PYTEST_ADDOPTS: "-vv --durations=20${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
@@ -362,11 +348,8 @@ jobs:
             run: tasks/install_ci_tool.sh fish
           - name: 📦 Install apt packages for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
-            run: |
-              # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
-              sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
-              sudo apt-get update -y
-              sudo apt-get install -y tcsh zsh
+            shell: bash
+            run: tasks/install_ci_apt.sh tcsh zsh
       - name: 📦 Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false
         env:
