@@ -200,8 +200,8 @@ jobs:
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
-          # PyPy can see the host CPU count even when the runner limits its CPU affinity.
-          PYTEST_XDIST_AUTO_NUM_WORKERS: ${{ runner.os == 'Linux' && startsWith(matrix.py, 'pypy') && '4' || '' }}
+          # Four PyPy 3.11 workers used 11 GiB on a 16 GiB runner before reaching the longest tests.
+          PYTEST_XDIST_AUTO_NUM_WORKERS: ${{ runner.os == 'Linux' && startsWith(matrix.py, 'pypy') && (matrix.py == 'pypy-3.11' && '2' || '4') || '' }}
           # GraalVM can report a shutdown error if pytest-timeout leaves a watcher thread alive (see #3240).
           PYTEST_ADDOPTS: "-vv --durations=20${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
