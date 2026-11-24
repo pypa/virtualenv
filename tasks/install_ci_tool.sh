@@ -15,7 +15,8 @@ esac
 # tr drops the CR that jq.exe emits on Windows
 read -r tag asset sha256 < <(jq --raw-output --arg tool "$tool" --arg os "$RUNNER_OS" \
     '.[$tool] | [.tag, .assets[$os].name, .assets[$os].sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
-gh release download "$tag" --repo "$repository" --pattern "$asset" --dir "$RUNNER_TEMP"
+curl --fail --location --silent --show-error --output "$RUNNER_TEMP/$asset" \
+    "https://github.com/$repository/releases/download/$tag/$asset"
 (cd "$RUNNER_TEMP" && echo "$sha256  $asset" | sha256sum -c -)
 
 bin=/usr/local/bin

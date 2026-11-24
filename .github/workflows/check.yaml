@@ -103,19 +103,13 @@ jobs:
           - name: 🦀 Install RustPython
             if: matrix.py == 'rp'
             shell: bash
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh rustpython
           - name: 📦 Install Nushell
             shell: bash
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
           - name: 📦 Install fish
             if: runner.os != 'Windows'
             shell: bash
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh fish
           - name: 📦 Install apt packages
             if: runner.os == 'Linux'
@@ -354,13 +348,9 @@ jobs:
             run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
           - name: 📦 Install Nushell for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
           - name: 📦 Install fish for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh fish
           - name: 📦 Install apt packages for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
