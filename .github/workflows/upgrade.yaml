@@ -51,7 +51,10 @@ jobs:
           CI_TOOLS_OUTCOME: ${{ steps.ci-tools.outcome }}
         run: |
           tox run -e upgrade
-          git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog
+          git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md
+          if [ -f docs/changelog/embedded-wheels.bugfix.rst ]; then
+            git add -- docs/changelog/embedded-wheels.bugfix.rst
+          fi
           if [ "$CI_TOOLS_OUTCOME" = "success" ]; then
             git add -- tasks/ci-tools.json
           fi

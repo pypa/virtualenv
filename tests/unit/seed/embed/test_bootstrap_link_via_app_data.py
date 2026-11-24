@@ -837,9 +837,13 @@ _QUOTING_ONLY: Final[pytest.MarkDecorator] = pytest.mark.skipif(
 @pytest.mark.parametrize(
     "name",
     [
-        # GraalPy skips the slow launcher tests, so the plain case is its only check that a console script runs
         pytest.param(
-            "plain", id="plain", marks=pytest.mark.skipif(IS_PYPY, reason="the slow app-data seed test runs a launcher")
+            "plain",
+            id="plain",
+            marks=[
+                pytest.mark.graalpy,
+                pytest.mark.skipif(IS_PYPY, reason="the slow app-data seed test runs a launcher"),
+            ],
         ),
         pytest.param("two words", id="space", marks=_QUOTING_ONLY),
         pytest.param("owner's env", id="apostrophe", marks=_QUOTING_ONLY),

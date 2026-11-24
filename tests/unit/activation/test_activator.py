@@ -125,7 +125,6 @@ def test_explicit_tk_path_requires_its_own_bytes(library_creator: Creator, monke
     assert (values["__TCL_LIBRARY__"], values["__TK_LIBRARY__"]) == ("/library/andré/tcl8.6", "")
 
 
-@pytest.mark.graalpy
 def test_activator_prompt_cwd(monkeypatch, tmp_path) -> None:
     class FakeActivator(Activator):
         def generate(self, creator):
