@@ -212,8 +212,7 @@ jobs:
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
         run: >-
-          ${{ runner.os == 'macOS' && matrix.py == 'rp' && 'bash tasks/sample_macos_spawn.sh' || '' }}
-          tox run --skip-pkg-install
+          ${{ runner.os == 'macOS' && matrix.py == 'rp' && 'bash tasks/sample_macos_spawn.sh' || '' }} tox run --skip-pkg-install
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
