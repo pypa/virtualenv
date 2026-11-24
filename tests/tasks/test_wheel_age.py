@@ -182,6 +182,8 @@ def regenerate(generator_repo: Path) -> Callable[[], subprocess.CompletedProcess
 def test_generator_converges(generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]) -> None:
     regenerate()
     assert "Copyright Example" in (generator_repo / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
+    index = generator_repo / "src" / "virtualenv" / "seed" / "wheels" / "embed" / "__init__.py"
+    assert "__lazy_modules__ = [" in index.read_text(encoding="utf-8")
     subprocess.run(["git", "add", "."], cwd=generator_repo, check=True)
     regenerate()
     subprocess.run(
