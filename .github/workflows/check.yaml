@@ -50,6 +50,7 @@ jobs:
           - {os: windows-2025-vs2026, py: "3.10", diagnostics: true}
           - {os: windows-2025-vs2026, py: "3.13t", diagnostics: true}
           - {os: macos-26, py: "3.13t", diagnostics: true}
+          - {os: macos-26, py: rp, diagnostics: true}
           - {os: ubuntu-24.04, py: graalpy}
           - {os: macos-26, py: graalpy}
           - {os: macos-26, py: "brew@3.14"}
@@ -210,7 +211,9 @@ jobs:
           fi
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
-        run: tox run --skip-pkg-install
+        run: >-
+          ${{ runner.os == 'macOS' && matrix.py == 'rp' && 'bash tasks/sample_macos_spawn.sh' || '' }}
+          tox run --skip-pkg-install
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
