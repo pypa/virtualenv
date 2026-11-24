@@ -53,6 +53,7 @@ jobs:
           - {os: ubuntu-24.04, py: pypy-3.11, diagnostics: true}
           - {os: ubuntu-24.04, py: pypy-3.10, diagnostics: true}
           - {os: macos-26, py: pypy-3.11, diagnostics: true}
+          - {os: macos-26, py: rp, diagnostics: true}
           - {os: ubuntu-24.04, py: graalpy}
           - {os: macos-26, py: graalpy}
           - {os: macos-26, py: "brew@3.14"}
@@ -111,8 +112,6 @@ jobs:
             run: tasks/install_ci_tool.sh rustpython
           - name: 📦 Install Nushell
             shell: bash
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
           - name: 📦 Install fish
             if: runner.os != 'Windows'
@@ -216,7 +215,8 @@ jobs:
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
         id: suite
-        run: tox run --skip-pkg-install
+        run: >-
+          ${{ runner.os == 'macOS' && matrix.py == 'rp' && 'bash tasks/sample_macos_spawn.sh' || '' }} tox run --skip-pkg-install
         background: true
         timeout-minutes: ${{ (matrix.py == 'graalpy' || startsWith(matrix.py, 'pypy')) && 22 || 30 }}
         env:
@@ -395,8 +395,6 @@ jobs:
             run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
           - name: 📦 Install Nushell for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
-            env:
-              GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
           - name: 📦 Install fish for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'

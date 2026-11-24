@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
 from typing import Final
 
@@ -210,3 +212,22 @@ def test_diagnostics_reject_nonpositive_interval(diagnostic_pytester: pytest.Pyt
     result: Final[pytest.RunResult] = diagnostic_pytester.runpytest_subprocess("--diagnostics-interval=0", timeout=30)
     assert result.ret == pytest.ExitCode.USAGE_ERROR
     result.stderr.fnmatch_lines(["*--diagnostics-interval must be positive*"])
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="requires POSIX Bash signal semantics")
+def test_native_sampler_preserves_sigint_handler(tmp_path: Path) -> None:
+    script = Path(__file__).parents[2] / "tasks" / "sample_macos_spawn.sh"
+    result = subprocess.run(
+        [
+            "bash",
+            str(script),
+            sys.executable,
+            "-c",
+            "import signal; assert signal.getsignal(signal.SIGINT) is signal.default_int_handler",
+        ],
+        cwd=tmp_path,
+        timeout=10,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

@@ -89,7 +89,7 @@ jobs:
     if: needs.generate.outputs.publish == 'true'
     permissions:
       contents: read
-    uses: tox-dev/github-workflows/.github/workflows/open-maintenance-pr.yaml@b34c57a8a06e7b043c2ddd0b6b7a8a778d7aa8f7 # 6.8.5
+    uses: tox-dev/github-workflows/.github/workflows/open-maintenance-pr.yaml@15c2457ffbf7454a2fd61eb51cade8f11f0c251c # 6.8.7
     with:
       artifact-id: ${{ needs.generate.outputs.patch-artifact-id }}
       allowed-paths: |
@@ -97,7 +97,7 @@ jobs:
         docs/changelog/embedded-wheels.bugfix.rst
         pylock.zipapp.toml
         tasks/ci-tools.json
-        src/virtualenv/seed/wheels/embed/catalog.py
+        src/virtualenv/seed/wheels/embed/__init__.py
         src/virtualenv/seed/wheels/embed/*.whl
       branch: auto/upgrade-embedded-deps
       title: Upgrade embedded pip/setuptools/wheel and CI test tools
