@@ -152,6 +152,8 @@ commands = [
 [env.rp]
 commands = [
   [
+    "python",
+    "-m",
     "pytest",
     { replace = "posargs", default = [
       "--junitxml",
