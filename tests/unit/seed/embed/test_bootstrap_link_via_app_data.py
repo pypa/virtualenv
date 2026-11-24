@@ -152,8 +152,8 @@ def test_second_interrupt_exits_and_next_run_finishes_seed(tmp_path: Path) -> No
     args: Final[list[str]] = ["--app-data", str(cache), "--no-periodic-update", "--no-setuptools", str(env)]
     script: Final[str] = """
 import os
+import signal
 import sys
-from _thread import interrupt_main
 from threading import Event, Thread
 from virtualenv.__main__ import run_with_catch
 from virtualenv.seed.embed.via_app_data.pip_install.base import PipInstall
@@ -164,7 +164,8 @@ def block(self, archive, folder):
 
 def watch_stdin():
     for _ in sys.stdin:
-        interrupt_main()
+        # A synthetic interrupt does not wake Windows waits that listen for SIGINT.
+        signal.raise_signal(signal.SIGINT)
 
 if os.name == "nt":
     Thread(target=watch_stdin, daemon=True).start()

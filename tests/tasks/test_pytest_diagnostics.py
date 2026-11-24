@@ -44,7 +44,15 @@ def diagnostic_pytester(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPat
     return pytester
 
 
-def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.Pytester) -> None:
+@pytest.mark.parametrize(
+    "conftest",
+    [
+        pytest.param("", id="runtime"),
+        pytest.param("from tasks import pytest_diagnostics\npytest_diagnostics._PYPY = True", id="python-frames"),
+    ],
+)
+def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.Pytester, conftest: str) -> None:
+    diagnostic_pytester.makeconftest(conftest)
     source: Final[str] = f'{_WAIT}\ndef test_wait_for_stack() -> None:\n    wait_for_stack("test_wait_for_stack")\n'
     diagnostic_pytester.makepyfile(test_first=source, test_second=source)
     diagnostic_pytester.runpytest_subprocess("-p", "xdist.plugin", "-n", "2", timeout=30).assert_outcomes(passed=2)

@@ -9,6 +9,7 @@ import sys
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from traceback import print_stack
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
 # faulthandler has one timer per process, including nested pytest sessions.
 _DIAGNOSTICS: Final[list[_Diagnostics]] = []
+_PYPY: Final[bool] = sys.implementation.name == "pypy"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -75,8 +77,14 @@ class _Diagnostics:
     def _dump_periodically(self) -> None:
         while not self._stopped.wait(self.interval):
             self._record("DUMP")
-            # holds the GIL, or stops the world on free-threaded builds, so no frame is freed while it reads
-            faulthandler.dump_traceback(file=self.stream)
+            if _PYPY:
+                # PyPy's faulthandler only dumps the thread that calls it.
+                for thread, frame in sys._current_frames().items():  # ruff: ignore[private-member-access]  # documented deadlock diagnostic
+                    self.stream.write(f"Thread 0x{thread:x}\n")
+                    print_stack(frame, file=self.stream)
+            else:
+                # On free-threaded builds this stops other threads before walking their frames.
+                faulthandler.dump_traceback(file=self.stream)
             self._arm_stall_timer()
 
     def _close(self) -> None:
@@ -89,9 +97,11 @@ class _Diagnostics:
         self._record("EXIT")
         self.stream.close()
 
+    @pytest.hookimpl
     def pytest_runtest_logstart(self, nodeid: str) -> None:
         self._record(f"TEST {nodeid}")
 
+    @pytest.hookimpl
     def pytest_runtest_logreport(self, report: pytest.TestReport) -> None:
         self._record(f"{report.when} {report.outcome} {report.nodeid}")
 
