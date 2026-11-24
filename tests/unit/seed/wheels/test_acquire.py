@@ -6,11 +6,12 @@ import os
 import subprocess
 import sys
 import sysconfig
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from subprocess import CalledProcessError, Popen
-from typing import TYPE_CHECKING, Final, NamedTuple
+from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
 import pytest
@@ -89,13 +90,13 @@ def test_pip_helper_keeps_wheel_path_with_separator(tmp_path: Path) -> None:
     ],
 )
 def test_download_wheel_uses_staged_archive(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
     version_spec: Callable[[Wheel], str | None],
 ) -> None:
-    _, expected, _ = download_process
+    expected = download_process.wheel
     result: Final[Wheel] = download_wheel(
         "pip", version_spec(expected), for_py_version, [], session_app_data, tmp_path, {}
     )
@@ -107,12 +108,12 @@ def test_download_wheel_uses_staged_archive(
 
 
 def test_download_wheel_not_found_raises(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
 ) -> None:
-    download_process[0].side_effect = None
+    download_process.process.side_effect = None
     with pytest.raises(RuntimeError, match="could not find downloaded wheel"):
         download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
     assert list(tmp_path.iterdir()) == []
@@ -207,12 +208,12 @@ def test_pip_helper_omits_current_directory_at_startup(session_app_data: AppData
 
 
 def test_download_fails(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
 ) -> None:
-    download_process[0].return_value.configure_mock(returncode=7)
+    download_process.process.return_value.configure_mock(returncode=7)
     with pytest.raises(CalledProcessError) as context:
         download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
     error: Final[CalledProcessError] = context.value
@@ -226,22 +227,22 @@ def test_download_fails(
 
 
 def test_download_wheel_python_io_encoding(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
 ) -> None:
     download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
-    assert download_process[0].call_args.kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
+    assert download_process.process.call_args.kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
 
 
 def test_download_wheel_keeps_failed_verification_out_of_cache(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
 ) -> None:
-    download_process[2].extend(b"\n")
+    download_process.payload += b"\n"
     with pytest.raises(RuntimeError, match="but PyPI reports"):
         download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
     assert list(tmp_path.iterdir()) == []
@@ -259,13 +260,13 @@ def test_download_wheel_keeps_failed_verification_out_of_cache(
     ],
 )
 def test_download_wheel_preserves_custom_index_policy(
-    download_process: tuple[MockType, Wheel, bytearray],
+    download_process: _DownloadProcess,
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
     env_var: str,
 ) -> None:
-    download_process[2].extend(b"\n")
+    download_process.payload += b"\n"
     result: Final[Wheel] = download_wheel(
         "pip",
         None,
@@ -275,21 +276,20 @@ def test_download_wheel_preserves_custom_index_policy(
         tmp_path,
         {env_var: "https://index.example/simple"},
     )
-    assert result.path.read_bytes() == bytes(download_process[2])
+    assert result.path.read_bytes() == download_process.payload
 
 
 @pytest.fixture
 def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadProcess:
     wheel: Final[Wheel | None] = get_embed_wheel("pip", for_py_version)
     assert wheel is not None
-    payload: Final[bytearray] = bytearray(wheel.path.read_bytes())
-    # PyPy can retain the hash input buffer until garbage collection.
+    payload = wheel.path.read_bytes()
     metadata: Final[bytes] = json.dumps({
         "releases": {
             wheel.version: [
                 {
                     "filename": wheel.name,
-                    "digests": {"sha256": hashlib.sha256(bytes(payload)).hexdigest()},
+                    "digests": {"sha256": hashlib.sha256(payload).hexdigest()},
                 }
             ]
         }
@@ -301,20 +301,22 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadPro
     mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=metadata_response)
 
     def downloaded(cmd: list[str], **_kwargs: str | int | bool | dict[str, str]) -> Popen[str]:
-        (Path(cmd[cmd.index("-d") + 1]) / wheel.name).write_bytes(payload)
+        (Path(cmd[cmd.index("-d") + 1]) / wheel.name).write_bytes(download.payload)
         return process.return_value
 
     process: Final[MockType] = mocker.patch(
         "virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=downloaded
     )
     process.return_value.configure_mock(**{"communicate.return_value": ("progress complete", ""), "returncode": 0})
-    return _DownloadProcess(process, wheel, payload)
+    download = _DownloadProcess(process, wheel, payload)
+    return download
 
 
-class _DownloadProcess(NamedTuple):
+@dataclass
+class _DownloadProcess:
     process: MockType
     wheel: Wheel
-    payload: bytearray
+    payload: bytes
 
 
 @pytest.fixture
@@ -419,7 +421,7 @@ def test_pin_prefers_verified_or_bundled_wheel_over_private_build(
     data = BytesIO()
     with ZipFile(data, "w") as archive:
         archive.writestr(f"pip-{verified.version}.dist-info/METADATA", f"Name: pip\nVersion: {verified.version}\n")
-    download_process.payload[:] = data.getvalue()
+    download_process.payload = data.getvalue()
     env = {"PIP_INDEX_URL": "https://packages.example/simple"}
     private = get_wheel("pip", "bundle", for_py_version, [], True, app_data, False, env)
     assert private is not None

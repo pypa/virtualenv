@@ -16,6 +16,7 @@ import sysconfig
 import textwrap
 import zipfile
 from argparse import ArgumentTypeError
+from codecs import lookup
 from collections import OrderedDict
 from functools import partial
 from operator import attrgetter
@@ -2251,12 +2252,20 @@ def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None
         action()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def latin1_locale() -> str:
     locales: Final[list[str]] = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
     names: Final[list[str]] = [name for name in locales if name.lower() == "aa_dj.iso88591"]
     if not names:
         pytest.skip("Latin-1 locale is unavailable")
+    encoding = subprocess.check_output(
+        [sys.executable, "-c", "import sys; print(sys.getfilesystemencoding())"],
+        env={**os.environ, "LC_ALL": names[0], "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+        text=True,
+        encoding="ascii",
+    ).strip()
+    if lookup(encoding).name != "iso8859-1":
+        pytest.skip(f"interpreter uses {encoding} under a Latin-1 locale")
     return names[0]
 
 
