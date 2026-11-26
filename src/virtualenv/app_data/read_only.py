@@ -71,7 +71,8 @@ class ReadOnlyAppData(AppDataDiskFolder):
         :raises NotImplementedError: always
 
         """
-        raise NotImplementedError
+        msg = "read-only app data does not keep an embed update log"
+        raise NotImplementedError(msg)
 
 
 class _PyInfoStoreDiskReadOnly(PyInfoStoreDisk):
