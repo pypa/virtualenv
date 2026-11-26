@@ -9,6 +9,7 @@ import sys
 import threading
 import traceback
 import zipfile
+from argparse import ArgumentTypeError
 from contextlib import ExitStack
 from errno import EACCES, EXDEV
 from pathlib import Path
@@ -335,6 +336,27 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
     data: Final[AppData] = make_app_data(str(tmp_path), read_only=False, env={})
     try:
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
+    finally:
+        data.close()
+
+
+@pytest.mark.parametrize("read_only", [pytest.param(False, id="writable"), pytest.param(True, id="read-only")])
+def test_app_data_explicit_not_a_directory(tmp_path: Path, read_only: bool) -> None:
+    blocker: Final[Path] = tmp_path / "cache"
+    blocker.write_text("", encoding="utf-8")
+
+    with pytest.raises(ArgumentTypeError, match="is not a directory"):
+        make_app_data(str(blocker), read_only=read_only, env={})
+
+
+def test_app_data_environment_not_a_directory_uses_temporary(tmp_path: Path) -> None:
+    blocker: Final[Path] = tmp_path / "cache"
+    blocker.write_text("", encoding="utf-8")
+
+    data: Final[AppData] = make_app_data(None, read_only=False, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(blocker)})
+    try:
+        assert isinstance(data, TempAppData)
+        assert str(data) != str(blocker)
     finally:
         data.close()
 

@@ -38,10 +38,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
 
     :returns: the app data store
 
-    :raises ArgumentTypeError: when the folder is empty or whitespace
+    :raises ArgumentTypeError: when the folder is empty or whitespace, or when an explicitly given folder is not a
+        directory
     :raises RuntimeError: when read-only app-data has no default location
 
     """
+    explicit: Final[bool] = folder is not None
     private: Final[bool] = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
         # A blank override must not resolve to the working directory, which --reset-app-data could delete.
@@ -63,6 +65,9 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         raise ArgumentTypeError(msg)
     folder = os.path.abspath(folder)
 
+    if (not_a_dir := _app_data_for_path_that_is_not_a_directory(folder, explicit=explicit)) is not None:
+        return not_a_dir
+
     if read_only:
         return ReadOnlyAppData(folder)
 
@@ -72,6 +77,17 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     if os.access(folder, os.W_OK):
         return AppDataDiskFolder(folder, private=private)
     _LOGGER.debug("app data folder %s has no write access", folder)
+    return TempAppData()
+
+
+def _app_data_for_path_that_is_not_a_directory(folder: str, *, explicit: bool) -> AppData | None:
+    # a file in the way would only fail much later, while seeding, with a message about downloading wheels
+    if os.path.isdir(folder) or not os.path.lexists(folder):
+        return None
+    msg: Final[str] = f"app data folder {folder!r} is not a directory"
+    if explicit:
+        raise ArgumentTypeError(msg)
+    _LOGGER.warning("using temporary app-data because %s is not a directory", folder)
     return TempAppData()
 
 
