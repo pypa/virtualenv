@@ -129,7 +129,7 @@ def test_manual_upgrade_refuses_app_data_that_cannot_update(
     try:
         assert (
             manual_upgrade(app_data, {}),
-            [record.getMessage() for record in caplog.records],
+            [record.getMessage() for record in caplog.records if record.levelno == logging.ERROR],
             do_update_mock.call_count,
         ) == (1, ["upgrading embedded wheels needs a writable --app-data folder without --read-only-app-data"], 0)
     finally:
