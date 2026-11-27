@@ -40,7 +40,8 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
 
     :raises ArgumentTypeError: when the folder is empty or whitespace, or when an explicitly given folder is not a
         directory
-    :raises RuntimeError: when read-only app-data has no default location
+    :raises RuntimeError: when read-only app-data has no default location, or its default or overridden folder is not a
+        directory
 
     """
     explicit: Final[bool] = folder is not None
@@ -65,7 +66,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         raise ArgumentTypeError(msg)
     folder = os.path.abspath(folder)
 
-    if (not_a_dir := _app_data_for_path_that_is_not_a_directory(folder, explicit=explicit)) is not None:
+    if (not_a_dir := _app_data_for_non_directory(folder, explicit=explicit, read_only=read_only)) is not None:
         return not_a_dir
 
     if read_only:
@@ -80,13 +81,15 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     return TempAppData()
 
 
-def _app_data_for_path_that_is_not_a_directory(folder: str, *, explicit: bool) -> AppData | None:
+def _app_data_for_non_directory(folder: str, *, explicit: bool, read_only: bool) -> AppData | None:
     # a file in the way would only fail much later, while seeding, with a message about downloading wheels
-    if os.path.isdir(folder) or not os.path.lexists(folder):
+    if os.path.isdir(folder) or not os.path.exists(folder):
         return None
     msg: Final[str] = f"app data folder {folder!r} is not a directory"
     if explicit:
         raise ArgumentTypeError(msg)
+    if read_only:
+        raise RuntimeError(msg)
     _LOGGER.warning("using temporary app-data because %s is not a directory", folder)
     return TempAppData()
 
