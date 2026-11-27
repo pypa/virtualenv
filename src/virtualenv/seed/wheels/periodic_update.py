@@ -611,6 +611,9 @@ def manual_upgrade(app_data: AppData, env: dict[str, str]) -> int:
     :returns: ``0`` when every update succeeded, ``1`` when any failed
 
     """
+    if not app_data.can_update:
+        LOGGER.error("upgrading embedded wheels needs a writable --app-data folder without --read-only-app-data")
+        return 1
     if app_data.for_wheel_index(env).wheel_index != "pypi" and not app_data.reuse_custom_wheels:
         LOGGER.error("use --app-data to keep custom-index wheels for offline use")
         return 1
