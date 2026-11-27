@@ -310,6 +310,9 @@ An empty or whitespace-only ``--app-data`` value is an error, as is a whitespace
 shell variables before using ``--app-data "$CACHE"``, especially with ``--reset-app-data``, which deletes the selected
 cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DATA`` is treated as unset.
 
+A ``--app-data`` path that exists but is not a directory is an error. When ``VIRTUALENV_OVERRIDE_APP_DATA`` or the
+default cache names such a path, writable runs warn and use temporary app-data, while read-only runs fail.
+
 When no default cache path is available, virtualenv uses temporary app-data and removes it after the run. Set
 ``VIRTUALENV_OVERRIDE_APP_DATA`` or ``--app-data`` to use a persistent cache. ``--read-only-app-data`` needs an explicit
 cache path in this case.

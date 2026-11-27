@@ -169,6 +169,28 @@ def test_blank_app_data_leaves_working_directory(
     ) == (2, "keep", [sentinel], True)
 
 
+_TEST_APP_DATA_NOT_A_DIRECTORY_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"argument --app-data: app data folder '.*' is not a directory\n\Z"
+)
+
+
+def test_app_data_that_is_a_file_is_rejected(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], give_app_data: Callable[[Path], list[str]]
+) -> None:
+    blocker: Final[Path] = tmp_path / "cache"
+    blocker.write_text("", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([*give_app_data(blocker), str(tmp_path / "env")])
+
+    assert (
+        context.value.code,
+        bool(_TEST_APP_DATA_NOT_A_DIRECTORY_PATTERN.search(capsys.readouterr().err)),
+        blocker.is_file(),
+        (tmp_path / "env").exists(),
+    ) == (2, True, True, False)
+
+
 def _on_command_line(_: pytest.MonkeyPatch, folder: Path) -> list[str]:
     return ["--app-data", str(folder)]
 

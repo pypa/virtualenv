@@ -9,6 +9,7 @@ import sys
 import threading
 import traceback
 import zipfile
+from argparse import ArgumentTypeError
 from contextlib import ExitStack
 from errno import EACCES, EXDEV
 from pathlib import Path
@@ -337,6 +338,59 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
     finally:
         data.close()
+
+
+@pytest.mark.parametrize("read_only", [pytest.param(False, id="writable"), pytest.param(True, id="read-only")])
+def test_app_data_explicit_not_a_directory(blocker: Path, read_only: bool) -> None:
+    with pytest.raises(ArgumentTypeError, match="is not a directory"):
+        make_app_data(str(blocker), read_only=read_only, env={})
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_app_data_explicit_dangling_link_uses_temporary(tmp_path: Path) -> None:
+    link: Final[Path] = tmp_path / "cache"
+    link.symlink_to(tmp_path / "missing")
+
+    data: Final[AppData] = make_app_data(str(link), read_only=False, env={})
+    try:
+        assert isinstance(data, TempAppData)
+    finally:
+        data.close()
+
+
+def test_app_data_environment_not_a_directory_uses_temporary(blocker: Path, caplog: pytest.LogCaptureFixture) -> None:
+    data: Final[AppData] = make_app_data(None, read_only=False, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(blocker)})
+    try:
+        assert (type(data), f"using temporary app-data because {blocker} is not a directory" in caplog.text) == (
+            TempAppData,
+            True,
+        )
+    finally:
+        data.close()
+
+
+def test_app_data_environment_not_a_directory_read_only(blocker: Path) -> None:
+    with pytest.raises(RuntimeError, match="is not a directory"):
+        make_app_data(None, read_only=True, env={"VIRTUALENV_OVERRIDE_APP_DATA": str(blocker)})
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits")
+def test_app_data_default_not_a_directory_keeps_mode(app_data_default: Path) -> None:
+    app_data_default.write_text("", encoding="utf-8")
+    app_data_default.chmod(0o644)
+
+    data: Final[AppData] = make_app_data(None, read_only=False, env={})
+    try:
+        assert (type(data), app_data_default.stat().st_mode & 0o7777) == (TempAppData, 0o644)
+    finally:
+        data.close()
+
+
+@pytest.fixture
+def blocker(tmp_path: Path) -> Path:
+    file: Final[Path] = tmp_path / "cache"
+    file.write_text("", encoding="utf-8")
+    return file
 
 
 @pytest.mark.parametrize(
