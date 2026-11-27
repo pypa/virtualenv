@@ -10,6 +10,7 @@ import os
 import shlex
 import signal
 import sys
+import time
 import zipfile
 from base64 import urlsafe_b64encode
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -219,7 +220,7 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
         finished.set()
 
     mocker.patch.object(PipInstall, "build_image", autospec=True, side_effect=build_image)
-    original_submit, original_wait = ThreadPoolExecutor.submit, Event.wait
+    original_submit, original_sleep = ThreadPoolExecutor.submit, time.sleep
     submit_calls = 0
     interrupts = 0
 
@@ -229,18 +230,18 @@ def test_repeated_interrupts_wait_for_seed_worker(tmp_path: Path, unusable_cache
         submit_calls += 1
         return future
 
-    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
+    def interrupt_sleep(seconds: float) -> None:
         nonlocal interrupts
-        if submit_calls >= 2 and current_thread() is main_thread() and event is not started:
-            assert original_wait(started, timeout=30)
+        if submit_calls >= 2 and current_thread() is main_thread():
+            assert started.wait(timeout=30)
             if interrupts < 2:
                 interrupts += 1
                 raise KeyboardInterrupt
             release.set()
-        return original_wait(event, timeout)
+        original_sleep(seconds)
 
     mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
-    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
+    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.sleep", autospec=True, side_effect=interrupt_sleep)
     with pytest.raises(KeyboardInterrupt):
         cli_run(
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
@@ -277,18 +278,18 @@ def test_interrupt_during_worker_submission_waits_for_seed(
             raise KeyboardInterrupt
         return future
 
-    original_wait = Event.wait
+    original_sleep = time.sleep
 
-    def interrupt_wait(event: Event, timeout: float | None = None) -> bool:
+    def interrupt_sleep(seconds: float) -> None:
         nonlocal wait_interrupted
         if interrupted and current_thread() is main_thread() and not wait_interrupted:
             wait_interrupted = True
             release.set()
             raise KeyboardInterrupt
-        return original_wait(event, timeout)
+        original_sleep(seconds)
 
     mocker.patch.object(ThreadPoolExecutor, "submit", autospec=True, side_effect=submit)
-    mocker.patch.object(Event, "wait", autospec=True, side_effect=interrupt_wait)
+    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.sleep", autospec=True, side_effect=interrupt_sleep)
     with pytest.raises(KeyboardInterrupt):
         cli_run(
             [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],

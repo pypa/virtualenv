@@ -24,6 +24,7 @@ from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
 from threading import Event, Lock
+from time import sleep
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
@@ -268,9 +269,10 @@ class _SeedWorker:
                 self.done.set()
 
     def wait(self) -> None:
-        # Windows before Python 3.14 cannot interrupt an unbounded lock wait.
-        while not self.done.wait(timeout=0.25):
-            pass
+        # Ctrl+C inside Event.wait can leave its lock released and surface as "release unlocked lock" instead of
+        # KeyboardInterrupt; sleep stays interruptible, also on Windows before Python 3.14.
+        while not self.done.is_set():
+            sleep(0.05)
 
 
 def _submit_or_run(executor: ThreadPoolExecutor, worker: _SeedWorker) -> None:
