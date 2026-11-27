@@ -458,7 +458,9 @@ Update the embedded wheel files to the latest versions:
 
     $ virtualenv --upgrade-embed-wheels
 
-If an upgrade fails, the command logs the affected package and Python version and exits with status 1.
+If an upgrade fails, the command logs the affected package and Python version and exits with status 1. The upgrade needs
+writable app-data: with ``--read-only-app-data``, or when virtualenv falls back to temporary app-data, it exits with
+status 1 without upgrading anything.
 
 Provide custom wheels
 =====================

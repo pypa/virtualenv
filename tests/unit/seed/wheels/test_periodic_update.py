@@ -26,7 +26,7 @@ from urllib.request import ProxyHandler, build_opener
 import pytest
 
 from virtualenv import cli_run
-from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.app_data import AppDataDiskFolder, ReadOnlyAppData, TempAppData
 from virtualenv.info import ROOT
 from virtualenv.seed.wheels import Wheel
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT, get_embed_wheel
@@ -52,6 +52,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture, MockType
 
+    from virtualenv.app_data.base import AppData
     from virtualenv.app_data.via_disk_folder import EmbedDistributionUpdateStoreDisk
 
 
@@ -109,6 +110,30 @@ def test_custom_upgrade_requires_dedicated_directory(tmp_path: Path, caplog: pyt
     assert manual_upgrade(app_data, {"PIP_INDEX_URL": "https://packages.example/simple"}) == 1
     assert "use --app-data" in caplog.text
     assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    "new_app_data",
+    [
+        pytest.param(lambda folder: ReadOnlyAppData(str(folder)), id="read-only"),
+        pytest.param(lambda _: TempAppData(), id="temporary"),
+    ],
+)
+def test_manual_upgrade_refuses_app_data_that_cannot_update(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, mocker: MockerFixture, new_app_data: Callable[[Path], AppData]
+) -> None:
+    do_update_mock: Final[MockType] = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.do_update", autospec=True, return_value=[]
+    )
+    app_data: Final[AppData] = new_app_data(tmp_path)
+    try:
+        assert (
+            manual_upgrade(app_data, {}),
+            [record.getMessage() for record in caplog.records if record.levelno == logging.ERROR],
+            do_update_mock.call_count,
+        ) == (1, ["upgrading embedded wheels needs a writable --app-data folder without --read-only-app-data"], 0)
+    finally:
+        app_data.close()
 
 
 def test_manual_upgrade_reports_failure(session_app_data, caplog, mocker) -> None:
