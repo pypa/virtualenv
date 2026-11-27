@@ -75,9 +75,9 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     if not _prepare_app_data_folder(folder, private):
         return TempAppData()
 
-    if os.access(folder, os.W_OK):
+    if os.path.isdir(folder) and os.access(folder, os.W_OK):
         return AppDataDiskFolder(folder, private=private)
-    _LOGGER.debug("app data folder %s has no write access", folder)
+    _LOGGER.debug("app data folder %s is not a writable directory", folder)
     return TempAppData()
 
 
