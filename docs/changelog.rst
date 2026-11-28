@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-14:
+
+***********************
+ 21.15.14 (2026-11-27)
+***********************
+
+.. _release-21-15-14-fixed:
+
+Fixed
+-----
+
+- An explicit ``--app-data`` path that exists but is not a directory is now a usage error. When
+  ``VIRTUALENV_OVERRIDE_APP_DATA`` or the default cache names such a path, writable runs warn and use temporary app-data
+  instead of failing while seeding, and a file at the default cache location keeps its permissions (:pr:`3773`) by
+  :user:`qianeric-backup` and :user:`gaborbernat`.
+- ``--upgrade-embed-wheels`` with read-only or temporary app-data now exits with status 1 after one error that asks for
+  a writable ``--app-data`` folder, instead of logging ``could not upgrade`` with an empty reason for every package and
+  Python version (:pr:`3774`) by :user:`qianeric-backup` and :user:`gaborbernat`.
+
 .. _release-21-15-13:
 
 ***********************
