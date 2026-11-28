@@ -248,7 +248,7 @@ sha256 = "abd01743f24e5287cd7a5db3752faf1a2d65353f38ec26d98e25a6db65958c85"
 
 [[packages]]
 name = "python-discovery"
-version = "1.9.5"
+version = "1.9.6"
 marker = "\"project-runtime\" in dependency_groups"
 requires-python = ">=3.9"
 dependencies = [
@@ -258,22 +258,22 @@ dependencies = [
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "python_discovery-1.9.5.tar.gz"
-upload-time = 2026-11-06T15:32:11.331993+00:00
-url = "https://files.pythonhosted.org/packages/68/55/70b46fae646bc6f5cb5e82569949d925cff1c7b5ce20ec4a11e0d977f8c6/python_discovery-1.9.5.tar.gz"
-size = 141121
+name = "python_discovery-1.9.6.tar.gz"
+upload-time = 2026-11-18T00:32:26.272893+00:00
+url = "https://files.pythonhosted.org/packages/cb/4e/20a9c45c4bb839e6e03e5971a546c623d12f950aa496cf344dc8e9f07167/python_discovery-1.9.6.tar.gz"
+size = 147742
 
 [packages.sdist.hashes]
-sha256 = "86279f5d2728bc067de28b7ddc571be2eacc2ae0e7048f8629d2481a0f8848a2"
+sha256 = "383aa67858d73a9585a843a37a4383c6be98e4d86a981a031328e393a6eb2632"
 
 [[packages.wheels]]
-name = "python_discovery-1.9.5-py3-none-any.whl"
-upload-time = 2026-11-06T15:32:09.821939+00:00
-url = "https://files.pythonhosted.org/packages/ac/35/25bd092ca8a7e71192afdca67fbff4f797da74408e74ac3626e13b409ec0/python_discovery-1.9.5-py3-none-any.whl"
-size = 44377
+name = "python_discovery-1.9.6-py3-none-any.whl"
+upload-time = 2026-11-18T00:32:24.849620+00:00
+url = "https://files.pythonhosted.org/packages/c4/34/65e66e8c384dc08f0e58c474587c05c4bc952f60facd8a15e80748118bd1/python_discovery-1.9.6-py3-none-any.whl"
+size = 98453
 
 [packages.wheels.hashes]
-sha256 = "a1fae8fca11e4bc61e38491c2aafff29e430b3c5e272d51ae52fb895bc4c0fac"
+sha256 = "93b10b90363d4151964cdeee2ec6601f3041b17fc2b253a1c3da7d6e7ddd8337"
 
 [[packages]]
 name = "typing-extensions"
@@ -302,7 +302,7 @@ sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 
 [tool.nab]
 nab-version = "0.0.30"
-created-at = 2026-11-24T08:14:37.452064+00:00
+created-at = 2026-11-28T01:31:38.046420+00:00
 command-line = [
     "nab",
     "lock",
@@ -347,6 +347,6 @@ cli-project-overrides = [
 
 [tool.nab.validation]
 version = 1
-all-inputs-sha256 = "a2b44974adfe75f01d840f69f7df3e3fa58300e41cfade5acaad7a6f595c367b"
-selection-inputs-sha256 = "74d671e8b439aa60e6c8768982c102b8fdaecbf8f254bed22881242489438877"
-contents-sha256 = "7483c8638d653f7c29063630a6695347168341f049b809df37db0a5d13136a3a"
+all-inputs-sha256 = "6508f425bdd69f40b5ce4c97c8386c1c04c9179997acd763d3dc26dd3bc2a03d"
+selection-inputs-sha256 = "ea3ee47b91ac68e69cabc2ba73af51bf24166524e0d6e834d8b32378b8b11347"
+contents-sha256 = "ac7b86fd7ee920edf39a956e74dd76d32c2e9fdfe757ae96b0a1776db100fe43"
